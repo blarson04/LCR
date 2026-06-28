@@ -38,9 +38,10 @@ import config  # noqa: E402
 CENSUS_RAW_DIR = config.RAW_DIR / "census"
 CENSUS_RAW_DIR.mkdir(parents=True, exist_ok=True)
 
-# Census geography keyword for metro/micro areas, and the population variable.
+# Census geography keyword for metro/micro areas, and the variables we use.
 _CBSA_GEO = "metropolitan statistical area/micropolitan statistical area"
 _POP_VAR = "B01003_001E"   # ACS table B01003: total population
+_HU_VAR = "B25001_001E"    # ACS table B25001: total housing units (permits denominator)
 
 # ACS1 release years we attempt for the population panel (2020 has no ACS1).
 ACS1_YEARS = (2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023)
@@ -104,6 +105,30 @@ def fetch_population(year: int, *, refresh: bool = False) -> pd.DataFrame:
     df = df[df["name"].str.endswith("Metro Area")]          # drop Micro areas
     df = df.rename(columns={_POP_VAR: "population"})
     return df[["cbsa_code", "name", "population", "year"]].reset_index(drop=True)
+
+
+def fetch_housing_units(year: int, *, refresh: bool = False) -> pd.DataFrame:
+    """One year of metro housing stock: [cbsa_code, name, housing_units, year]."""
+    df = fetch_acs1(year, [_HU_VAR], refresh=refresh)
+    df = df[df["name"].str.endswith("Metro Area")]          # drop Micro areas
+    df = df.rename(columns={_HU_VAR: "housing_units"})
+    return df[["cbsa_code", "name", "housing_units", "year"]].reset_index(drop=True)
+
+
+def build_housing_panel(years=ACS1_YEARS, *, refresh: bool = False) -> pd.DataFrame:
+    """
+    Stack housing stock across ACS1 years: one row per (cbsa_code, year). This
+    is the denominator of the permits-to-stock supply indicator. Years with no
+    ACS1 release are skipped.
+    """
+    frames = []
+    for yr in years:
+        try:
+            frames.append(fetch_housing_units(yr, refresh=refresh))
+        except RuntimeError as e:
+            print(f"  [skip] {yr}: {e.__class__.__name__} — {str(e).splitlines()[0]}")
+    panel = pd.concat(frames, ignore_index=True)
+    return panel.sort_values(["cbsa_code", "year"]).reset_index(drop=True)
 
 
 def build_population_panel(years=ACS1_YEARS, *, refresh: bool = False) -> pd.DataFrame:

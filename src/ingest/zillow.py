@@ -38,64 +38,79 @@ ZORI_URL = (
     "https://files.zillowstatic.com/research/public_csvs/zori/"
     "Metro_zori_uc_sfrcondomfr_sm_sa_month.csv"
 )
+# ZHVI = Zillow Home Value Index (all homes, smoothed + SA). Home values drive
+# the cost-to-own-vs-rent affordability indicator (with the FRED mortgage rate).
+ZHVI_URL = (
+    "https://files.zillowstatic.com/research/public_csvs/zhvi/"
+    "Metro_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+)
 _ID_COLS = ["RegionID", "SizeRank", "RegionName", "RegionType", "StateName"]
 MIN_MONTHS_PER_YEAR = 6   # a year needs >= this many monthly obs to count
 
 
-def fetch_zori(*, refresh: bool = False) -> pd.DataFrame:
-    """Download the wide ZORI metro CSV, caching the raw file to data/raw/zillow/."""
-    cache = ZILLOW_RAW_DIR / "Metro_zori_sfrcondomfr_sm_sa_month.csv"
+def _download(url: str, cache_name: str, *, refresh: bool = False) -> pd.DataFrame:
+    """Download a wide Zillow metro CSV, caching the raw file to data/raw/zillow/."""
+    cache = ZILLOW_RAW_DIR / cache_name
     if cache.exists() and not refresh:
         return pd.read_csv(cache)
-
-    resp = requests.get(ZORI_URL, timeout=120)
+    resp = requests.get(url, timeout=120)
     if resp.status_code != 200:
         raise RuntimeError(
-            f"ZORI download failed (status {resp.status_code}). The Zillow path may have "
-            f"changed — check https://www.zillow.com/research/data/ and update ZORI_URL.\n"
-            f"URL tried: {ZORI_URL}"
+            f"Zillow download failed (status {resp.status_code}). The path may have "
+            f"changed — check https://www.zillow.com/research/data/ .\nURL tried: {url}"
         )
     cache.write_bytes(resp.content)
     return pd.read_csv(io.BytesIO(resp.content))
 
 
-def to_long_annual(df: pd.DataFrame | None = None, *, refresh: bool = False) -> pd.DataFrame:
-    """
-    Convert wide monthly ZORI to a tidy annual panel:
-    columns [region_id, region_name, state, year, zori], one row per metro-year.
+def fetch_zori(*, refresh: bool = False) -> pd.DataFrame:
+    return _download(ZORI_URL, "Metro_zori_sfrcondomfr_sm_sa_month.csv", refresh=refresh)
 
-    A year's value is the mean of its monthly observations, kept only if the
-    year has >= MIN_MONTHS_PER_YEAR months. Metro (msa) rows only, from
-    RENT_HISTORY_START onward.
-    """
-    if df is None:
-        df = fetch_zori(refresh=refresh)
 
+def fetch_zhvi(*, refresh: bool = False) -> pd.DataFrame:
+    return _download(ZHVI_URL, "Metro_zhvi_sfrcondo_sm_sa_month.csv", refresh=refresh)
+
+
+def _annualize(df: pd.DataFrame, value_name: str) -> pd.DataFrame:
+    """
+    Shared logic: wide monthly metro series -> tidy annual panel with columns
+    [region_id, region_name, state, year, <value_name>]. A year's value is the
+    mean of its monthly observations, kept only if the year has enough months.
+    Metro (msa) rows only, from RENT_HISTORY_START onward.
+    """
     df = df[df["RegionType"] == "msa"].copy()
     date_cols = [c for c in df.columns if c not in _ID_COLS]
 
     long = df.melt(
         id_vars=["RegionID", "RegionName", "StateName"],
-        value_vars=date_cols,
-        var_name="date",
-        value_name="zori",
+        value_vars=date_cols, var_name="date", value_name=value_name,
     )
     long["date"] = pd.to_datetime(long["date"])
     long["year"] = long["date"].dt.year
-    long = long.dropna(subset=["zori"])
+    long = long.dropna(subset=[value_name])
 
-    # Mean per metro-year, but only for years with enough monthly coverage.
     grp = long.groupby(["RegionID", "RegionName", "StateName", "year"])
-    annual = grp["zori"].agg(["mean", "count"]).reset_index()
+    annual = grp[value_name].agg(["mean", "count"]).reset_index()
     annual = annual[annual["count"] >= MIN_MONTHS_PER_YEAR]
     annual = annual[annual["year"] >= config.RENT_HISTORY_START]
-
-    annual = annual.rename(
-        columns={"RegionID": "region_id", "RegionName": "region_name",
-                 "StateName": "state", "mean": "zori"}
-    )
-    return (annual[["region_id", "region_name", "state", "year", "zori"]]
+    annual = annual.rename(columns={"RegionID": "region_id", "RegionName": "region_name",
+                                    "StateName": "state", "mean": value_name})
+    return (annual[["region_id", "region_name", "state", "year", value_name]]
             .sort_values(["region_id", "year"]).reset_index(drop=True))
+
+
+def to_long_annual(df: pd.DataFrame | None = None, *, refresh: bool = False) -> pd.DataFrame:
+    """Annual ZORI panel: [region_id, region_name, state, year, zori]."""
+    if df is None:
+        df = fetch_zori(refresh=refresh)
+    return _annualize(df, "zori")
+
+
+def zhvi_long_annual(df: pd.DataFrame | None = None, *, refresh: bool = False) -> pd.DataFrame:
+    """Annual ZHVI (home value) panel: [region_id, region_name, state, year, zhvi]."""
+    if df is None:
+        df = fetch_zhvi(refresh=refresh)
+    return _annualize(df, "zhvi")
 
 
 def metros_with_full_coverage(annual: pd.DataFrame | None = None) -> pd.DataFrame:
