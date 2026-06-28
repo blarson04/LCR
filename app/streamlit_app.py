@@ -124,7 +124,7 @@ def inject_css() -> None:
       .secsub {{ color:{MUTED}; font-size:.9rem; margin-bottom:1rem; }}
 
       /* Metric cards (detail tab) */
-      [data-testid="stMetric"] {{ background:#FFFFFF; border:1px solid {HAIRLINE};
+      [data-testid="stMetric"] {{ background:{CARD_BG}; border:1px solid {HAIRLINE};
           border-radius:12px; padding:.9rem 1.1rem; }}
       [data-testid="stMetricLabel"] p {{ font-size:.72rem; font-weight:600;
           letter-spacing:.08em; text-transform:uppercase; color:{MUTED}; }}
