@@ -1,0 +1,108 @@
+"""
+Central configuration for the Multifamily Market Screener.
+
+Everything that is a *choice* (which metros, how heavily we weight each
+indicator, where regimes start and end, where files live) lives here so the
+pipeline code stays generic and these knobs are easy to find and change.
+
+The "why" behind every number is in decision-log.md. Cross-references to that
+log are noted inline.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+# --------------------------------------------------------------------------
+# Paths  (everything is relative to this file, so it works on any machine)
+# --------------------------------------------------------------------------
+ROOT = Path(__file__).resolve().parent
+DATA_DIR = ROOT / "data"
+RAW_DIR = DATA_DIR / "raw"            # cached source downloads (gitignored)
+PROCESSED_DIR = DATA_DIR / "processed"  # cleaned metro x year panel
+PREDICTIONS_DIR = ROOT / "predictions"  # frozen, timestamped prediction runs
+
+for _d in (RAW_DIR, PROCESSED_DIR, PREDICTIONS_DIR):
+    _d.mkdir(parents=True, exist_ok=True)
+
+# --------------------------------------------------------------------------
+# Metro universe  (decision-log: "Metro universe: 500k population floor")
+# --------------------------------------------------------------------------
+# A metro must clear BOTH gates to enter the panel:
+#   1. population >= POP_FLOOR
+#   2. continuous rent-index history back to RENT_HISTORY_START
+# Every metro that fails a gate is logged with the reason (transparency is
+# part of the methodology).
+POP_FLOOR = 500_000
+RENT_HISTORY_START = 2015   # ZORI reaches ~2015; Apartment List ~2017
+
+# --------------------------------------------------------------------------
+# Forecast target  (decision-log: "Forecast horizon")
+# --------------------------------------------------------------------------
+PRIMARY_HORIZON_YEARS = 3   # the real target: 3-year forward rent growth
+CONTRAST_HORIZON_YEARS = 1  # reported as a foil, not the target
+
+# --------------------------------------------------------------------------
+# Indicator weights  (decision-log: "Living snapshot: current v1 weights")
+# v1 weights are HAND-SET, not fitted. They must sum to 1.0.
+# "inverse": True means higher raw value is WORSE; indicators.py flips it so
+# that after flipping, higher = better for every indicator.
+# --------------------------------------------------------------------------
+INDICATORS = {
+    # ---- Demand: 40% ----
+    "net_migration":        {"weight": 0.14, "inverse": False, "bucket": "Demand"},
+    "job_growth":           {"weight": 0.12, "inverse": False, "bucket": "Demand"},
+    "income_growth":        {"weight": 0.08, "inverse": False, "bucket": "Demand"},
+    "population_growth":    {"weight": 0.06, "inverse": False, "bucket": "Demand"},
+    # ---- Supply: 25% ----
+    "permits_to_stock":     {"weight": 0.17, "inverse": True,  "bucket": "Supply"},
+    "mf_pipeline":          {"weight": 0.08, "inverse": True,  "bucket": "Supply"},
+    # ---- Affordability: 20% ----
+    "rent_to_income":       {"weight": 0.12, "inverse": True,  "bucket": "Affordability"},
+    "cost_to_own_vs_rent":  {"weight": 0.08, "inverse": False, "bucket": "Affordability"},
+    # ---- Momentum: 10% (confirmation only) ----
+    "trailing_rent_growth": {"weight": 0.10, "inverse": False, "bucket": "Momentum"},
+    # ---- Resilience: 5% ----
+    "employment_diversity": {"weight": 0.05, "inverse": False, "bucket": "Resilience"},
+}
+
+BUCKET_WEIGHTS = {  # derived; handy for charts and sanity checks
+    "Demand": 0.40, "Supply": 0.25, "Affordability": 0.20,
+    "Momentum": 0.10, "Resilience": 0.05,
+}
+
+# --------------------------------------------------------------------------
+# Regime windows  (decision-log: "COVID era — segment by regime")
+# Each backtest result is reported per regime AND pooled. Windows are tagged
+# by the regime(s) they span.
+# --------------------------------------------------------------------------
+REGIMES = {
+    "pre_covid":     (2015, 2019),   # baseline
+    "shock":         (2020, 2022),   # stimulus + remote-work spike (anomalous)
+    "normalization": (2023, 2099),   # supply thesis playing out; 2099 = "present"
+}
+
+# --------------------------------------------------------------------------
+# Backtest knobs  (decision-log: "Evaluation metric" / "Winsorize")
+# --------------------------------------------------------------------------
+WINSOR_LIMITS = (0.01, 0.99)   # cap rent-growth outliers at 1st / 99th pct
+TAU_RANK_BASIS = "realized"    # weightedtau weighting: "realized" | "predicted" | "symmetric"
+PRECISION_K = 10               # headline metric: precision@10
+RANDOM_SEED = 42               # set wherever randomness enters, for reproducibility
+
+
+def validate_weights() -> None:
+    """Fail loudly if the hand-set weights ever stop summing to 1.0."""
+    total = sum(spec["weight"] for spec in INDICATORS.values())
+    if abs(total - 1.0) > 1e-9:
+        raise ValueError(f"Indicator weights must sum to 1.0, got {total:.4f}")
+
+
+if __name__ == "__main__":
+    validate_weights()
+    print("config.py OK")
+    print(f"  root            : {ROOT}")
+    print(f"  indicators      : {len(INDICATORS)} (weights sum to 1.0)")
+    print(f"  population floor : {POP_FLOOR:,}")
+    print(f"  rent history     : {RENT_HISTORY_START}+")
+    print(f"  regimes          : {', '.join(REGIMES)}")

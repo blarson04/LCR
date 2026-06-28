@@ -1,0 +1,17 @@
+# Pinned for reproducibility. If an install fails on your machine,
+# relax the exact "==" to ">=" for that one line and re-run.
+
+# Core data stack
+pandas==2.2.3
+numpy==2.2.1
+scipy==1.15.1
+pyarrow==18.1.0          # parquet read/write for the processed panel
+
+# Data sources
+requests==2.32.3
+fredapi==0.5.2           # FRED (first source wired up)
+python-dotenv==1.0.1     # reads API keys from .env
+
+# Website (added properly in M5; listed now so the env is complete)
+streamlit==1.41.1
+plotly==5.24.1

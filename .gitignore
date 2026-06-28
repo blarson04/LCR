@@ -1,0 +1,26 @@
+# Secrets — never commit real API keys
+.env
+
+# Machine-local Claude Code settings (personal, not shared)
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Cached raw downloads (reproducible from code; large/binary)
+data/raw/*
+!data/raw/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+
+# Office lock/temp files (this project lives in OneDrive)
+~$*
