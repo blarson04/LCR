@@ -55,7 +55,7 @@ at <https://fred.stlouisfed.org/docs/api/api_key.html>.
 
 - [x] **M1** — One source (FRED) end to end: fetch → cache → clean
 - [x] **M2** — All sources + metro × year panel (110 metros × 2015–2025); universe frozen
-- [ ] **M3** — Indicators + score → first ranking
+- [x] **M3** — Indicators + normalize (within-year z) + weighted score → first ranking
 - [ ] **M4** — Backtest (walk-forward, regimes, tau + precision@k)
 - [ ] **M5** — Streamlit app (map, table, drill-down)
 - [ ] **M6** — Deploy + first frozen prediction run
