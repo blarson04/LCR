@@ -11,6 +11,7 @@ pyarrow==18.1.0          # parquet read/write for the processed panel
 requests==2.32.3
 fredapi==0.5.2           # FRED (first source wired up)
 python-dotenv==1.0.1     # reads API keys from .env
+openpyxl==3.1.5          # read Census CBSA delineation .xlsx crosswalk
 
 # Website (added properly in M5; listed now so the env is complete)
 streamlit==1.41.1
