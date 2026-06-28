@@ -1,0 +1,15 @@
+# Streamlit theme — the fine-grained look is done with injected CSS in the app;
+# this sets the base palette so native widgets match.
+[theme]
+base = "light"
+primaryColor = "#0F766E"          # refined teal accent
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F8FAFC"
+textColor = "#0B1B2B"             # ink navy
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

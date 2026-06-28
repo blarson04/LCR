@@ -1,17 +1,21 @@
 """
-streamlit_app.py — the interactive screener website (M5).
+streamlit_app.py — the interactive screener website (M5, styled in M6).
 
 Four views:
-  1. Map        — every metro as a point, colored by composite score.
-  2. Ranking    — the full sortable leaderboard with bucket subscores.
-  3. Metro detail — pick a metro; see its rank, score, and each indicator's
-                    value + percentile, so the score is fully explainable.
-  4. Backtest & method — the walk-forward track record + methodology/limitations.
+  1. Map         — every metro as a point, colored by composite score.
+  2. Rankings    — the full sortable leaderboard with bucket subscores.
+  3. Metro detail — pick a metro; its rank, score, and each indicator's value +
+                    percentile, so the score is fully explainable.
+  4. Methodology — the walk-forward track record + methodology/limitations.
+
+The presentation follows an editorial-research / fintech design language
+(serif masthead + Inter UI, a single teal accent, a muted diverging score
+scale, KPI stat band, hidden Streamlit chrome).
 
 Run locally:
     .venv/Scripts/python.exe -m streamlit run app/streamlit_app.py
 
-It reads the committed data/processed/ outputs and recomputes the (cheap)
+Reads the committed data/processed/ outputs and recomputes the (cheap)
 indicator/score steps, so it works on Streamlit Community Cloud with no keys.
 """
 
@@ -22,6 +26,7 @@ from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,8 +37,8 @@ from src import score as score_mod              # noqa: E402
 
 SCORE_YEAR = score_mod.SCORE_YEAR
 INDICATORS = config.INDICATORS
-PRETTY = {                                       # display labels for the 10 indicators
-    "net_migration": "Net domestic migration (rate)",
+PRETTY = {
+    "net_migration": "Net domestic migration",
     "job_growth": "Job growth (YoY)",
     "income_growth": "Income growth (YoY)",
     "population_growth": "Population growth (YoY)",
@@ -45,164 +50,285 @@ PRETTY = {                                       # display labels for the 10 ind
     "employment_diversity": "Employment diversity",
 }
 
-st.set_page_config(page_title="Multifamily Market Screener", layout="wide")
+# ---- Design tokens --------------------------------------------------------
+INK = "#0B1B2B"
+BODY = "#334155"
+MUTED = "#64748B"
+ACCENT = "#0F766E"
+HAIRLINE = "#E5E9F0"
+# Muted diverging scale (deep red -> warm neutral -> deep green), not rainbow.
+SCORE_SCALE = [[0.0, "#9E2A2B"], [0.25, "#D08C7C"], [0.5, "#ECE6DC"],
+               [0.75, "#6FAE8C"], [1.0, "#1B5E45"]]
+GRAD_STOPS = [(0.0, (158, 42, 43)), (0.5, (236, 230, 220)), (1.0, (27, 94, 69))]
 
-# Red -> yellow -> green CSS gradient (avoids a heavy matplotlib dependency that
-# pandas' built-in background_gradient would require).
-_GRAD_STOPS = [(0.0, (215, 48, 39)), (0.5, (255, 221, 120)), (1.0, (26, 152, 80))]
+st.set_page_config(page_title="Multifamily Market Screener",
+                   page_icon="◴", layout="wide")
 
 
-def _grad_css(t: float) -> str:
-    """Map t in [0,1] to a 'background-color: rgb(...)' string; '' if missing."""
+# ---- Styling helpers ------------------------------------------------------
+def inject_css() -> None:
+    st.markdown(f"""
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap');
+
+      html, body, [class*="css"], .stApp {{
+          font-family: 'Inter', -apple-system, system-ui, sans-serif;
+          color: {BODY};
+      }}
+      .stApp {{ background: #FFFFFF; }}
+
+      /* Hide Streamlit chrome for a product look */
+      [data-testid="stHeader"], [data-testid="stToolbar"] {{ display: none; }}
+      #MainMenu, footer {{ visibility: hidden; }}
+      .block-container {{ padding: 1.4rem 2.6rem 4rem; max-width: 1240px; }}
+
+      h1, h2, h3 {{ color: {INK}; letter-spacing: -0.01em; }}
+
+      /* Masthead */
+      .masthead {{ border-bottom: 1px solid {HAIRLINE}; padding-bottom: 1.1rem; margin-bottom: 1.5rem; }}
+      .kicker {{ font-size: .72rem; font-weight: 600; letter-spacing: .16em;
+                 text-transform: uppercase; color: {ACCENT}; margin-bottom: .35rem; }}
+      .wordmark {{ font-family: 'Source Serif 4', Georgia, serif; font-weight: 600;
+                   font-size: 2.35rem; line-height: 1.1; color: {INK}; margin: 0; }}
+      .subhead {{ color: {MUTED}; font-size: 1.02rem; margin-top: .45rem; max-width: 760px; }}
+      .badge {{ display:inline-block; font-size:.72rem; font-weight:600; color:{ACCENT};
+                background:#ECFDF5; border:1px solid #CCFBEF; border-radius:999px;
+                padding:.18rem .6rem; letter-spacing:.02em; }}
+
+      /* KPI stat band */
+      .statband {{ display:flex; gap:14px; margin:0 0 1.6rem; flex-wrap:wrap; }}
+      .stat {{ flex:1; min-width:170px; background:#FFFFFF; border:1px solid {HAIRLINE};
+               border-radius:12px; padding:.95rem 1.1rem; }}
+      .stat .lab {{ font-size:.7rem; font-weight:600; letter-spacing:.1em;
+                    text-transform:uppercase; color:{MUTED}; }}
+      .stat .val {{ font-size:1.65rem; font-weight:700; color:{INK}; line-height:1.15;
+                    margin-top:.25rem; font-variant-numeric: tabular-nums; }}
+      .stat .sub {{ font-size:.8rem; color:{MUTED}; margin-top:.1rem; }}
+
+      /* Tabs */
+      .stTabs [data-baseweb="tab-list"] {{ gap: 1.6rem; border-bottom:1px solid {HAIRLINE}; }}
+      .stTabs [data-baseweb="tab"] {{ height: 44px; padding: 0 2px; background: transparent;
+          font-weight:600; color:{MUTED}; }}
+      .stTabs [aria-selected="true"] {{ color:{INK}; border-bottom:2px solid {ACCENT}; }}
+
+      /* Section headers */
+      .sec {{ font-family:'Source Serif 4',Georgia,serif; font-size:1.35rem; font-weight:600;
+              color:{INK}; margin:.2rem 0 .15rem; }}
+      .secsub {{ color:{MUTED}; font-size:.9rem; margin-bottom:1rem; }}
+
+      /* Metric cards (detail tab) */
+      [data-testid="stMetric"] {{ background:#FFFFFF; border:1px solid {HAIRLINE};
+          border-radius:12px; padding:.9rem 1.1rem; }}
+      [data-testid="stMetricLabel"] p {{ font-size:.72rem; font-weight:600;
+          letter-spacing:.08em; text-transform:uppercase; color:{MUTED}; }}
+      [data-testid="stMetricValue"] {{ color:{INK}; font-weight:700; }}
+
+      [data-testid="stDataFrame"] {{ border:1px solid {HAIRLINE}; border-radius:12px; }}
+      .cap {{ color:{MUTED}; font-size:.82rem; margin-top:.5rem; }}
+      hr {{ border-color:{HAIRLINE}; }}
+    </style>
+    """, unsafe_allow_html=True)
+
+
+def grad_css(t: float) -> str:
     if pd.isna(t):
         return ""
     t = max(0.0, min(1.0, float(t)))
-    for (t0, c0), (t1, c1) in zip(_GRAD_STOPS, _GRAD_STOPS[1:]):
+    for (t0, c0), (t1, c1) in zip(GRAD_STOPS, GRAD_STOPS[1:]):
         if t <= t1:
             f = (t - t0) / (t1 - t0) if t1 > t0 else 0.0
             rgb = tuple(int(c0[i] + (c1[i] - c0[i]) * f) for i in range(3))
-            return f"background-color: rgb({rgb[0]},{rgb[1]},{rgb[2]})"
+            txt = "#FFFFFF" if (t < 0.18 or t > 0.82) else INK
+            return f"background-color: rgb{rgb}; color: {txt};"
     return ""
 
 
+def section(title: str, sub: str = "") -> None:
+    st.markdown(f"<div class='sec'>{title}</div>"
+                + (f"<div class='secsub'>{sub}</div>" if sub else ""),
+                unsafe_allow_html=True)
+
+
+def style_fig(fig: go.Figure, height: int = 540) -> go.Figure:
+    fig.update_layout(
+        height=height, margin=dict(l=0, r=0, t=8, b=0),
+        font=dict(family="Inter, sans-serif", color=BODY, size=13),
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        hoverlabel=dict(font_family="Inter, sans-serif", bgcolor=INK,
+                        font_color="#FFFFFF", bordercolor=INK),
+    )
+    return fig
+
+
+# ---- Data -----------------------------------------------------------------
 @st.cache_data
 def load_data():
-    """Compute + load everything once (cached across reruns)."""
     scored = score_mod.score()
     raw = indicators.compute_indicators()
     norm = normalize.normalize()
     panel = pd.read_parquet(config.PROCESSED_DIR / "panel.parquet")
-    coords = pd.read_csv(config.PROCESSED_DIR / "metro_coords.csv",
-                         dtype={"cbsa_code": str})
+    coords = pd.read_csv(config.PROCESSED_DIR / "metro_coords.csv", dtype={"cbsa_code": str})
     backtest = pd.read_csv(config.PROCESSED_DIR / "backtest_summary.csv")
     return scored, raw, norm, panel, coords, backtest
 
 
+inject_css()
 scored, raw, norm, panel, coords, backtest = load_data()
 rank_year = scored[scored["year"] == SCORE_YEAR].copy()
 raw_year = raw[raw["year"] == SCORE_YEAR].set_index("cbsa_code")
 norm_year = norm[norm["year"] == SCORE_YEAR].set_index("cbsa_code")
-# direction-aware percentile (higher = better) from the normalized z-scores
 pctile = norm_year[list(INDICATORS)].rank(pct=True) * 100
 
-st.title("🏙️ Multifamily Market Screener")
-st.caption(f"Ranking ~110 large US metros by 3-year forward rent-growth potential · "
-           f"{SCORE_YEAR} cross-section · free public data · a screening framework, not a crystal ball")
+# ---- Masthead -------------------------------------------------------------
+top_metro = rank_year.sort_values("rank").iloc[0]["cbsa_title"].split("-")[0].split(",")[0]
+pc = backtest[(backtest["horizon"] == 3) & (backtest["regime"] == "pre_covid")]
+pc_tau = pc["mean_tau"].iloc[0] if len(pc) else float("nan")
+
+st.markdown(f"""
+<div class="masthead">
+  <div class="kicker">Multifamily Research · v{config.MODEL_VERSION}</div>
+  <h1 class="wordmark">The Rent-Growth Screener</h1>
+  <div class="subhead">A transparent, backtested framework ranking the {len(rank_year)} largest US
+  metros by their fundamentals for <b>3-year forward rent growth</b> — built entirely on free public
+  data. A screening framework, not a crystal ball.</div>
+  <div style="margin-top:.7rem"><span class="badge">{SCORE_YEAR} cross-section</span></div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown(f"""
+<div class="statband">
+  <div class="stat"><div class="lab">Metros screened</div><div class="val">{len(rank_year)}</div>
+       <div class="sub">≥ 500k population, full rent history</div></div>
+  <div class="stat"><div class="lab">Indicators</div><div class="val">10</div>
+       <div class="sub">across 5 fundamental buckets</div></div>
+  <div class="stat"><div class="lab">Backtest accuracy</div><div class="val">τ {pc_tau:.2f}</div>
+       <div class="sub">pre-COVID 3-yr, weighted Kendall&#39;s τ</div></div>
+  <div class="stat"><div class="lab">Top-ranked market</div><div class="val">{top_metro}</div>
+       <div class="sub">strongest {SCORE_YEAR} fundamentals</div></div>
+</div>
+""", unsafe_allow_html=True)
 
 tab_map, tab_rank, tab_detail, tab_method = st.tabs(
-    ["🗺️ Map", "📊 Ranking", "🔍 Metro detail", "🧪 Backtest & method"])
+    ["Map", "Rankings", "Metro detail", "Methodology"])
 
 
-# --------------------------------------------------------------------------
-# 1. Map
-# --------------------------------------------------------------------------
+# ---- 1. Map ---------------------------------------------------------------
 with tab_map:
-    st.subheader(f"Composite score by metro — {SCORE_YEAR}")
+    section("Composite score by metro",
+            f"{SCORE_YEAR} cross-section · green = stronger fundamentals · hover for rank & score")
     mp = rank_year.merge(coords, on="cbsa_code", how="left")
     fig = px.scatter_geo(
         mp, lat="lat", lon="lon", color="score", scope="usa",
-        hover_name="cbsa_title", size=[10] * len(mp), size_max=12,
-        color_continuous_scale="RdYlGn", color_continuous_midpoint=0,
-        custom_data=["rank", "score"],
-    )
-    fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>rank %{customdata[0]} · "
-                                    "score %{customdata[1]:.3f}<extra></extra>")
-    fig.update_layout(height=560, margin=dict(l=0, r=0, t=10, b=0))
-    st.plotly_chart(fig, use_container_width=True)
-    st.caption("Green = higher composite score (more attractive on fundamentals). "
-               "Hover for rank and score.")
+        hover_name="cbsa_title", size=[8] * len(mp), size_max=13,
+        color_continuous_scale=SCORE_SCALE, color_continuous_midpoint=0,
+        custom_data=["rank", "score"])
+    fig.update_traces(
+        marker=dict(line=dict(width=0.6, color="white")),
+        hovertemplate="<b>%{hovertext}</b><br>Rank %{customdata[0]} · "
+                      "score %{customdata[1]:.3f}<extra></extra>")
+    fig.update_geos(showland=True, landcolor="#EEF1F5", showlakes=False,
+                    subunitcolor="white", countrycolor="white",
+                    bgcolor="rgba(0,0,0,0)", showframe=False, coastlinecolor="white")
+    fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=12, len=0.7))
+    st.plotly_chart(style_fig(fig, 560), use_container_width=True)
 
 
-# --------------------------------------------------------------------------
-# 2. Ranking
-# --------------------------------------------------------------------------
+# ---- 2. Rankings ----------------------------------------------------------
 with tab_rank:
-    st.subheader(f"Full ranking — {len(rank_year)} metros")
+    section(f"Full ranking — {len(rank_year)} metros",
+            "Weighted z-score contribution per bucket · click a header to sort")
     show = rank_year[["rank", "cbsa_title", "score", "bucket_Demand", "bucket_Supply",
                       "bucket_Affordability", "bucket_Momentum", "bucket_Resilience",
                       "n_indicators"]].rename(columns={
-        "cbsa_title": "Metro", "score": "Score", "bucket_Demand": "Demand",
+        "rank": "Rank", "cbsa_title": "Metro", "score": "Score", "bucket_Demand": "Demand",
         "bucket_Supply": "Supply", "bucket_Affordability": "Afford.",
-        "bucket_Momentum": "Momentum", "bucket_Resilience": "Resil.",
-        "n_indicators": "Cov."})
+        "bucket_Momentum": "Moment.", "bucket_Resilience": "Resil.",
+        "n_indicators": "Data"})
     smin, smax = show["Score"].min(), show["Score"].max()
-    st.dataframe(
-        show.style.format({c: "{:+.3f}" for c in
-                           ["Score", "Demand", "Supply", "Afford.", "Momentum", "Resil."]})
-            .map(lambda v: _grad_css((v - smin) / (smax - smin)), subset=["Score"]),
-        hide_index=True, use_container_width=True, height=560)
-    st.caption("Columns are weighted z-score contributions per bucket. "
-               "Cov. = how many of the 10 indicators the metro had (rest treated as neutral). "
-               "Click a column header to sort.")
+    num_cols = ["Score", "Demand", "Supply", "Afford.", "Moment.", "Resil."]
+    styler = (show.style
+              .format({c: "{:+.3f}" for c in num_cols} | {"Data": "{:.0f}/10"})
+              .map(lambda v: grad_css((v - smin) / (smax - smin)), subset=["Score"])
+              .set_properties(subset=num_cols, **{"font-variant-numeric": "tabular-nums"})
+              .set_properties(subset=["Metro"], **{"font-weight": "600", "color": INK}))
+    st.dataframe(styler, hide_index=True, use_container_width=True, height=600,
+                 column_config={"Rank": st.column_config.NumberColumn(width="small")})
 
 
-# --------------------------------------------------------------------------
-# 3. Metro detail
-# --------------------------------------------------------------------------
+# ---- 3. Metro detail ------------------------------------------------------
 with tab_detail:
-    metro = st.selectbox("Choose a metro", rank_year.sort_values("cbsa_title")["cbsa_title"])
+    metro = st.selectbox("Select a metro", rank_year.sort_values("cbsa_title")["cbsa_title"],
+                         label_visibility="collapsed")
     row = rank_year[rank_year["cbsa_title"] == metro].iloc[0]
     code = row["cbsa_code"]
+    section(metro, f"Composite rank and the fundamentals behind it · {SCORE_YEAR}")
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Rank", f"{int(row['rank'])} of {len(rank_year)}")
+    c1.metric("Rank", f"#{int(row['rank'])}", help=f"of {len(rank_year)} metros")
     c2.metric("Composite score", f"{row['score']:+.3f}")
     c3.metric("Indicator coverage", f"{int(row['n_indicators'])}/10")
 
-    st.markdown("**Indicator detail** — raw value, and percentile vs all metros "
-                "(100 = best on that indicator, direction already applied):")
     rows = []
     for key in INDICATORS:
-        rawval = raw_year[key].get(code, float("nan"))
-        pct = pctile[key].get(code, float("nan"))
-        rows.append({"Indicator": PRETTY[key],
-                     "Bucket": INDICATORS[key]["bucket"],
-                     "Weight": f"{INDICATORS[key]['weight']*100:.0f}%",
-                     "Raw value": rawval, "Percentile": pct})
+        rows.append({"Indicator": PRETTY[key], "Bucket": INDICATORS[key]["bucket"],
+                     "Weight": INDICATORS[key]["weight"] * 100,
+                     "Value": raw_year[key].get(code, float("nan")),
+                     "Percentile": pctile[key].get(code, float("nan"))})
     detail = pd.DataFrame(rows)
-    st.dataframe(
-        detail.style.format({"Raw value": "{:.4g}", "Percentile": "{:.0f}"})
-              .map(lambda v: _grad_css(v / 100.0), subset=["Percentile"]),
-        hide_index=True, use_container_width=True)
+    st.markdown("<div class='cap'>Percentile vs all metros (100 = best on that indicator; "
+                "direction already applied so higher is always better).</div>",
+                unsafe_allow_html=True)
+    dstyler = (detail.style
+               .format({"Weight": "{:.0f}%", "Value": "{:.4g}", "Percentile": "{:.0f}"})
+               .map(lambda v: grad_css(v / 100.0), subset=["Percentile"])
+               .set_properties(subset=["Indicator"], **{"font-weight": "600", "color": INK}))
+    st.dataframe(dstyler, hide_index=True, use_container_width=True, height=395)
 
-    # Rent history for context.
     hist = panel[panel["cbsa_code"] == code][["year", "zori"]].dropna()
     if len(hist):
-        figh = px.line(hist, x="year", y="zori", markers=True,
-                       title=f"{metro} — ZORI rent ($/mo)")
-        figh.update_layout(height=320, margin=dict(l=0, r=0, t=40, b=0))
-        st.plotly_chart(figh, use_container_width=True)
+        figh = px.line(hist, x="year", y="zori", markers=True)
+        figh.update_traces(line=dict(color=ACCENT, width=2.5),
+                           marker=dict(color=ACCENT, size=6))
+        figh.update_xaxes(showgrid=False, title=None, dtick=1)
+        figh.update_yaxes(showgrid=True, gridcolor="#EEF2F6", title="ZORI rent ($/mo)")
+        st.markdown("<div class='cap' style='margin-top:1rem'><b>Rent history</b> — "
+                    "Zillow Observed Rent Index</div>", unsafe_allow_html=True)
+        st.plotly_chart(style_fig(figh, 300), use_container_width=True)
 
 
-# --------------------------------------------------------------------------
-# 4. Backtest & method
-# --------------------------------------------------------------------------
+# ---- 4. Methodology -------------------------------------------------------
 with tab_method:
-    st.subheader("Does it actually work? Walk-forward backtest")
+    section("Does it actually work?", "Walk-forward backtest — the model never sees the future")
     st.markdown(
         "Each year's ranking is compared against **realized forward rent growth** "
-        "(3-year primary, 1-year contrast), ranked across metros. The model never "
-        "sees the future. Metric: top-weighted Kendall's τ (rewards getting the "
-        "true top markets right) and precision@10 (share of the top 10 that landed "
-        "in the realized top quartile).")
+        "(3-year primary, 1-year contrast), ranked across metros. Metric: top-weighted "
+        "Kendall's τ (rewards getting the true top markets right) and precision@10 "
+        "(share of the top 10 that landed in the realized top quartile).")
+    bt = backtest.rename(columns={"horizon": "Horizon", "regime": "Regime",
+                                  "n_windows": "Windows", "mean_tau": "Mean τ",
+                                  "mean_precision@10": "Precision@10"})
+    bt["Regime"] = bt["Regime"].str.replace("_", "-").str.title()
     st.dataframe(
-        backtest.rename(columns={"horizon": "Horizon (yr)", "regime": "Regime",
-                                 "n_windows": "Windows", "mean_tau": "Mean τ",
-                                 "mean_precision@10": "Mean precision@10"})
-            .style.format({"Mean τ": "{:.3f}", "Mean precision@10": "{:.2f}"}),
+        bt.style.format({"Mean τ": "{:.3f}", "Precision@10": "{:.2f}", "Horizon": "{:.0f}y"})
+          .set_properties(subset=["Mean τ", "Precision@10"], **{"font-variant-numeric": "tabular-nums"}),
         hide_index=True, use_container_width=True)
-    st.markdown(
-        "**How to read it:** the framework is strong in the **pre-COVID** regime "
-        "(τ≈0.6, ~88% precision) and **breaks down in the 2020–22 shock** — exactly "
-        "as expected when fundamentals were distorted by stimulus and remote-work "
-        "churn. We report this rather than hide it.\n\n"
-        "**Limitations:** rent history starts ~2015, so there are few independent "
-        "windows — results are *directional evidence, not statistical proof*. ZORI "
-        "is asking (not executed) rent. No capital-markets data (cap rates, "
-        "transaction volume); rent growth is the proxy for profitability. v1 weights "
-        "are hand-set hypotheses, not fitted. Full reasoning lives in `decision-log.md`.")
+
+    cols = st.columns(2)
+    with cols[0]:
+        st.markdown(f"""<div class='sec' style='font-size:1.05rem'>How to read it</div>
+        The framework is strong in the **pre-COVID** regime (τ ≈ {pc_tau:.2f}, ~88% precision)
+        and **breaks down during the 2020–22 shock**, when stimulus and remote-work churn
+        distorted fundamentals. We report that openly — a model that claimed to work
+        everywhere would be the less credible one.""", unsafe_allow_html=True)
+    with cols[1]:
+        st.markdown("""<div class='sec' style='font-size:1.05rem'>Limitations</div>
+        Rent history starts ~2015 → few independent windows, so results are **directional
+        evidence, not statistical proof**. ZORI is asking (not executed) rent. No
+        capital-markets data (cap rates, transaction volume); rent growth is the proxy for
+        profitability. v1 weights are hand-set hypotheses, not fitted.""", unsafe_allow_html=True)
 
 
-st.divider()
-st.caption("Built with free public data (Census, IRS, BLS/QCEW, BEA, Zillow, FRED). "
-           "Methodology & rationale: decision-log.md · Source: build per v1-build-spec.md")
+st.markdown(f"""<hr style='margin-top:2.5rem'>
+<div class='cap'>Built on free public data — Census · IRS · BLS/QCEW · BEA · Zillow · FRED.
+Methodology &amp; rationale in <code>decision-log.md</code>. Model v{config.MODEL_VERSION}.</div>
+""", unsafe_allow_html=True)
