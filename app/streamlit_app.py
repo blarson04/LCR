@@ -50,6 +50,48 @@ PRETTY = {
     "employment_diversity": "Employment diversity",
 }
 
+# Plain-English (strength, watch-out) phrasing for each indicator — used to turn
+# the numbers into a readable outlook for non-analysts.
+OUTLOOK = {
+    "net_migration": ("People are moving in faster than most metros",
+                      "More residents are leaving than arriving"),
+    "job_growth": ("Jobs are growing faster than most metros",
+                   "Job growth is lagging the pack"),
+    "income_growth": ("Local incomes are rising quickly",
+                      "Income growth is sluggish"),
+    "population_growth": ("The population is expanding",
+                          "Population is flat or shrinking"),
+    "permits_to_stock": ("Very little new building — tight supply supports rents",
+                         "Heavy homebuilding raises oversupply risk"),
+    "mf_pipeline": ("Few new apartments in the pipeline",
+                    "A large apartment pipeline is adding competition"),
+    "rent_to_income": ("Rents are affordable vs. local incomes, leaving room to grow",
+                       "Rents already stretch local incomes"),
+    "cost_to_own_vs_rent": ("Buying is far pricier than renting, keeping demand in rentals",
+                            "Buying is relatively cheap, which can pull renters into ownership"),
+    "trailing_rent_growth": ("Rents have been climbing lately",
+                             "Recent rent growth has been weak"),
+    "employment_diversity": ("A diverse job base makes it more resilient",
+                             "The economy leans on just a few industries"),
+}
+
+# Approximate state-label positions (lat, lon) for putting abbreviations on the map.
+STATE_CENTROIDS = {
+    "AL": (32.8, -86.8), "AZ": (34.2, -111.7), "AR": (34.8, -92.4), "CA": (37.2, -119.5),
+    "CO": (39.0, -105.5), "CT": (41.6, -72.7), "DE": (39.0, -75.5), "DC": (38.9, -77.0),
+    "FL": (28.6, -81.7), "GA": (32.9, -83.4), "HI": (20.8, -156.3), "ID": (44.2, -114.5),
+    "IL": (40.0, -89.2), "IN": (39.9, -86.3), "IA": (42.0, -93.5), "KS": (38.5, -98.4),
+    "KY": (37.5, -85.3), "LA": (31.0, -92.0), "ME": (45.4, -69.2), "MD": (39.0, -76.8),
+    "MA": (42.3, -71.9), "MI": (44.3, -85.0), "MN": (46.3, -94.3), "MS": (32.7, -89.7),
+    "MO": (38.4, -92.5), "MT": (47.0, -109.6), "NE": (41.5, -99.8), "NV": (39.3, -116.6),
+    "NH": (43.7, -71.6), "NJ": (40.1, -74.7), "NM": (34.4, -106.1), "NY": (42.9, -75.5),
+    "NC": (35.5, -79.4), "ND": (47.5, -100.5), "OH": (40.3, -82.8), "OK": (35.6, -97.5),
+    "OR": (43.9, -120.6), "PA": (40.9, -77.8), "RI": (41.7, -71.5), "SC": (33.9, -80.9),
+    "SD": (44.4, -100.2), "TN": (35.8, -86.4), "TX": (31.3, -99.3), "UT": (39.3, -111.7),
+    "VT": (44.1, -72.7), "VA": (37.6, -78.8), "WA": (47.4, -120.5), "WV": (38.6, -80.6),
+    "WI": (44.6, -89.9), "WY": (43.0, -107.5),
+}
+
 # ---- Design tokens (dark theme) -------------------------------------------
 INK = "#F1F5F9"        # headings / near-white
 BODY = "#CBD5E1"       # body text
@@ -133,6 +175,16 @@ def inject_css() -> None:
       [data-testid="stDataFrame"] {{ border:1px solid {HAIRLINE}; border-radius:12px; }}
       .cap {{ color:{MUTED}; font-size:.82rem; margin-top:.5rem; }}
       hr {{ border-color:{HAIRLINE}; }}
+
+      /* Pro/con outlook cards */
+      .outlook {{ background:{CARD_BG}; border:1px solid {HAIRLINE}; border-radius:12px;
+                  padding:1rem 1.2rem; height:100%; }}
+      .ohead {{ font-weight:700; font-size:.95rem; margin-bottom:.55rem; }}
+      .ohead.good {{ color:#34D399; }} .ohead.bad {{ color:#F08C84; }}
+      .olist {{ list-style:none; padding:0; margin:0; }}
+      .olist li {{ margin:.45rem 0; color:{BODY}; font-size:.92rem; line-height:1.4; }}
+      .ic {{ font-weight:700; margin-right:.55rem; }}
+      .ic.good {{ color:#34D399; }} .ic.bad {{ color:#F08C84; }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -242,7 +294,15 @@ if page == "Map":
     fig.update_geos(showland=True, landcolor="#17202B", showlakes=False,
                     subunitcolor="#2A3744", countrycolor="#2A3744",
                     bgcolor="rgba(0,0,0,0)", showframe=False, coastlinecolor="#2A3744")
-    fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=12, len=0.7))
+    # Faint state abbreviations at state centroids for geographic context.
+    fig.add_trace(go.Scattergeo(
+        lat=[v[0] for v in STATE_CENTROIDS.values()],
+        lon=[v[1] for v in STATE_CENTROIDS.values()],
+        text=list(STATE_CENTROIDS), mode="text",
+        textfont=dict(family="Inter, sans-serif", size=9, color="#55657A"),
+        hoverinfo="skip", showlegend=False))
+    fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=12, len=0.7),
+                      showlegend=False)
     st.plotly_chart(style_fig(fig, 560), use_container_width=True)
 
 
@@ -281,6 +341,38 @@ if page == "Metro detail":
     c2.metric("Composite score", f"{row['score']:+.3f}")
     c3.metric("Indicator coverage", f"{int(row['n_indicators'])}/10")
 
+    # Plain-English outlook auto-generated from this metro's percentiles.
+    PRO_T, CON_T = 65, 35
+    pros, cons = [], []
+    for k in INDICATORS:
+        p = pctile[k].get(code, float("nan"))
+        if pd.isna(p):
+            continue
+        if p >= PRO_T:
+            pros.append((OUTLOOK[k][0], p))
+        elif p <= CON_T:
+            cons.append((OUTLOOK[k][1], p))
+    pros = [t for t, _ in sorted(pros, key=lambda x: -x[1])][:5]
+    cons = [t for t, _ in sorted(cons, key=lambda x: x[1])][:5]
+
+    def _bullets(items, kind, empty):
+        if not items:
+            return f"<li style='color:{MUTED}'>{empty}</li>"
+        mark = "✓" if kind == "good" else "✕"
+        return "".join(f"<li><span class='ic {kind}'>{mark}</span>{i}</li>" for i in items)
+
+    st.markdown("<div class='cap' style='margin:.6rem 0 .4rem'><b>The quick read</b> — "
+                "auto-generated from how this metro ranks across the 10 indicators.</div>",
+                unsafe_allow_html=True)
+    oc1, oc2 = st.columns(2)
+    oc1.markdown(f"<div class='outlook'><div class='ohead good'>Strengths</div>"
+                 f"<ul class='olist'>{_bullets(pros, 'good', 'No standout strengths this year.')}"
+                 f"</ul></div>", unsafe_allow_html=True)
+    oc2.markdown(f"<div class='outlook'><div class='ohead bad'>Watch-outs</div>"
+                 f"<ul class='olist'>{_bullets(cons, 'bad', 'No major red flags this year.')}"
+                 f"</ul></div>", unsafe_allow_html=True)
+    st.write("")
+
     rows = []
     for key in INDICATORS:
         rows.append({"Indicator": PRETTY[key], "Bucket": INDICATORS[key]["bucket"],
@@ -311,6 +403,34 @@ if page == "Metro detail":
 
 # ---- 4. Methodology -------------------------------------------------------
 if page == "Methodology":
+    section("How the screener works", "From raw public data to a single ranking — in plain English")
+    st.markdown("""
+The screener scores all **110 metros** on **10 fundamental indicators**, grouped into five
+themes. For each indicator it compares every metro **against all the others in the same year**,
+so a nationwide swing cancels out and only a metro's *relative* standing counts. Measures where
+"more is worse" (like heavy homebuilding, or rent that already eats up local incomes) are
+flipped, so **higher always means better**. Each indicator is then multiplied by a fixed weight
+and summed into one **composite score**, and metros are ranked by it. The same formula runs for
+every metro — nothing is hand-picked.""")
+
+    bucket_order = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
+    brows = []
+    for b in bucket_order:
+        ks = [k for k in INDICATORS if INDICATORS[k]["bucket"] == b]
+        w = sum(INDICATORS[k]["weight"] for k in ks)
+        brows.append({"Theme": b, "Weight": f"{w*100:.0f}%",
+                      "What it captures": " · ".join(PRETTY[k] for k in ks)})
+    st.dataframe(
+        pd.DataFrame(brows).style.set_properties(
+            subset=["Theme"], **{"font-weight": "600", "color": INK})
+        .set_properties(subset=["Weight"], **{"color": ACCENT, "font-weight": "600"}),
+        hide_index=True, use_container_width=True)
+    st.markdown("<div class='cap'>Demand leads at 40% — the framework bets that who's moving in, "
+                "hiring, and earning matters most over a 3-year horizon, with a heavy supply "
+                "penalty (25%) as the contrarian edge. Weights are hand-set hypotheses for v1, "
+                "tested below.</div>", unsafe_allow_html=True)
+
+    st.write("")
     section("Does it actually work?", "Walk-forward backtest — the model never sees the future")
     st.markdown(
         "Each year's ranking is compared against **realized forward rent growth** "
