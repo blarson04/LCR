@@ -25,6 +25,24 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-06-28 — Build-time data-source decisions (M2 ingest)
+
+These are implementation choices made while wiring up the data pipeline. They're recorded here because several are non-obvious and shouldn't be silently "corrected" later, and because the build spec asks to keep this log current.
+
+**BLS via QCEW open-data files, not the BLS time-series API.** Job growth, wage growth, and employment diversification all come from the QCEW (Quarterly Census of Employment and Wages) open-data CSVs (`data.bls.gov/cew/...`), which need no API key. Reasons: QCEW is a near-census of employer reports (more accurate than the CES sample), it delivers employment + wages + full industry mix in a single file per metro-year, and it avoids both the BLS API's rate limits and a separate CBSA→BLS-area-code crosswalk. QCEW lags ~6–9 months, which is immaterial for an annual panel on a 3-year horizon. A `BLS_API_KEY` is kept in `.env` for optional future cross-checks but is intentionally unused in v1.
+
+**BEA income via county→metro roll-up.** BEA's CAINC1 table (personal income, population, per-capita income) is served at county level; the API rejects MSA geography. So we pull counties and aggregate to metros with the shared crosswalk — the same pattern as IRS migration and permits. Per-capita income is derived as metro personal income ÷ metro population.
+
+**Shared county→CBSA crosswalk.** The county-grained sources (IRS migration, building permits, BEA income) all roll up through one module built from the Census OMB July-2023 delineation file (393 Metropolitan CBSAs). Its CBSA codes match the ACS API's, so everything joins on one clean key.
+
+**Rent and home-value series (Zillow).** Both ZORI (rent, the target) and ZHVI (home value, for the cost-to-own-vs-rent indicator) use the *smoothed, seasonally-adjusted, all-homes-plus-multifamily* series, annualized as the mean of monthly values. Seasonal adjustment keeps month-of-year effects out of the growth math.
+
+**Net migration = net domestic, persons.** From IRS data we use the "Total Migration-US" aggregate (which excludes foreign migration), measured in exemptions (≈ persons), summed across a metro's counties so intra-metro moves cancel. Each file pair (e.g. 2022↔2023) is labeled as the later year.
+
+**Employment diversification = HHI across private NAICS sectors.** Herfindahl index of employment across the 20 private NAICS sectors (QCEW sector level). Higher HHI = more concentrated = less resilient; the indicator flips it so higher = better.
+
+**Apartment List deferred to v1.1.** The spec scopes Apartment List as a bonus (rent cross-check + vacancy), not one of the 10 core indicators, so it's deferred to reach a first ranking sooner.
+
 ### 2026-06-28 — Metro universe: 500k population floor
 
 **Metro universe — MSAs with 500k+ population (~110 metros), gated by rent-data coverage.**
