@@ -95,6 +95,10 @@ TAU_RANK_BASIS = "realized"    # weightedtau weighting: "realized" | "predicted"
 PRECISION_K = 10               # headline metric: precision@10
 RANDOM_SEED = 42               # set wherever randomness enters, for reproducibility
 
+# Model version — bump when weights, indicators, or methodology change. Stamped
+# into every frozen prediction run so the track record is unambiguous.
+MODEL_VERSION = "1.0.0"
+
 
 def validate_weights() -> None:
     """Fail loudly if the hand-set weights ever stop summing to 1.0."""

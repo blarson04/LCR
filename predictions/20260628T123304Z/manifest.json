@@ -1,0 +1,51 @@
+{
+  "timestamp_utc": "20260628T123304Z",
+  "model_version": "1.0.0",
+  "git_commit": "f60b5f7",
+  "score_year": 2023,
+  "n_metros": 110,
+  "top_metro": "Charleston-North Charleston, SC",
+  "top_score": 0.5340549749552395,
+  "weights": {
+    "net_migration": 0.14,
+    "job_growth": 0.12,
+    "income_growth": 0.08,
+    "population_growth": 0.06,
+    "permits_to_stock": 0.17,
+    "mf_pipeline": 0.08,
+    "rent_to_income": 0.12,
+    "cost_to_own_vs_rent": 0.08,
+    "trailing_rent_growth": 0.1,
+    "employment_diversity": 0.05
+  },
+  "regimes": {
+    "pre_covid": [
+      2015,
+      2019
+    ],
+    "shock": [
+      2020,
+      2022
+    ],
+    "normalization": [
+      2023,
+      2099
+    ]
+  },
+  "evaluation_metric": {
+    "primary": "top-weighted Kendall's tau (scipy.stats.weightedtau)",
+    "tau_rank_basis": "realized",
+    "headline": "precision@10 (top-quartile hit-rate)",
+    "primary_horizon_years": 3,
+    "winsor_limits": [
+      0.01,
+      0.99
+    ]
+  },
+  "files": {
+    "backtest_summary.csv": "7f5ec6006e302f6804b9ce34dca48e541c312a5f21657198b1a38c09fad836ae",
+    "panel_snapshot.parquet": "a65c1daed3160c6f4c586360ed0f98abca9f82b8f3e5a088d4c49c76c7f5b41f",
+    "ranking.csv": "71744851e5e8e94a5ea8882b305c5a1aa3593f547bb99b0726c3e23ea1f0a72a",
+    "scores.parquet": "dbd92ef3be3c88cb573cbfb50c59a1e5e6d55694e7583220a11c38f42c4a6c45"
+  }
+}
