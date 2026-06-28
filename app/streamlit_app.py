@@ -50,16 +50,18 @@ PRETTY = {
     "employment_diversity": "Employment diversity",
 }
 
-# ---- Design tokens --------------------------------------------------------
-INK = "#0B1B2B"
-BODY = "#334155"
-MUTED = "#64748B"
-ACCENT = "#0F766E"
-HAIRLINE = "#E5E9F0"
-# Muted diverging scale (deep red -> warm neutral -> deep green), not rainbow.
-SCORE_SCALE = [[0.0, "#9E2A2B"], [0.25, "#D08C7C"], [0.5, "#ECE6DC"],
-               [0.75, "#6FAE8C"], [1.0, "#1B5E45"]]
-GRAD_STOPS = [(0.0, (158, 42, 43)), (0.5, (236, 230, 220)), (1.0, (27, 94, 69))]
+# ---- Design tokens (dark theme) -------------------------------------------
+INK = "#F1F5F9"        # headings / near-white
+BODY = "#CBD5E1"       # body text
+MUTED = "#8595A6"      # secondary text
+ACCENT = "#2DD4BF"     # bright teal accent
+HAIRLINE = "#1E2A38"   # subtle borders
+PAGE_BG = "#0C1118"
+CARD_BG = "#121A24"
+# Muted diverging scale tuned for dark: red -> desaturated slate -> green.
+SCORE_SCALE = [[0.0, "#D6504A"], [0.25, "#C2877F"], [0.5, "#9AA6B4"],
+               [0.75, "#5FB78E"], [1.0, "#2E9E72"]]
+GRAD_STOPS = [(0.0, (214, 80, 74)), (0.5, (154, 166, 180)), (1.0, (46, 158, 114))]
 
 st.set_page_config(page_title="Multifamily Market Screener",
                    page_icon="◴", layout="wide")
@@ -75,7 +77,7 @@ def inject_css() -> None:
           font-family: 'Inter', -apple-system, system-ui, sans-serif;
           color: {BODY};
       }}
-      .stApp {{ background: #FFFFFF; }}
+      .stApp {{ background: {PAGE_BG}; }}
 
       /* Hide Streamlit chrome for a product look */
       [data-testid="stHeader"], [data-testid="stToolbar"] {{ display: none; }}
@@ -91,13 +93,14 @@ def inject_css() -> None:
       .wordmark {{ font-family: 'Source Serif 4', Georgia, serif; font-weight: 600;
                    font-size: 2.35rem; line-height: 1.1; color: {INK}; margin: 0; }}
       .subhead {{ color: {MUTED}; font-size: 1.02rem; margin-top: .45rem; max-width: 760px; }}
+      .subhead b {{ color: {BODY}; }}
       .badge {{ display:inline-block; font-size:.72rem; font-weight:600; color:{ACCENT};
-                background:#ECFDF5; border:1px solid #CCFBEF; border-radius:999px;
-                padding:.18rem .6rem; letter-spacing:.02em; }}
+                background:rgba(45,212,191,.10); border:1px solid rgba(45,212,191,.30);
+                border-radius:999px; padding:.18rem .6rem; letter-spacing:.02em; }}
 
       /* KPI stat band */
       .statband {{ display:flex; gap:14px; margin:0 0 1.6rem; flex-wrap:wrap; }}
-      .stat {{ flex:1; min-width:170px; background:#FFFFFF; border:1px solid {HAIRLINE};
+      .stat {{ flex:1; min-width:170px; background:{CARD_BG}; border:1px solid {HAIRLINE};
                border-radius:12px; padding:.95rem 1.1rem; }}
       .stat .lab {{ font-size:.7rem; font-weight:600; letter-spacing:.1em;
                     text-transform:uppercase; color:{MUTED}; }}
@@ -105,11 +108,15 @@ def inject_css() -> None:
                     margin-top:.25rem; font-variant-numeric: tabular-nums; }}
       .stat .sub {{ font-size:.8rem; color:{MUTED}; margin-top:.1rem; }}
 
-      /* Tabs */
-      .stTabs [data-baseweb="tab-list"] {{ gap: 1.6rem; border-bottom:1px solid {HAIRLINE}; }}
-      .stTabs [data-baseweb="tab"] {{ height: 44px; padding: 0 2px; background: transparent;
-          font-weight:600; color:{MUTED}; }}
-      .stTabs [aria-selected="true"] {{ color:{INK}; border-bottom:2px solid {ACCENT}; }}
+      /* Nav (radio styled as tabs) */
+      [data-testid="stRadio"] {{ margin-bottom: 1.4rem; }}
+      [data-testid="stRadio"] > div {{ gap: 0 !important; }}
+      [data-testid="stRadio"] [role="radiogroup"] {{ gap: 1.8rem; border-bottom:1px solid {HAIRLINE}; }}
+      [data-testid="stRadio"] label {{ padding:.45rem 0 !important; margin:0 !important; }}
+      [data-testid="stRadio"] label > div:first-child {{ display:none !important; }}  /* hide the circle */
+      [data-testid="stRadio"] label p {{ color:{MUTED}; font-weight:600; font-size:.98rem; }}
+      [data-testid="stRadio"] label:has(input:checked) p {{ color:{INK}; }}
+      [data-testid="stRadio"] label:has(input:checked) {{ border-bottom:2px solid {ACCENT}; }}
 
       /* Section headers */
       .sec {{ font-family:'Source Serif 4',Georgia,serif; font-size:1.35rem; font-weight:600;
@@ -131,6 +138,7 @@ def inject_css() -> None:
 
 
 def grad_css(t: float) -> str:
+    """Map t in [0,1] to a colored cell, picking black/white text for contrast."""
     if pd.isna(t):
         return ""
     t = max(0.0, min(1.0, float(t)))
@@ -138,7 +146,8 @@ def grad_css(t: float) -> str:
         if t <= t1:
             f = (t - t0) / (t1 - t0) if t1 > t0 else 0.0
             rgb = tuple(int(c0[i] + (c1[i] - c0[i]) * f) for i in range(3))
-            txt = "#FFFFFF" if (t < 0.18 or t > 0.82) else INK
+            lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+            txt = "#0B1118" if lum > 150 else "#FFFFFF"
             return f"background-color: rgb{rgb}; color: {txt};"
     return ""
 
@@ -154,8 +163,8 @@ def style_fig(fig: go.Figure, height: int = 540) -> go.Figure:
         height=height, margin=dict(l=0, r=0, t=8, b=0),
         font=dict(family="Inter, sans-serif", color=BODY, size=13),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        hoverlabel=dict(font_family="Inter, sans-serif", bgcolor=INK,
-                        font_color="#FFFFFF", bordercolor=INK),
+        hoverlabel=dict(font_family="Inter, sans-serif", bgcolor=CARD_BG,
+                        font_color=INK, bordercolor=HAIRLINE),
     )
     return fig
 
@@ -208,12 +217,16 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-tab_map, tab_rank, tab_detail, tab_method = st.tabs(
-    ["Map", "Rankings", "Metro detail", "Methodology"])
+# Stateful nav: unlike st.tabs (which resets to the first tab on every rerun),
+# a keyed radio remembers the selected view in session_state, so changing the
+# metro dropdown keeps you on the Metro-detail view. Styled as tabs via CSS.
+page = st.radio(
+    "View", ["Map", "Rankings", "Metro detail", "Methodology"],
+    horizontal=True, key="nav", label_visibility="collapsed")
 
 
 # ---- 1. Map ---------------------------------------------------------------
-with tab_map:
+if page == "Map":
     section("Composite score by metro",
             f"{SCORE_YEAR} cross-section · green = stronger fundamentals · hover for rank & score")
     mp = rank_year.merge(coords, on="cbsa_code", how="left")
@@ -223,18 +236,18 @@ with tab_map:
         color_continuous_scale=SCORE_SCALE, color_continuous_midpoint=0,
         custom_data=["rank", "score"])
     fig.update_traces(
-        marker=dict(line=dict(width=0.6, color="white")),
+        marker=dict(line=dict(width=0.5, color="rgba(255,255,255,0.35)")),
         hovertemplate="<b>%{hovertext}</b><br>Rank %{customdata[0]} · "
                       "score %{customdata[1]:.3f}<extra></extra>")
-    fig.update_geos(showland=True, landcolor="#EEF1F5", showlakes=False,
-                    subunitcolor="white", countrycolor="white",
-                    bgcolor="rgba(0,0,0,0)", showframe=False, coastlinecolor="white")
+    fig.update_geos(showland=True, landcolor="#17202B", showlakes=False,
+                    subunitcolor="#2A3744", countrycolor="#2A3744",
+                    bgcolor="rgba(0,0,0,0)", showframe=False, coastlinecolor="#2A3744")
     fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=12, len=0.7))
     st.plotly_chart(style_fig(fig, 560), use_container_width=True)
 
 
 # ---- 2. Rankings ----------------------------------------------------------
-with tab_rank:
+if page == "Rankings":
     section(f"Full ranking — {len(rank_year)} metros",
             "Weighted z-score contribution per bucket · click a header to sort")
     show = rank_year[["rank", "cbsa_title", "score", "bucket_Demand", "bucket_Supply",
@@ -256,7 +269,7 @@ with tab_rank:
 
 
 # ---- 3. Metro detail ------------------------------------------------------
-with tab_detail:
+if page == "Metro detail":
     metro = st.selectbox("Select a metro", rank_year.sort_values("cbsa_title")["cbsa_title"],
                          label_visibility="collapsed")
     row = rank_year[rank_year["cbsa_title"] == metro].iloc[0]
@@ -290,14 +303,14 @@ with tab_detail:
         figh.update_traces(line=dict(color=ACCENT, width=2.5),
                            marker=dict(color=ACCENT, size=6))
         figh.update_xaxes(showgrid=False, title=None, dtick=1)
-        figh.update_yaxes(showgrid=True, gridcolor="#EEF2F6", title="ZORI rent ($/mo)")
+        figh.update_yaxes(showgrid=True, gridcolor=HAIRLINE, title="ZORI rent ($/mo)")
         st.markdown("<div class='cap' style='margin-top:1rem'><b>Rent history</b> — "
                     "Zillow Observed Rent Index</div>", unsafe_allow_html=True)
         st.plotly_chart(style_fig(figh, 300), use_container_width=True)
 
 
 # ---- 4. Methodology -------------------------------------------------------
-with tab_method:
+if page == "Methodology":
     section("Does it actually work?", "Walk-forward backtest — the model never sees the future")
     st.markdown(
         "Each year's ranking is compared against **realized forward rent growth** "
