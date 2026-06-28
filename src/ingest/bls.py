@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import io
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -41,9 +42,30 @@ _AGG_TOTAL = 40   # MSA, all industries, all ownership
 _AGG_SECTOR = 44  # MSA, by NAICS sector (private, own_code 5)
 
 
+# The 2023 OMB delineation renumbered a few CBSAs, but QCEW still files them
+# under their OLD codes. ACS already uses the new codes, so without these
+# overrides these metros get zero employment data. (Poughkeepsie/28880 is NOT
+# here: QCEW only carries it from 2024 under C2888, which the default rule
+# already produces — its earlier years are a genuine gap.)
+QCEW_AREA_OVERRIDES = {
+    "17410": "C1746",   # Cleveland, OH (was CBSA 17460)
+    "19430": "C1938",   # Dayton, OH    (was CBSA 19380)
+}
+
+
 def qcew_area_code(cbsa_code: str) -> str:
     """CBSA code (5-digit string) -> QCEW area code, e.g. '12420' -> 'C1242'."""
-    return "C" + str(cbsa_code)[:4]
+    cbsa_code = str(cbsa_code)
+    if cbsa_code in QCEW_AREA_OVERRIDES:
+        return QCEW_AREA_OVERRIDES[cbsa_code]
+    return "C" + cbsa_code[:4]
+
+
+# Politeness + resilience: BLS resets the connection if hit too fast (we fetch
+# ~1,100 files to build the panel). Pause briefly between live downloads and
+# retry transient network errors with backoff.
+_DOWNLOAD_PAUSE = 0.2   # seconds between live downloads
+_MAX_RETRIES = 4
 
 
 def fetch_metro_year(cbsa_code: str, year: int, *, refresh: bool = False) -> pd.DataFrame:
@@ -52,12 +74,29 @@ def fetch_metro_year(cbsa_code: str, year: int, *, refresh: bool = False) -> pd.
     cache = BLS_RAW_DIR / f"{area}_{year}.csv"
     if cache.exists() and not refresh:
         return pd.read_csv(cache)
+
     url = f"https://data.bls.gov/cew/data/api/{year}/a/area/{area}.csv"
-    resp = requests.get(url, timeout=60, headers={"User-Agent": "multifamily-screener research"})
-    if resp.status_code != 200:
-        raise RuntimeError(f"QCEW download failed for {area} {year} (status {resp.status_code}).")
-    cache.write_bytes(resp.content)
-    return pd.read_csv(io.BytesIO(resp.content))
+    last_err = None
+    for attempt in range(_MAX_RETRIES):
+        try:
+            resp = requests.get(url, timeout=60,
+                                headers={"User-Agent": "multifamily-screener research"})
+        except requests.exceptions.RequestException as e:
+            last_err = e                          # transient (reset/timeout): back off + retry
+            time.sleep(1.5 * (attempt + 1))
+            continue
+        if resp.status_code == 404:               # this metro genuinely has no QCEW area
+            raise RuntimeError(f"QCEW has no area file for {area} {year} (404).")
+        if resp.status_code != 200:
+            last_err = RuntimeError(f"status {resp.status_code}")
+            time.sleep(1.5 * (attempt + 1))
+            continue
+        cache.write_bytes(resp.content)
+        time.sleep(_DOWNLOAD_PAUSE)
+        return pd.read_csv(io.BytesIO(resp.content))
+
+    raise RuntimeError(f"QCEW download failed for {area} {year} after "
+                       f"{_MAX_RETRIES} tries: {last_err}")
 
 
 def summarize_metro_year(cbsa_code: str, year: int, *, refresh: bool = False) -> dict:
@@ -97,8 +136,8 @@ def build_employment_panel(cbsa_codes, years=range(2015, 2025), *,
             try:
                 rows.append(summarize_metro_year(cbsa, yr, refresh=refresh))
             except RuntimeError as e:
-                if verbose:
-                    print(f"  [skip] {cbsa} {yr}: {str(e).splitlines()[0]}")
+                # Always surface skips: a missing metro-year becomes a NaN gap.
+                print(f"  [skip] {cbsa} {yr}: {str(e).splitlines()[0]}")
     return pd.DataFrame(rows).sort_values(["cbsa_code", "year"]).reset_index(drop=True)
 
 

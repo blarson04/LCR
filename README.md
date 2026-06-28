@@ -54,7 +54,7 @@ at <https://fred.stlouisfed.org/docs/api/api_key.html>.
 ## Build status
 
 - [x] **M1** — One source (FRED) end to end: fetch → cache → clean
-- [ ] **M2** — All sources + metro × year panel; freeze the universe
+- [x] **M2** — All sources + metro × year panel (110 metros × 2015–2025); universe frozen
 - [ ] **M3** — Indicators + score → first ranking
 - [ ] **M4** — Backtest (walk-forward, regimes, tau + precision@k)
 - [ ] **M5** — Streamlit app (map, table, drill-down)

@@ -35,6 +35,11 @@ for _d in (RAW_DIR, PROCESSED_DIR, PREDICTIONS_DIR):
 # part of the methodology).
 POP_FLOOR = 500_000
 RENT_HISTORY_START = 2015   # ZORI reaches ~2015; Apartment List ~2017
+# A metro clears the rent gate if its ZORI is gap-free through the latest year
+# and starts no later than this. Set to 2016 (not 2015) so two legitimate ~600k
+# metros — Jackson, MS and Syracuse, NY — aren't dropped for missing only the
+# 2015 baseline year (decision-log 2026-06-29). They get a blank 2015 cell.
+RENT_GATE_LATEST_START = 2016
 
 # --------------------------------------------------------------------------
 # Forecast target  (decision-log: "Forecast horizon")

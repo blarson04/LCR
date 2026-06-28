@@ -113,28 +113,34 @@ def zhvi_long_annual(df: pd.DataFrame | None = None, *, refresh: bool = False) -
     return _annualize(df, "zhvi")
 
 
-def metros_with_full_coverage(annual: pd.DataFrame | None = None) -> pd.DataFrame:
+def metros_with_full_coverage(annual: pd.DataFrame | None = None, *,
+                              latest_start: int | None = None) -> pd.DataFrame:
     """
-    Metros whose ZORI history is continuous from RENT_HISTORY_START to the
-    latest available year (no gaps). This is the rent-coverage gate; metros
+    Metros whose ZORI history is gap-free through the latest available year and
+    starts no later than `latest_start`. This is the rent-coverage gate; metros
     failing it get dropped from the universe (and logged) in build_panel.py.
-    Returns the id columns + first_year / last_year / n_years.
+
+    `latest_start` defaults to RENT_HISTORY_START (strict: must start in 2015).
+    build_panel passes RENT_GATE_LATEST_START (2016) so metros missing only the
+    baseline year still qualify. Returns id columns + first/last/n_years.
     """
     if annual is None:
         annual = to_long_annual()
+    if latest_start is None:
+        latest_start = config.RENT_HISTORY_START
     latest = annual["year"].max()
-    expected = set(range(config.RENT_HISTORY_START, latest + 1))
 
     rows = []
     for rid, g in annual.groupby("region_id"):
         years = set(g["year"])
-        if expected.issubset(years):
+        first, last = min(years), max(years)
+        gap_free = years == set(range(first, last + 1))
+        if gap_free and last == latest and first <= latest_start:
             rows.append({
                 "region_id": rid,
                 "region_name": g["region_name"].iloc[0],
                 "state": g["state"].iloc[0],
-                "first_year": min(years), "last_year": max(years),
-                "n_years": len(years),
+                "first_year": first, "last_year": last, "n_years": len(years),
             })
     return pd.DataFrame(rows).sort_values("region_name").reset_index(drop=True)
 
