@@ -1,12 +1,20 @@
-# Full toolchain for REGENERATING the data pipeline (data ingest -> panel ->
-# indicators/score -> backtest -> registry). The deployed app does NOT need these
-# — it only needs requirements.txt. Install locally with:
+# Full toolchain for REGENERATING the data pipeline (ingest -> panel ->
+# indicators/score -> backtest -> registry). Exact pins for reproducibility.
+# The deployed app does NOT need these — it uses requirements.txt.
 #     pip install -r requirements-pipeline.txt
 
--r requirements.txt
-
+# core data stack
+pandas==2.2.3
+numpy==2.2.1
 scipy==1.15.1            # backtest: scipy.stats.weightedtau
-requests==2.32.3         # source downloads
+pyarrow==18.1.0          # parquet read/write
+
+# data sources
+requests==2.32.3
 fredapi==0.5.2           # FRED ingest
 python-dotenv==1.0.1     # read API keys from .env
 openpyxl==3.1.5          # read the Census CBSA delineation .xlsx
+
+# app / viz
+streamlit==1.41.1
+plotly==5.24.1
