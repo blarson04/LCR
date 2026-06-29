@@ -1,0 +1,12 @@
+# Full toolchain for REGENERATING the data pipeline (data ingest -> panel ->
+# indicators/score -> backtest -> registry). The deployed app does NOT need these
+# — it only needs requirements.txt. Install locally with:
+#     pip install -r requirements-pipeline.txt
+
+-r requirements.txt
+
+scipy==1.15.1            # backtest: scipy.stats.weightedtau
+requests==2.32.3         # source downloads
+fredapi==0.5.2           # FRED ingest
+python-dotenv==1.0.1     # read API keys from .env
+openpyxl==3.1.5          # read the Census CBSA delineation .xlsx
