@@ -58,7 +58,7 @@ at <https://fred.stlouisfed.org/docs/api/api_key.html>.
 - [x] **M3** — Indicators + normalize (within-year z) + weighted score → first ranking
 - [x] **M4** — Backtest: walk-forward, regimes, weighted-τ + precision@10 (strong pre-COVID, breaks down in shock — as expected)
 - [x] **M5** — Streamlit app: map, ranking, metro drill-down, backtest & method
-- [ ] **M6** — Deploy + first frozen prediction run
+- [x] **M6** — Prediction registry (frozen first run); public deploy optional
 
 ### Run the app
 
@@ -66,3 +66,16 @@ at <https://fred.stlouisfed.org/docs/api/api_key.html>.
 .venv\Scripts\python.exe -m streamlit run app\streamlit_app.py
 ```
 Opens in your browser. Reads the committed `data/processed/` outputs — no API keys needed.
+
+### Deploy (Streamlit Community Cloud)
+
+The deployed app reads the committed `data/processed/` files, so it needs **no API
+keys** at runtime. Deploy from the `main` branch with the app file
+`app/streamlit_app.py`; it installs from `requirements.txt`.
+
+**Update workflow:** the repo *is* the website. Improve locally → `git push` →
+Streamlit Cloud auto-rebuilds the live URL in ~1–2 min.
+
+- **Website change:** edit `app/`, test with `streamlit run`, commit, push.
+- **Model/data change:** rerun the pipeline, then commit the regenerated
+  `data/processed/*` (and a new `predictions/<timestamp>/` run), and push.
