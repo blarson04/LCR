@@ -81,23 +81,36 @@ def _zori_lookup() -> pd.DataFrame:
     return panel[["cbsa_code", "year", "zori"]]
 
 
-def run_backtest(horizons=(3, 1)) -> pd.DataFrame:
-    """Return one row per (horizon, prediction year T) with tau, precision@10,
-    n_metros, and regime."""
-    scored = score_mod.score()
-    zori = _zori_lookup()
-
-    # Prediction years with enough indicator coverage to trust the score.
+def usable_pred_years(scored: pd.DataFrame | None = None) -> list[int]:
+    """Prediction years whose scores have enough indicator coverage to trust
+    (median >= MIN_INDICATOR_COVERAGE of 10). Fixed once from the full model so
+    every baseline is evaluated on the SAME years for a fair comparison."""
+    if scored is None:
+        scored = score_mod.score()
     cov = scored.groupby("year")["n_indicators"].median()
-    usable_years = sorted(cov[cov >= MIN_INDICATOR_COVERAGE].index)
+    return sorted(int(y) for y in cov[cov >= MIN_INDICATOR_COVERAGE].index)
+
+
+def evaluate_predictions(predictions: pd.DataFrame, pred_years: list[int] | None = None,
+                         horizons=(3, 1), zori: pd.DataFrame | None = None) -> pd.DataFrame:
+    """
+    The shared walk-forward harness. `predictions` is any ranking source:
+    columns [cbsa_code, year, score] with higher = better. Returns one row per
+    (horizon, prediction year T) with weighted_tau, precision_at_10, regime.
+    Used by the full model AND every baseline/ablation, so they're comparable.
+    """
+    if zori is None:
+        zori = _zori_lookup()
+    if pred_years is None:
+        pred_years = usable_pred_years()
     latest_zori = int(zori["year"].max())
 
     rows = []
     for h in horizons:
-        for T in usable_years:
+        for T in pred_years:
             if T + h > latest_zori:
                 continue
-            pred = scored[scored["year"] == T][["cbsa_code", "score"]]
+            pred = predictions[predictions["year"] == T][["cbsa_code", "score"]]
             now = zori[zori["year"] == T][["cbsa_code", "zori"]].rename(columns={"zori": "z0"})
             fut = zori[zori["year"] == T + h][["cbsa_code", "zori"]].rename(columns={"zori": "z1"})
 
@@ -116,6 +129,13 @@ def run_backtest(horizons=(3, 1)) -> pd.DataFrame:
                                                    df["realized"].to_numpy(), config.PRECISION_K),
             })
     return pd.DataFrame(rows)
+
+
+def run_backtest(horizons=(3, 1)) -> pd.DataFrame:
+    """Full-model walk-forward backtest (one row per horizon × prediction year)."""
+    scored = score_mod.score()
+    return evaluate_predictions(scored[["cbsa_code", "year", "score"]],
+                                usable_pred_years(scored), horizons)
 
 
 def summarize(results: pd.DataFrame) -> pd.DataFrame:
