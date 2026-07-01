@@ -222,6 +222,62 @@ def style_fig(fig: go.Figure, height: int = 540) -> go.Figure:
     return fig
 
 
+# ---- Uncertainty / explanation / regime helpers ---------------------------
+BUCKET_LABEL = {"Demand": "demand (migration & jobs)", "Supply": "limited new supply",
+                "Affordability": "affordability", "Momentum": "rent momentum",
+                "Resilience": "a diversified economy"}
+# A few reasonable re-weightings of the v2 model; a metro's rank range across
+# them is an honest "how sensitive is this rank to model choices" band.
+SCHEME_FACTORS = {"current": {}, "equal": None, "demand-tilt": {"Demand": 1.5},
+                  "supply-tilt": {"Supply": 1.6}, "affordability-light": {"Affordability": 0.4}}
+
+
+def _scheme_weights(factor):
+    if factor is None:
+        return {k: 1.0 / N_IND for k in INDICATORS}
+    w = {k: INDICATORS[k]["weight"] * factor.get(INDICATORS[k]["bucket"], 1.0) for k in INDICATORS}
+    tot = sum(w.values())
+    return {k: v / tot for k, v in w.items()}
+
+
+def rank_ranges(norm_df: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Per-metro min/max rank across the weighting schemes (rank uncertainty)."""
+    z = norm_df[norm_df.year == year].set_index("cbsa_code")[list(INDICATORS)].fillna(0.0)
+    ranks = {}
+    for name, fac in SCHEME_FACTORS.items():
+        w = _scheme_weights(fac)
+        ranks[name] = sum(w[k] * z[k] for k in INDICATORS).rank(ascending=False, method="min")
+    rk = pd.DataFrame(ranks)
+    return pd.DataFrame({"rank_lo": rk.min(axis=1).astype(int),
+                         "rank_hi": rk.max(axis=1).astype(int)})
+
+
+def why_sentence(row) -> str:
+    contribs = {b: row.get(f"bucket_{b}", 0.0) for b in BUCKET_LABEL}
+    pos = max(contribs, key=contribs.get)
+    neg = min(contribs, key=contribs.get)
+    txt = f"Ranks **#{int(row['rank'])}** chiefly on strong **{BUCKET_LABEL[pos]}** ({contribs[pos]:+.2f})"
+    if contribs[neg] < 0:
+        txt += f", held back by weak **{BUCKET_LABEL[neg]}** ({contribs[neg]:+.2f})."
+    else:
+        txt += " — with no bucket dragging it down."
+    return txt
+
+
+def national_rent_growth(panel_df: pd.DataFrame, year: int) -> float:
+    now = panel_df[panel_df.year == year][["cbsa_code", "zori"]]
+    prev = panel_df[panel_df.year == year - 1][["cbsa_code", "zori"]].rename(columns={"zori": "p"})
+    m = now.merge(prev, on="cbsa_code").dropna()
+    return float((m["zori"] / m["p"] - 1).median()) if len(m) else float("nan")
+
+
+def regime_of(year: int) -> str:
+    for name, (lo, hi) in config.REGIMES.items():
+        if lo <= year <= hi:
+            return name
+    return "unknown"
+
+
 # ---- Data -----------------------------------------------------------------
 @st.cache_data
 def load_data():
@@ -231,15 +287,21 @@ def load_data():
     panel = pd.read_parquet(config.PROCESSED_DIR / "panel.parquet")
     coords = pd.read_csv(config.PROCESSED_DIR / "metro_coords.csv", dtype={"cbsa_code": str})
     backtest = pd.read_csv(config.PROCESSED_DIR / "backtest_summary.csv")
-    return scored, raw, norm, panel, coords, backtest
+    reg_path = config.PREDICTIONS_DIR / "registry_index.csv"
+    registry = pd.read_csv(reg_path) if reg_path.exists() else pd.DataFrame()
+    return scored, raw, norm, panel, coords, backtest, registry
 
 
 inject_css()
-scored, raw, norm, panel, coords, backtest = load_data()
+scored, raw, norm, panel, coords, backtest, registry = load_data()
 rank_year = scored[scored["year"] == SCORE_YEAR].copy()
+rank_year = rank_year.merge(rank_ranges(norm, SCORE_YEAR), on="cbsa_code", how="left")
 raw_year = raw[raw["year"] == SCORE_YEAR].set_index("cbsa_code")
 norm_year = norm[norm["year"] == SCORE_YEAR].set_index("cbsa_code")
 pctile = norm_year[list(INDICATORS)].rank(pct=True) * 100
+
+CUR_REGIME = regime_of(SCORE_YEAR)
+NAT_GROWTH = national_rent_growth(panel, SCORE_YEAR)
 
 # ---- Masthead -------------------------------------------------------------
 top_metro = rank_year.sort_values("rank").iloc[0]["cbsa_title"].split("-")[0].split(",")[0]
@@ -261,7 +323,7 @@ st.markdown(f"""
 <div class="statband">
   <div class="stat"><div class="lab">Metros screened</div><div class="val">{len(rank_year)}</div>
        <div class="sub">≥ 500k population, full rent history</div></div>
-  <div class="stat"><div class="lab">Indicators</div><div class="val">10</div>
+  <div class="stat"><div class="lab">Indicators</div><div class="val">{N_IND}</div>
        <div class="sub">across 5 fundamental buckets</div></div>
   <div class="stat"><div class="lab">Backtest accuracy</div><div class="val">τ {pc_tau:.2f}</div>
        <div class="sub">pre-COVID 3-yr, weighted Kendall&#39;s τ</div></div>
@@ -270,11 +332,28 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+# ---- Regime / confidence flag --------------------------------------------
+_shock_like = CUR_REGIME == "shock" or (not pd.isna(NAT_GROWTH) and NAT_GROWTH > 0.075)
+if _shock_like:
+    _bg, _bd, _fg, _msg = ("rgba(234,179,8,.10)", "rgba(234,179,8,.35)", "#EAB308",
+        f"<b>Elevated-uncertainty regime.</b> {SCORE_YEAR} conditions resemble a shock "
+        f"(national rent growth {NAT_GROWTH:+.1%}); in shock regimes the backtest shows model "
+        f"reliability drops sharply — treat this ranking with extra caution.")
+else:
+    _bg, _bd, _fg, _msg = ("rgba(45,212,191,.08)", "rgba(45,212,191,.30)", ACCENT,
+        f"<b>Normal regime.</b> {SCORE_YEAR} conditions look typical (national rent growth "
+        f"{NAT_GROWTH:+.1%}); the model is operating within its validated range. Still a "
+        f"screen, not a guarantee — see rank ranges.")
+st.markdown(f"<div style='background:{_bg};border:1px solid {_bd};border-radius:10px;"
+            f"padding:.6rem .9rem;margin-bottom:1.3rem;font-size:.9rem;color:{BODY}'>"
+            f"<span style='color:{_fg};font-weight:700'>●</span> {_msg}</div>",
+            unsafe_allow_html=True)
+
 # Stateful nav: unlike st.tabs (which resets to the first tab on every rerun),
 # a keyed radio remembers the selected view in session_state, so changing the
 # metro dropdown keeps you on the Metro-detail view. Styled as tabs via CSS.
 page = st.radio(
-    "View", ["Map", "Rankings", "Metro detail", "Methodology"],
+    "View", ["Map", "Rankings", "Metro detail", "Compare", "Track record & method"],
     horizontal=True, key="nav", label_visibility="collapsed")
 
 
@@ -318,6 +397,8 @@ if page == "Rankings":
         "bucket_Supply": "Supply", "bucket_Affordability": "Afford.",
         "bucket_Momentum": "Moment.", "bucket_Resilience": "Resil.",
         "n_indicators": "Data"})
+    show.insert(1, "Range", (rank_year["rank_lo"].astype(int).astype(str) + "–"
+                             + rank_year["rank_hi"].astype(int).astype(str)).to_numpy())
     smin, smax = show["Score"].min(), show["Score"].max()
     num_cols = ["Score", "Demand", "Supply", "Afford.", "Moment.", "Resil."]
     styler = (show.style
@@ -327,6 +408,9 @@ if page == "Rankings":
               .set_properties(subset=["Metro"], **{"font-weight": "600", "color": INK}))
     st.dataframe(styler, hide_index=True, use_container_width=True, height=600,
                  column_config={"Rank": st.column_config.NumberColumn(width="small")})
+    st.markdown("<div class='cap'><b>Range</b> = the metro's rank span across several reasonable "
+                "alternative weightings — a wide range means the rank is sensitive to model choices "
+                "(treat it as a screen, not a precise ordering).</div>", unsafe_allow_html=True)
 
 
 # ---- 3. Metro detail ------------------------------------------------------
@@ -340,7 +424,12 @@ if page == "Metro detail":
     c1, c2, c3 = st.columns(3)
     c1.metric("Rank", f"#{int(row['rank'])}", help=f"of {len(rank_year)} metros")
     c2.metric("Composite score", f"{row['score']:+.3f}")
-    c3.metric("Indicator coverage", f"{int(row['n_indicators'])}/{N_IND}")
+    c3.metric("Rank range", f"#{int(row['rank_lo'])}–#{int(row['rank_hi'])}",
+              help="span across alternative model weightings — the rank's sensitivity")
+
+    # Plain-language "why this rank" from the bucket contributions.
+    st.markdown(f"<div class='cap' style='margin:.5rem 0 .2rem'>{why_sentence(row)}</div>",
+                unsafe_allow_html=True)
 
     # Plain-English outlook auto-generated from this metro's percentiles.
     PRO_T, CON_T = 65, 35
@@ -362,8 +451,8 @@ if page == "Metro detail":
         mark = "✓" if kind == "good" else "✕"
         return "".join(f"<li><span class='ic {kind}'>{mark}</span>{i}</li>" for i in items)
 
-    st.markdown("<div class='cap' style='margin:.6rem 0 .4rem'><b>The quick read</b> — "
-                "auto-generated from how this metro ranks across the 10 indicators.</div>",
+    st.markdown(f"<div class='cap' style='margin:.6rem 0 .4rem'><b>The quick read</b> — "
+                f"auto-generated from how this metro ranks across the {N_IND} indicators.</div>",
                 unsafe_allow_html=True)
     oc1, oc2 = st.columns(2)
     oc1.markdown(f"<div class='outlook'><div class='ohead good'>Strengths</div>"
@@ -390,29 +479,97 @@ if page == "Metro detail":
                .set_properties(subset=["Indicator"], **{"font-weight": "600", "color": INK}))
     st.dataframe(dstyler, hide_index=True, use_container_width=True, height=395)
 
+    tcol1, tcol2 = st.columns(2)
     hist = panel[panel["cbsa_code"] == code][["year", "zori"]].dropna()
     if len(hist):
         figh = px.line(hist, x="year", y="zori", markers=True)
-        figh.update_traces(line=dict(color=ACCENT, width=2.5),
-                           marker=dict(color=ACCENT, size=6))
-        figh.update_xaxes(showgrid=False, title=None, dtick=1)
+        figh.update_traces(line=dict(color=ACCENT, width=2.5), marker=dict(color=ACCENT, size=6))
+        figh.update_xaxes(showgrid=False, title=None, dtick=2)
         figh.update_yaxes(showgrid=True, gridcolor=HAIRLINE, title="ZORI rent ($/mo)")
-        st.markdown("<div class='cap' style='margin-top:1rem'><b>Rent history</b> — "
-                    "Zillow Observed Rent Index</div>", unsafe_allow_html=True)
-        st.plotly_chart(style_fig(figh, 300), use_container_width=True)
+        tcol1.markdown("<div class='cap' style='margin-top:1rem'><b>Rent history</b> — "
+                       "Zillow Observed Rent Index</div>", unsafe_allow_html=True)
+        tcol1.plotly_chart(style_fig(figh, 300), use_container_width=True)
+
+    traj = scored[scored["cbsa_code"] == code][["year", "rank"]].dropna().sort_values("year")
+    if len(traj) > 1:
+        figr = px.line(traj, x="year", y="rank", markers=True)
+        figr.update_traces(line=dict(color="#8B9DC3", width=2.5), marker=dict(color="#8B9DC3", size=6))
+        figr.update_xaxes(showgrid=False, title=None, dtick=2)
+        figr.update_yaxes(autorange="reversed", showgrid=True, gridcolor=HAIRLINE,
+                          title="Rank (1 = best)")
+        tcol2.markdown("<div class='cap' style='margin-top:1rem'><b>Rank trajectory</b> — "
+                       "composite rank over time</div>", unsafe_allow_html=True)
+        tcol2.plotly_chart(style_fig(figr, 300), use_container_width=True)
 
 
-# ---- 4. Methodology -------------------------------------------------------
-if page == "Methodology":
+# ---- 4. Compare -----------------------------------------------------------
+if page == "Compare":
+    section("Compare metros", "Pick 2–3 markets to see them side by side")
+    default2 = list(rank_year.sort_values("rank")["cbsa_title"].head(2))
+    picks = st.multiselect("Metros", list(rank_year.sort_values("cbsa_title")["cbsa_title"]),
+                           default=default2, max_selections=3, label_visibility="collapsed")
+    if len(picks) < 2:
+        st.info("Select at least two metros to compare.")
+    else:
+        cols = st.columns(len(picks))
+        codes = {}
+        for i, mt in enumerate(picks):
+            r = rank_year[rank_year.cbsa_title == mt].iloc[0]
+            codes[mt] = r["cbsa_code"]
+            cols[i].metric(mt.split(",")[0], f"#{int(r['rank'])}",
+                           help=f"score {r['score']:+.3f} · range #{int(r['rank_lo'])}–#{int(r['rank_hi'])}")
+
+        comp = pd.DataFrame({"Indicator": [PRETTY[k] for k in INDICATORS]})
+        for mt, code in codes.items():
+            comp[mt.split(",")[0]] = [pctile[k].get(code, float("nan")) for k in INDICATORS]
+        metro_cols = [mt.split(",")[0] for mt in picks]
+        cstyler = comp.style.format({c: "{:.0f}" for c in metro_cols}).set_properties(
+            subset=["Indicator"], **{"font-weight": "600", "color": INK})
+        for c in metro_cols:
+            cstyler = cstyler.map(lambda v: grad_css(v / 100.0), subset=[c])
+        st.markdown("<div class='cap'>Indicator percentiles (100 = best on that indicator). "
+                    "Greener favours the metro.</div>", unsafe_allow_html=True)
+        st.dataframe(cstyler, hide_index=True, use_container_width=True)
+
+        blabels = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
+        bard = [{"Metro": mt.split(",")[0], "Bucket": b,
+                 "Contribution": rank_year[rank_year.cbsa_title == mt].iloc[0][f"bucket_{b}"]}
+                for mt in picks for b in blabels]
+        figb = px.bar(pd.DataFrame(bard), x="Bucket", y="Contribution", color="Metro",
+                      barmode="group", color_discrete_sequence=["#2DD4BF", "#8B9DC3", "#E0A458"])
+        figb.update_xaxes(showgrid=False, title=None)
+        figb.update_yaxes(showgrid=True, gridcolor=HAIRLINE, zeroline=True,
+                          zerolinecolor=HAIRLINE, title="Weighted z contribution")
+        st.markdown("<div class='cap' style='margin-top:.6rem'><b>Bucket contributions</b> — "
+                    "what drives each metro's score</div>", unsafe_allow_html=True)
+        st.plotly_chart(style_fig(figb, 340), use_container_width=True)
+
+
+# ---- 5. Track record & method --------------------------------------------
+if page == "Track record & method":
+    section("Track record", "Every run is frozen & timestamped — an auditable, pre-registered history")
+    if len(registry):
+        rt = registry.rename(columns={
+            "timestamp_utc": "Run (UTC)", "model_version": "Version", "git_commit": "Commit",
+            "score_year": "Year", "n_metros": "Metros", "top_metro": "Top metro"})
+        st.dataframe(rt.style.set_properties(subset=["Version"], **{"color": ACCENT, "font-weight": "600"}),
+                     hide_index=True, use_container_width=True)
+    st.markdown("<div class='cap'>Each production run freezes its scores, ranking, input-data "
+                "snapshot, and a manifest (weights + locked metric + integrity hashes), never "
+                "edited — so the live track record can be scored against reality as outcomes "
+                "mature. This pre-registration is the project's core credibility differentiator.</div>",
+                unsafe_allow_html=True)
+
+    st.write("")
     section("How the screener works", "From raw public data to a single ranking — in plain English")
-    st.markdown("""
-The screener scores all **110 metros** on **10 fundamental indicators**, grouped into five
-themes. For each indicator it compares every metro **against all the others in the same year**,
-so a nationwide swing cancels out and only a metro's *relative* standing counts. Measures where
-"more is worse" (like heavy homebuilding, or rent that already eats up local incomes) are
-flipped, so **higher always means better**. Each indicator is then multiplied by a fixed weight
-and summed into one **composite score**, and metros are ranked by it. The same formula runs for
-every metro — nothing is hand-picked.""")
+    st.markdown(f"""
+The screener scores all **{len(rank_year)} metros** on **{N_IND} fundamental indicators**, grouped
+into five themes. For each indicator it compares every metro **against all the others in the same
+year**, so a nationwide swing cancels out and only a metro's *relative* standing counts. Measures
+where "more is worse" (like heavy homebuilding, or rent that already eats up local incomes) are
+flipped, so **higher always means better**. Each indicator is then multiplied by a fixed weight and
+summed into one **composite score**, and metros are ranked by it. The same formula runs for every
+metro — nothing is hand-picked.""")
 
     bucket_order = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
     brows = []
@@ -428,8 +585,8 @@ every metro — nothing is hand-picked.""")
         hide_index=True, use_container_width=True)
     st.markdown("<div class='cap'>Demand leads at 40% — the framework bets that who's moving in, "
                 "hiring, and earning matters most over a 3-year horizon, with a heavy supply "
-                "penalty (25%) as the contrarian edge. Weights are hand-set hypotheses for v1, "
-                "tested below.</div>", unsafe_allow_html=True)
+                "penalty (25%) as the contrarian edge. v2 uses the de-duplicated 8-indicator set; "
+                "weights are hand-set (not fitted), tested below.</div>", unsafe_allow_html=True)
 
     st.write("")
     section("Does it actually work?", "Walk-forward backtest — the model never sees the future")
@@ -459,7 +616,7 @@ every metro — nothing is hand-picked.""")
         Rent history starts ~2015 → few independent windows, so results are **directional
         evidence, not statistical proof**. ZORI is asking (not executed) rent. No
         capital-markets data (cap rates, transaction volume); rent growth is the proxy for
-        profitability. v1 weights are hand-set hypotheses, not fitted.""", unsafe_allow_html=True)
+        profitability. Weights are hand-set hypotheses, not fitted.""", unsafe_allow_html=True)
 
 
 st.markdown(f"""<hr style='margin-top:2.5rem'>
