@@ -20,6 +20,9 @@ survive:
 Implication for v2: **de-duplicate on parsimony/collinearity grounds, not accuracy; do not
 free-fit weights** (the accuracy landscape is too flat to fit without overfitting).
 
+**P4 recommendation:** adopt the **de-duplicated** scheme — the simplest weighting not reliably
+worse than the best. It drops the two redundant indicators with no reliable accuracy loss.
+
 ---
 
 ## P1 — Baselines (walk-forward, same years/metros)
@@ -106,13 +109,30 @@ the edge over momentum, and every indicator-cut delta.
 
 ---
 
-## What P4 should (and shouldn't) do
+## P4 — Weight robustness (3y τ, bootstrap B=1000)
 
-- **Should:** compare a few *hypothesis-driven* schemes (hand-set vs. equal-weight vs. a
-  de-duplicated scheme vs. a Demand-tilted scheme) with bootstrap CIs; pick the **simplest scheme
-  not reliably worse than the best**.
-- **Shouldn't:** run an unconstrained optimizer — the flat, noisy landscape guarantees overfitting.
+Best point estimate: **demand-tilted**. Recommendation (simplest not reliably worse than best):
+**de-duplicated**.
 
-## Open items
-- **P4** — weight robustness (above).  **Tier 2** — price/return dimension, vacancy, AI-exposure
-  (each gated by the redundancy/ablation test).  **Tier 3** — surface track record + uncertainty in the UI.
+| Scheme | #ind | 3y tau | 95% CI | gap vs best | reliably worse? |
+| --- | --- | --- | --- | --- | --- |
+| hand-set (v1) | 10 | 0.444 | [+0.357, +0.502] | +0.037 [-0.003, +0.075] | no |
+| equal-weight | 10 | 0.405 | [+0.326, +0.459] | +0.076 [+0.032, +0.113] | yes |
+| de-duplicated | 8 | 0.444 | [+0.356, +0.514] | +0.038 [-0.018, +0.081] | no |
+| demand-tilted | 10 | 0.482 | [+0.389, +0.534] | +0.000 [+0.000, +0.000] | no |
+
+Only equal-weight is *reliably* worse than the best — so a thoughtful scheme beats naive
+equal-weighting, but among thoughtful schemes the differences are within noise (don't over-tune).
+The **de-duplicated 8-indicator** scheme matches the 10-indicator hand-set with no reliable loss:
+a free parsimony win. `demand-tilted` has the top point estimate but its edge is not reliable —
+noted as a hypothesis, not adopted.
+
+---
+
+## Tier 1 complete → what's next
+
+- **Adopt for v2:** the de-duplicated 8-indicator scheme; frame accuracy honestly (real signal,
+  comparable to momentum, beats equal-weight/persistence); report CIs everywhere.
+- **Tier 2** (each gated by the redundancy/ablation test): price/return dimension, vacancy,
+  AI-exposure indicator.
+- **Tier 3:** surface the track record + uncertainty in the UI; "why this rank" panel; regime flag.

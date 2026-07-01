@@ -38,6 +38,7 @@ def build() -> Path:
     corr = pd.read_csv(PROC / "indicator_correlation.csv", index_col=0)
     tau = pd.read_csv(PROC / "uncertainty_tau.csv")
     gaps = pd.read_csv(PROC / "uncertainty_gaps.csv")
+    wsch = pd.read_csv(PROC / "weight_schemes.csv")
 
     full_tau = float(abl.loc[abl.variant == "Full model", "tau_3y"].iloc[0])
     ft = tau[tau.ranking == "full"].iloc[0]
@@ -78,6 +79,18 @@ def build() -> Path:
     pairs_df = pd.DataFrame(pairs).sort_values("corr", key=lambda s: s.str.replace("+", "").astype(float).abs(),
                                                ascending=False) if pairs else pd.DataFrame({"pair": ["(none)"], "corr": [""]})
 
+    # P4 weight schemes
+    ws = wsch.copy()
+    ws["95% CI"] = ws.apply(lambda r: f"[{r['ci_lo']:+.3f}, {r['ci_hi']:+.3f}]", axis=1)
+    ws["gap vs best"] = ws.apply(lambda r: f"{r['gap_vs_best']:+.3f} [{r['gap_lo']:+.3f}, {r['gap_hi']:+.3f}]", axis=1)
+    ws["reliably worse?"] = ws["reliably_worse"].map({True: "yes", False: "no"})
+    ws["tau_3y"] = ws["tau_3y"].map(lambda v: f"{v:.3f}")
+    ws = ws.rename(columns={"scheme": "Scheme", "n_ind": "#ind", "tau_3y": "3y tau"})
+    ws = ws[["Scheme", "#ind", "3y tau", "95% CI", "gap vs best", "reliably worse?"]]
+    best_scheme = wsch.sort_values("tau_3y", ascending=False).iloc[0]["scheme"]
+    ok = wsch[~wsch["reliably_worse"]].sort_values(["n_ind", "gap_vs_best"])
+    rec_scheme = ok.iloc[0]["scheme"] if len(ok) else best_scheme
+
     # P3 gaps
     g = gaps.copy()
     g["95% CI"] = g.apply(lambda r: f"[{r['lo']:+.3f}, {r['hi']:+.3f}]", axis=1)
@@ -106,6 +119,9 @@ survive:
 
 Implication for v2: **de-duplicate on parsimony/collinearity grounds, not accuracy; do not
 free-fit weights** (the accuracy landscape is too flat to fit without overfitting).
+
+**P4 recommendation:** adopt the **{rec_scheme}** scheme — the simplest weighting not reliably
+worse than the best. It drops the two redundant indicators with no reliable accuracy loss.
 
 ---
 
@@ -154,16 +170,28 @@ the edge over momentum, and every indicator-cut delta.
 
 ---
 
-## What P4 should (and shouldn't) do
+## P4 — Weight robustness (3y τ, bootstrap B=1000)
 
-- **Should:** compare a few *hypothesis-driven* schemes (hand-set vs. equal-weight vs. a
-  de-duplicated scheme vs. a Demand-tilted scheme) with bootstrap CIs; pick the **simplest scheme
-  not reliably worse than the best**.
-- **Shouldn't:** run an unconstrained optimizer — the flat, noisy landscape guarantees overfitting.
+Best point estimate: **{best_scheme}**. Recommendation (simplest not reliably worse than best):
+**{rec_scheme}**.
 
-## Open items
-- **P4** — weight robustness (above).  **Tier 2** — price/return dimension, vacancy, AI-exposure
-  (each gated by the redundancy/ablation test).  **Tier 3** — surface track record + uncertainty in the UI.
+{_tbl(ws)}
+
+Only equal-weight is *reliably* worse than the best — so a thoughtful scheme beats naive
+equal-weighting, but among thoughtful schemes the differences are within noise (don't over-tune).
+The **de-duplicated 8-indicator** scheme matches the 10-indicator hand-set with no reliable loss:
+a free parsimony win. `demand-tilted` has the top point estimate but its edge is not reliable —
+noted as a hypothesis, not adopted.
+
+---
+
+## Tier 1 complete → what's next
+
+- **Adopt for v2:** the de-duplicated 8-indicator scheme; frame accuracy honestly (real signal,
+  comparable to momentum, beats equal-weight/persistence); report CIs everywhere.
+- **Tier 2** (each gated by the redundancy/ablation test): price/return dimension, vacancy,
+  AI-exposure indicator.
+- **Tier 3:** surface the track record + uncertainty in the UI; "why this rank" panel; regime flag.
 """
     OUT.write_text(md, encoding="utf-8")
     return OUT
