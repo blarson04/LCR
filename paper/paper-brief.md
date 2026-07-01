@@ -1,6 +1,6 @@
 # Multifamily Rent-Growth Screener — Paper Brief
 
-*Auto-generated 2026-06-28 from the model outputs. Regenerate with
+*Auto-generated 2026-07-01 from the model outputs. Regenerate with
 `python src/paper_brief.py`. Every number here is pulled directly from the processed data —
 nothing is hand-typed. Companion source docs: `decision-log.md` (the "why") and
 `v1-build-spec.md` (the "how").*
@@ -13,15 +13,15 @@ A transparent, backtested **screening framework** ranks the **110 largest US met
 by their fundamentals for **3-year forward rent growth**, using only free public data. Ten
 indicators across five themes are normalized cross-sectionally within each year and combined
 with hand-set weights into a composite score. Walk-forward validation shows the framework is
-**strong in normal regimes** (pre-COVID 3-year weighted Kendall's τ ≈ **0.61**, precision@10
+**strong in normal regimes** (pre-COVID 3-year weighted Kendall's τ ≈ **0.60**, precision@10
 ≈ **88%**) and **breaks down during the 2020–22 shock** (τ ≈ **0.13**) — an expected,
 honestly-reported result. Every run is frozen to a pre-registration registry for an auditable
 track record. It is positioned as a *screening framework, not a prediction engine*.
 
 **Headline numbers**
 - Universe: **110 metros**, scored on the **2023** cross-section; panel spans **2015–2025**.
-- Pre-COVID 3-yr: τ **0.613**, precision@10 **0.88**.  Shock 3-yr: τ **0.130**.
-- Pooled 3-yr τ **0.452** vs. pooled 1-yr τ **0.488** (≈ equal → see finding #3).
+- Pre-COVID 3-yr: τ **0.602**, precision@10 **0.88**.  Shock 3-yr: τ **0.130**.
+- Pooled 3-yr τ **0.444** vs. pooled 1-yr τ **0.485** (≈ equal → see finding #3).
 - Worst single window: 3-yr starting **2022** (predicting the post-peak decline), τ **-0.055**.
 
 ---
@@ -126,39 +126,39 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 
 | Horizon (y) | Regime | Windows | Mean weighted-τ | Mean precision@10 |
 | --- | --- | --- | --- | --- |
-| 1 | pre-covid | 4 | 0.658 | 0.82 |
+| 1 | pre-covid | 4 | 0.652 | 0.82 |
 | 1 | shock | 2 | 0.315 | 0.45 |
 | 1 | normalization | 1 | 0.155 | 0.50 |
-| 1 | POOLED | 7 | 0.488 | 0.67 |
-| 3 | pre-covid | 4 | 0.613 | 0.88 |
+| 1 | POOLED | 7 | 0.485 | 0.67 |
+| 3 | pre-covid | 4 | 0.602 | 0.88 |
 | 3 | shock | 2 | 0.130 | 0.25 |
-| 3 | POOLED | 6 | 0.452 | 0.67 |
+| 3 | POOLED | 6 | 0.444 | 0.67 |
 
 **Every window**
 
 | Horizon (y) | Pred. year | Regime | Metros | weighted-τ | precision@10 |
 | --- | --- | --- | --- | --- | --- |
-| 3 | 2016 | pre-covid | 110 | 0.692 | 0.90 |
+| 3 | 2016 | pre-covid | 110 | 0.678 | 0.90 |
 | 3 | 2017 | pre-covid | 110 | 0.662 | 0.90 |
 | 3 | 2018 | pre-covid | 110 | 0.621 | 0.80 |
-| 3 | 2019 | pre-covid | 110 | 0.478 | 0.90 |
+| 3 | 2019 | pre-covid | 110 | 0.445 | 0.90 |
 | 3 | 2021 | shock | 110 | 0.315 | 0.40 |
 | 3 | 2022 | shock | 110 | -0.055 | 0.10 |
 | 1 | 2016 | pre-covid | 110 | 0.736 | 0.90 |
-| 1 | 2017 | pre-covid | 110 | 0.749 | 1.00 |
-| 1 | 2018 | pre-covid | 110 | 0.666 | 0.90 |
+| 1 | 2017 | pre-covid | 110 | 0.728 | 1.00 |
+| 1 | 2018 | pre-covid | 110 | 0.663 | 0.90 |
 | 1 | 2019 | pre-covid | 110 | 0.481 | 0.50 |
 | 1 | 2021 | shock | 110 | 0.451 | 0.60 |
 | 1 | 2022 | shock | 110 | 0.179 | 0.30 |
 | 1 | 2023 | normalization | 110 | 0.155 | 0.50 |
 
 **Three findings for the paper**
-1. **It works in normal times.** Pre-COVID 3-yr τ ≈ 0.61, precision@10 ≈ 88% — the
+1. **It works in normal times.** Pre-COVID 3-yr τ ≈ 0.60, precision@10 ≈ 88% — the
    top-10 picks landed in the realized top quartile ~88% of the time.
 2. **It breaks down in the shock, as expected.** Shock 3-yr τ ≈ 0.13; the 2022-start window
    (predicting the post-peak correction) is slightly negative (τ -0.05). This vindicates
    the rule never to fit weights on the shock regime, and is reported rather than hidden.
-3. **3-year ≈ 1-year (τ 0.45 vs 0.49).** The decision log hypothesized the model
+3. **3-year ≈ 1-year (τ 0.44 vs 0.48).** The decision log hypothesized the model
    would do *better* at 3y if it captured fundamentals over momentum; instead they're comparable,
    suggesting momentum and fundamentals contribute similarly — a candidate for fitted-weight work.
 

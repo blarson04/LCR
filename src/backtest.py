@@ -119,6 +119,11 @@ def evaluate_predictions(predictions: pd.DataFrame, pred_years: list[int] | None
             if len(df) < config.PRECISION_K:
                 continue
             df["realized"] = _winsorize(df["z1"] / df["z0"] - 1.0)
+            # Winsorizing creates tied realized values (capped at the pctile), and
+            # the rank-weighted tau breaks ties by input order — so sort on a
+            # stable key to make the metric deterministic and every ranking
+            # source strictly comparable.
+            df = df.sort_values("cbsa_code").reset_index(drop=True)
 
             rows.append({
                 "horizon": h, "pred_year": T, "regime": _regime_of(T),
