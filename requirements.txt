@@ -1,13 +1,13 @@
 # Deployed-app runtime ONLY (see requirements-pipeline.txt for the data pipeline).
 #
-# streamlit & plotly are PINNED to the tested versions: they're pure-Python
-# wheels (no Python-version wheel risk), and unpinned floors let Streamlit Cloud
-# install a newer Streamlit whose API changes broke the app (e.g. use_container_width).
-# pandas/numpy/pyarrow are COMPILED, so they stay as capped ranges — floors ensure
-# a prebuilt wheel exists for the Cloud Python, caps avoid breaking major releases.
+# streamlit & plotly are PURE-PYTHON (one wheel for all Pythons), so we cap them
+# below the versions whose API changes broke the rendered app — no wheel risk.
+# pandas/numpy/pyarrow are COMPILED, so they stay OPEN floors (no upper cap):
+# capping them forced Streamlit Cloud into a failing source build when the Cloud
+# Python only had wheels for newer versions.
 
-streamlit==1.41.1
-plotly==5.24.1
-pandas>=2.1,<2.4
-numpy>=1.26,<2.4
-pyarrow>=16,<19
+streamlit>=1.40,<1.49
+plotly>=5.18,<6
+pandas>=2.1
+numpy>=1.26
+pyarrow>=14
