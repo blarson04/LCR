@@ -27,6 +27,7 @@ import config                       # noqa: E402
 from src import normalize           # noqa: E402
 
 INDICATOR_COLS = normalize.INDICATOR_COLS
+N_IND = len(INDICATOR_COLS)
 WEIGHTS = {k: v["weight"] for k, v in config.INDICATORS.items()}
 BUCKETS = {k: v["bucket"] for k, v in config.INDICATORS.items()}
 SCORE_YEAR = 2023   # latest year with broad coverage across all sources
@@ -83,11 +84,11 @@ def _print_ranking() -> None:
     print("  " + "-" * 58)
     for _, r in rk.head(15).iterrows():
         title = r["cbsa_title"][:40]
-        print(f"{r['rank']:>3}  {title:<42}{r['score']:>7.3f}  {r['n_indicators']:>2}/10")
+        print(f"{r['rank']:>3}  {title:<42}{r['score']:>7.3f}  {r['n_indicators']:>2}/{N_IND}")
     print("   ...")
     for _, r in rk.tail(5).iterrows():
         title = r["cbsa_title"][:40]
-        print(f"{r['rank']:>3}  {title:<42}{r['score']:>7.3f}  {r['n_indicators']:>2}/10")
+        print(f"{r['rank']:>3}  {title:<42}{r['score']:>7.3f}  {r['n_indicators']:>2}/{N_IND}")
 
     print("\n  Top metro bucket breakdown (weighted z contribution):")
     top = rk.iloc[0]

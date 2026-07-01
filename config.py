@@ -48,20 +48,24 @@ PRIMARY_HORIZON_YEARS = 3   # the real target: 3-year forward rent growth
 CONTRAST_HORIZON_YEARS = 1  # reported as a foil, not the target
 
 # --------------------------------------------------------------------------
-# Indicator weights  (decision-log: "Living snapshot: current v1 weights")
-# v1 weights are HAND-SET, not fitted. They must sum to 1.0.
+# Indicator weights
+# v2 = the DE-DUPLICATED 8-indicator scheme (see v2-findings.md, P2/P4):
+# population_growth was folded into net_migration (r=0.62) and mf_pipeline into
+# permits_to_stock (r=0.77) — the bootstrap showed this matches the v1 10-indicator
+# model with no reliable accuracy loss, so we prefer the more parsimonious set.
+# Bucket totals are unchanged (Demand 40 / Supply 25 / Affordability 20 /
+# Momentum 10 / Resilience 5). Weights are HAND-SET (not fitted) and sum to 1.0.
 # "inverse": True means higher raw value is WORSE; indicators.py flips it so
 # that after flipping, higher = better for every indicator.
+# (The v1 weights are preserved in git history + the frozen v1 registry run.)
 # --------------------------------------------------------------------------
 INDICATORS = {
     # ---- Demand: 40% ----
-    "net_migration":        {"weight": 0.14, "inverse": False, "bucket": "Demand"},
+    "net_migration":        {"weight": 0.20, "inverse": False, "bucket": "Demand"},
     "job_growth":           {"weight": 0.12, "inverse": False, "bucket": "Demand"},
     "income_growth":        {"weight": 0.08, "inverse": False, "bucket": "Demand"},
-    "population_growth":    {"weight": 0.06, "inverse": False, "bucket": "Demand"},
     # ---- Supply: 25% ----
-    "permits_to_stock":     {"weight": 0.17, "inverse": True,  "bucket": "Supply"},
-    "mf_pipeline":          {"weight": 0.08, "inverse": True,  "bucket": "Supply"},
+    "permits_to_stock":     {"weight": 0.25, "inverse": True,  "bucket": "Supply"},
     # ---- Affordability: 20% ----
     "rent_to_income":       {"weight": 0.12, "inverse": True,  "bucket": "Affordability"},
     "cost_to_own_vs_rent":  {"weight": 0.08, "inverse": False, "bucket": "Affordability"},
@@ -97,7 +101,7 @@ RANDOM_SEED = 42               # set wherever randomness enters, for reproducibi
 
 # Model version — bump when weights, indicators, or methodology change. Stamped
 # into every frozen prediction run so the track record is unambiguous.
-MODEL_VERSION = "1.0.0"
+MODEL_VERSION = "2.0.0"
 
 
 def validate_weights() -> None:

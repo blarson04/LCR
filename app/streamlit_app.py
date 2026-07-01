@@ -37,6 +37,7 @@ from src import score as score_mod              # noqa: E402
 
 SCORE_YEAR = score_mod.SCORE_YEAR
 INDICATORS = config.INDICATORS
+N_IND = len(INDICATORS)
 PRETTY = {
     "net_migration": "Net domestic migration",
     "job_growth": "Job growth (YoY)",
@@ -320,7 +321,7 @@ if page == "Rankings":
     smin, smax = show["Score"].min(), show["Score"].max()
     num_cols = ["Score", "Demand", "Supply", "Afford.", "Moment.", "Resil."]
     styler = (show.style
-              .format({c: "{:+.3f}" for c in num_cols} | {"Data": "{:.0f}/10"})
+              .format({c: "{:+.3f}" for c in num_cols} | {"Data": f"{{:.0f}}/{N_IND}"})
               .map(lambda v: grad_css((v - smin) / (smax - smin)), subset=["Score"])
               .set_properties(subset=num_cols, **{"font-variant-numeric": "tabular-nums"})
               .set_properties(subset=["Metro"], **{"font-weight": "600", "color": INK}))
@@ -339,7 +340,7 @@ if page == "Metro detail":
     c1, c2, c3 = st.columns(3)
     c1.metric("Rank", f"#{int(row['rank'])}", help=f"of {len(rank_year)} metros")
     c2.metric("Composite score", f"{row['score']:+.3f}")
-    c3.metric("Indicator coverage", f"{int(row['n_indicators'])}/10")
+    c3.metric("Indicator coverage", f"{int(row['n_indicators'])}/{N_IND}")
 
     # Plain-English outlook auto-generated from this metro's percentiles.
     PRO_T, CON_T = 65, 35

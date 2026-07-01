@@ -74,9 +74,12 @@ def compute_indicators(panel: pd.DataFrame | None = None) -> pd.DataFrame:
     out = panel[["cbsa_code", "cbsa_title", "year"]].copy()
 
     # Levels / rates
+    # v2 = de-duplicated 8-indicator set: population_growth (folded into
+    # net_migration) and mf_pipeline (folded into permits_to_stock) are no longer
+    # scored. The panel still carries `population` (migration denominator) and
+    # `permits_mf` for reference/context.
     out["net_migration"] = panel["net_migration"] / panel["population"]
     out["permits_to_stock"] = panel["permits_total"] / panel["housing_units"]
-    out["mf_pipeline"] = panel["permits_mf"] / panel["housing_units"]
     out["rent_to_income"] = (panel["zori"] * 12.0) / panel["per_capita_income"]
     own = _monthly_mortgage_payment(panel["zhvi"], panel["mortgage_rate_30y"])
     out["cost_to_own_vs_rent"] = own / panel["zori"]
@@ -85,7 +88,6 @@ def compute_indicators(panel: pd.DataFrame | None = None) -> pd.DataFrame:
     # Year-over-year growth
     out["job_growth"] = _yoy(panel, "total_emp")
     out["income_growth"] = _yoy(panel, "per_capita_income")
-    out["population_growth"] = _yoy(panel, "population")
     out["trailing_rent_growth"] = _yoy(panel, "zori")
 
     return out[["cbsa_code", "cbsa_title", "year"] + INDICATOR_COLS]

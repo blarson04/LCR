@@ -25,6 +25,12 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-01 — v2 model: adopt the de-duplicated 8-indicator scheme
+
+After a Tier-1 rigor pass (baselines, ablation, uncertainty, weight robustness — see `v2-plan.md` and `paper/v2-findings.md`), v2 drops two redundant indicators: **`population_growth`** (folded into `net_migration`, r=0.62) and **`mf_pipeline`** (folded into `permits_to_stock`, r=0.77). The metro-cluster bootstrap showed the 8-indicator scheme matches the v1 10-indicator model with **no reliable accuracy loss** (3-yr weighted τ ≈ 0.44, overlapping CIs), so we prefer the more parsimonious set. Bucket totals are unchanged (Demand 40 / Supply 25 / Affordability 20 / Momentum 10 / Resilience 5).
+
+We deliberately do **not** free-fit the weights: only equal-weight was *reliably* worse than the best scheme; among hypothesis-driven schemes the differences were within noise, so tuning would chase noise. Honest framing carried into v2: the composite has real 3-yr signal and reliably beats equal-weight and persistence, but is **not** reliably better than a trailing-rent-growth (momentum) one-liner, and **`net_migration` is the single indispensable indicator**. Model version → 2.0.0; the v1 model is preserved in git history and the frozen v1 registry run.
+
 ### 2026-06-28 — Build-time data-source decisions (M2 ingest)
 
 These are implementation choices made while wiring up the data pipeline. They're recorded here because several are non-obvious and shouldn't be silently "corrected" later, and because the build spec asks to keep this log current.
