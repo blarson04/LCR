@@ -92,18 +92,22 @@ def usable_pred_years(scored: pd.DataFrame | None = None) -> list[int]:
 
 
 def evaluate_predictions(predictions: pd.DataFrame, pred_years: list[int] | None = None,
-                         horizons=(3, 1), zori: pd.DataFrame | None = None) -> pd.DataFrame:
+                         horizons=(3, 1), target: pd.DataFrame | None = None,
+                         target_col: str = "zori") -> pd.DataFrame:
     """
     The shared walk-forward harness. `predictions` is any ranking source:
     columns [cbsa_code, year, score] with higher = better. Returns one row per
     (horizon, prediction year T) with weighted_tau, precision_at_10, regime.
     Used by the full model AND every baseline/ablation, so they're comparable.
+
+    `target` is the outcome to predict (default ZORI rent, column "zori"); pass a
+    home-value frame with target_col="zhvi" to score against price appreciation.
     """
-    if zori is None:
-        zori = _zori_lookup()
+    if target is None:
+        target = _zori_lookup()
     if pred_years is None:
         pred_years = usable_pred_years()
-    latest_zori = int(zori["year"].max())
+    latest_zori = int(target["year"].max())
 
     rows = []
     for h in horizons:
@@ -111,8 +115,8 @@ def evaluate_predictions(predictions: pd.DataFrame, pred_years: list[int] | None
             if T + h > latest_zori:
                 continue
             pred = predictions[predictions["year"] == T][["cbsa_code", "score"]]
-            now = zori[zori["year"] == T][["cbsa_code", "zori"]].rename(columns={"zori": "z0"})
-            fut = zori[zori["year"] == T + h][["cbsa_code", "zori"]].rename(columns={"zori": "z1"})
+            now = target[target["year"] == T][["cbsa_code", target_col]].rename(columns={target_col: "z0"})
+            fut = target[target["year"] == T + h][["cbsa_code", target_col]].rename(columns={target_col: "z1"})
 
             df = pred.merge(now, on="cbsa_code").merge(fut, on="cbsa_code").dropna()
             df = df[df["z0"] > 0]
