@@ -25,6 +25,15 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-01 — Tier-2 candidates gated: vacancy & AI-exposure NOT adopted
+
+Two new signals were tested against the pre-committed gate — standalone predictive τ + redundancy + does-it-*reliably*-improve-τ (metro-cluster bootstrap CI). See `src/tier2_gate.py` and `data/processed/tier2_gates.csv`.
+
+- **Vacancy (P6)** — ACS rental vacancy rate (chosen over Apartment List for reproducibility; AL download URLs move). Standalone 3y τ +0.19, but augmenting the composite at 10% doesn't reliably help (Δτ −0.028, CI [−0.093, +0.016]) and it's partly redundant with `cost_to_own_vs_rent` (r 0.38).
+- **AI-exposure (P7)** — an **industry-level proxy**: metro employment share in the highest gen-AI-exposure NAICS sectors (Information, Finance & Insurance, Professional/Scientific/Technical, Management of companies), built from the already-cached QCEW data because BLS OEWS occupation files block bot downloads (HTTP 403). Genuinely **non-redundant** (max |r| 0.26) but weak standalone (+0.09) and **zero reliable value-add** (Δτ +0.003, CI [−0.040, +0.039]).
+
+**Decision:** neither is adopted as a scored indicator — the gate guards against adding noise/complexity (the same discipline that vetoed the P2 cuts and the P5 second screen). Both are kept as panel columns for **context/description**. Headline: across P5–P7, **no new free signal reliably improved the model**, reinforcing that it is a parsimonious, honestly-bounded framework. AI-exposure remains a novel descriptive layer; occupation-level OEWS is a future refinement if accessible data is found.
+
 ### 2026-07-01 — v2 model: adopt the de-duplicated 8-indicator scheme
 
 After a Tier-1 rigor pass (baselines, ablation, uncertainty, weight robustness — see `v2-plan.md` and `paper/v2-findings.md`), v2 drops two redundant indicators: **`population_growth`** (folded into `net_migration`, r=0.62) and **`mf_pipeline`** (folded into `permits_to_stock`, r=0.77). The metro-cluster bootstrap showed the 8-indicator scheme matches the v1 10-indicator model with **no reliable accuracy loss** (3-yr weighted τ ≈ 0.44, overlapping CIs), so we prefer the more parsimonious set. Bucket totals are unchanged (Demand 40 / Supply 25 / Affordability 20 / Momentum 10 / Resilience 5).

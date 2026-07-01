@@ -117,6 +117,7 @@ def assemble_panel(universe: pd.DataFrame) -> pd.DataFrame:
     print("  pulling QCEW employment for the universe (slow on first run) ...")
     emp = bls.build_employment_panel(cbsa_codes)[
         ["cbsa_code", "year", "total_emp", "avg_annual_pay", "emp_hhi"]]
+    aiexp = bls.build_ai_exposure_panel(cbsa_codes)[["cbsa_code", "year", "ai_exposure"]]
 
     zori = zillow.to_long_annual()
     zori = zori.assign(cbsa_code=zori["region_id"].map(rid_to_cbsa))
@@ -135,13 +136,13 @@ def assemble_panel(universe: pd.DataFrame) -> pd.DataFrame:
         [universe["cbsa_code"], years], names=["cbsa_code", "year"]).to_frame(index=False)
     panel = grid.merge(universe[["cbsa_code", "cbsa_title"]], on="cbsa_code", how="left")
 
-    for src in (pop_panel, hu_panel, vac, mig, perm, inc, emp, zori, zhvi):
+    for src in (pop_panel, hu_panel, vac, mig, perm, inc, emp, aiexp, zori, zhvi):
         panel = panel.merge(src, on=["cbsa_code", "year"], how="left")
     panel = panel.merge(mtg, on="year", how="left")  # national rate, broadcast
 
     ordered = ["cbsa_code", "cbsa_title", "year", "population", "housing_units",
                "rental_vacancy", "net_migration", "permits_total", "permits_mf", "total_emp",
-               "avg_annual_pay", "emp_hhi", "per_capita_income", "zori", "zhvi",
+               "avg_annual_pay", "emp_hhi", "ai_exposure", "per_capita_income", "zori", "zhvi",
                "mortgage_rate_30y"]
     return panel[ordered].sort_values(["cbsa_code", "year"]).reset_index(drop=True)
 

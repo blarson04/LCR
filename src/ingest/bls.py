@@ -123,6 +123,41 @@ def summarize_metro_year(cbsa_code: str, year: int, *, refresh: bool = False) ->
             "total_emp": total_emp, "avg_annual_pay": avg_pay, "emp_hhi": emp_hhi}
 
 
+# Highest gen-AI-exposure NAICS sectors (Information, Finance & Insurance,
+# Professional/Scientific/Technical, Management of companies). An industry-level
+# PROXY for occupational AI exposure — occupation-level OEWS blocks bot downloads
+# (HTTP 403), so this uses the QCEW sector data already cached. (P7)
+_AI_EXPOSED_SECTORS = {"51", "52", "54", "55"}
+
+
+def ai_exposure_share(cbsa_code: str, year: int, *, refresh: bool = False) -> float:
+    """Metro employment share in high-AI-exposure white-collar sectors (0..1)."""
+    df = fetch_metro_year(cbsa_code, year, refresh=refresh)
+    sec = df[df["agglvl_code"] == _AGG_SECTOR][["industry_code", "annual_avg_emplvl"]].copy()
+    sec["emp"] = pd.to_numeric(sec["annual_avg_emplvl"], errors="coerce")
+    total = sec["emp"].sum()
+    exposed = sec[sec["industry_code"].astype(str).isin(_AI_EXPOSED_SECTORS)]["emp"].sum()
+    # A metro with literally zero Info/Finance/Prof/Mgmt employment is implausible,
+    # so treat a hard 0 as QCEW disclosure suppression (missing), not a true zero.
+    if not total or total <= 0 or exposed <= 0:
+        return np.nan
+    return float(exposed / total)
+
+
+def build_ai_exposure_panel(cbsa_codes, years=range(2015, 2025), *,
+                            refresh: bool = False) -> pd.DataFrame:
+    """[cbsa_code, year, ai_exposure] for the given metros (reads cached QCEW)."""
+    rows = []
+    for cbsa in cbsa_codes:
+        for yr in years:
+            try:
+                rows.append({"cbsa_code": str(cbsa), "year": yr,
+                             "ai_exposure": ai_exposure_share(cbsa, yr, refresh=refresh)})
+            except RuntimeError:
+                pass
+    return pd.DataFrame(rows)
+
+
 def build_employment_panel(cbsa_codes, years=range(2015, 2025), *,
                            refresh: bool = False, verbose: bool = False) -> pd.DataFrame:
     """

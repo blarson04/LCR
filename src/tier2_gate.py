@@ -38,7 +38,14 @@ def _zwithin(s: pd.Series, yr: pd.Series) -> pd.Series:
     return (s - g.transform("mean")) / g.transform("std").replace(0, np.nan)
 
 
-def gate(name: str, panel_col: str, *, inverse: bool, weight: float = 0.10, B: int = 800):
+def _standalone_tau(cand, py, zori):
+    st = backtest.summarize(backtest.evaluate_predictions(
+        cand.rename(columns={"cand": "score"}).dropna(), py, (3,), target=zori))
+    return float(st[(st.horizon == 3) & (st.regime == "POOLED")]["mean_tau"].iloc[0])
+
+
+def gate(name: str, panel_col: str, *, inverse: bool, weight: float = 0.10,
+         B: int = 800, auto_orient: bool = True):
     panel = indicators.load_panel().sort_values(["cbsa_code", "year"])
     norm = normalize.normalize()
     scored = score_mod.score()
@@ -51,10 +58,13 @@ def gate(name: str, panel_col: str, *, inverse: bool, weight: float = 0.10, B: i
     cand = panel[["cbsa_code", "year"]].copy()
     cand["cand"] = cz.to_numpy()
 
-    # 1. standalone 3y tau
-    st = backtest.summarize(backtest.evaluate_predictions(
-        cand.rename(columns={"cand": "score"}).dropna(), py, (3,), target=zori))
-    standalone = float(st[(st.horizon == 3) & (st.regime == "POOLED")]["mean_tau"].iloc[0])
+    # 1. standalone 3y tau — auto-orient so the candidate gets its fairest shot
+    standalone = _standalone_tau(cand, py, zori)
+    flipped = False
+    if auto_orient and standalone < 0:
+        cand["cand"] = -cand["cand"]
+        standalone = -standalone
+        flipped = True
 
     # 2. redundancy vs existing indicators (pooled across metro-years)
     merged = norm.merge(cand, on=["cbsa_code", "year"], how="inner")
@@ -83,7 +93,8 @@ def gate(name: str, panel_col: str, *, inverse: bool, weight: float = 0.10, B: i
     reliable = lo > 0
     adopt = (standalone > 0.10) and (max_abs_corr < 0.70) and reliable
     return {"name": name, "standalone_tau": standalone, "top_corr": top,
-            "delta_tau": d_point, "ci": (lo, hi), "reliable": reliable, "adopt": adopt}
+            "delta_tau": d_point, "ci": (lo, hi), "reliable": reliable, "adopt": adopt,
+            "flipped": flipped}
 
 
 def _report(r):
@@ -101,4 +112,20 @@ def _report(r):
 
 
 if __name__ == "__main__":
-    _report(gate("rental_vacancy (P6)", "rental_vacancy", inverse=True))
+    import sys as _sys
+    which = _sys.argv[1] if len(_sys.argv) > 1 else "all"
+    results = []
+    if which in ("all", "p6"):
+        r = gate("rental_vacancy (P6)", "rental_vacancy", inverse=True)
+        _report(r); results.append(r); print()
+    if which in ("all", "p7"):
+        r = gate("ai_exposure (P7)", "ai_exposure", inverse=True)
+        _report(r); results.append(r)
+    if results:
+        pd.DataFrame([{
+            "candidate": x["name"], "standalone_tau_3y": round(x["standalone_tau"], 3),
+            "max_abs_corr": round(abs(x["top_corr"][0][1]), 3),
+            "value_add_delta_tau": round(x["delta_tau"], 3),
+            "ci_lo": round(x["ci"][0], 3), "ci_hi": round(x["ci"][1], 3),
+            "adopted": x["adopt"]} for x in results]).to_csv(
+            config.PROCESSED_DIR / "tier2_gates.csv", index=False)
