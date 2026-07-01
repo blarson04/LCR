@@ -42,6 +42,8 @@ CENSUS_RAW_DIR.mkdir(parents=True, exist_ok=True)
 _CBSA_GEO = "metropolitan statistical area/micropolitan statistical area"
 _POP_VAR = "B01003_001E"   # ACS table B01003: total population
 _HU_VAR = "B25001_001E"    # ACS table B25001: total housing units (permits denominator)
+_VAC_FORRENT = "B25004_002E"  # B25004: vacant units 'for rent'
+_VAC_RENTER = "B25003_003E"   # B25003: renter-occupied units (vacancy-rate denominator)
 
 # ACS1 release years we attempt for the population panel (2020 has no ACS1).
 ACS1_YEARS = (2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023)
@@ -125,6 +127,28 @@ def build_housing_panel(years=ACS1_YEARS, *, refresh: bool = False) -> pd.DataFr
     for yr in years:
         try:
             frames.append(fetch_housing_units(yr, refresh=refresh))
+        except RuntimeError as e:
+            print(f"  [skip] {yr}: {e.__class__.__name__} — {str(e).splitlines()[0]}")
+    panel = pd.concat(frames, ignore_index=True)
+    return panel.sort_values(["cbsa_code", "year"]).reset_index(drop=True)
+
+
+def fetch_vacancy(year: int, *, refresh: bool = False) -> pd.DataFrame:
+    """One year of metro rental vacancy: [cbsa_code, name, rental_vacancy, year].
+    rental_vacancy = vacant-for-rent / (renter-occupied + vacant-for-rent)."""
+    df = fetch_acs1(year, [_VAC_FORRENT, _VAC_RENTER], refresh=refresh)
+    df = df[df["name"].str.endswith("Metro Area")].copy()
+    denom = df[_VAC_RENTER] + df[_VAC_FORRENT]
+    df["rental_vacancy"] = df[_VAC_FORRENT] / denom.where(denom > 0)
+    return df[["cbsa_code", "name", "rental_vacancy", "year"]].reset_index(drop=True)
+
+
+def build_vacancy_panel(years=ACS1_YEARS, *, refresh: bool = False) -> pd.DataFrame:
+    """Stack rental vacancy across ACS1 years (a Tier-2 candidate supply/demand signal)."""
+    frames = []
+    for yr in years:
+        try:
+            frames.append(fetch_vacancy(yr, refresh=refresh))
         except RuntimeError as e:
             print(f"  [skip] {yr}: {e.__class__.__name__} — {str(e).splitlines()[0]}")
     panel = pd.concat(frames, ignore_index=True)

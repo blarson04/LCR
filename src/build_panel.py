@@ -109,6 +109,7 @@ def assemble_panel(universe: pd.DataFrame) -> pd.DataFrame:
     print("  pulling sources ...")
     pop_panel = census.build_population_panel()[["cbsa_code", "year", "population"]]
     hu_panel = census.build_housing_panel()[["cbsa_code", "year", "housing_units"]]
+    vac = census.build_vacancy_panel()[["cbsa_code", "year", "rental_vacancy"]]
     mig = irs_migration.build_migration_panel()[["cbsa_code", "year", "net_migration"]]
     perm = (permits.build_permits_panel()[["cbsa_code", "year", "total_units", "mf_units"]]
             .rename(columns={"total_units": "permits_total", "mf_units": "permits_mf"}))
@@ -134,12 +135,12 @@ def assemble_panel(universe: pd.DataFrame) -> pd.DataFrame:
         [universe["cbsa_code"], years], names=["cbsa_code", "year"]).to_frame(index=False)
     panel = grid.merge(universe[["cbsa_code", "cbsa_title"]], on="cbsa_code", how="left")
 
-    for src in (pop_panel, hu_panel, mig, perm, inc, emp, zori, zhvi):
+    for src in (pop_panel, hu_panel, vac, mig, perm, inc, emp, zori, zhvi):
         panel = panel.merge(src, on=["cbsa_code", "year"], how="left")
     panel = panel.merge(mtg, on="year", how="left")  # national rate, broadcast
 
     ordered = ["cbsa_code", "cbsa_title", "year", "population", "housing_units",
-               "net_migration", "permits_total", "permits_mf", "total_emp",
+               "rental_vacancy", "net_migration", "permits_total", "permits_mf", "total_emp",
                "avg_annual_pay", "emp_hhi", "per_capita_income", "zori", "zhvi",
                "mortgage_rate_30y"]
     return panel[ordered].sort_values(["cbsa_code", "year"]).reset_index(drop=True)
