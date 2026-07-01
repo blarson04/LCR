@@ -41,6 +41,8 @@ def build() -> Path:
     wsch = pd.read_csv(PROC / "weight_schemes.csv")
     pr_red = pd.read_csv(PROC / "price_return_redundancy.csv")
     pr_appr = pd.read_csv(PROC / "price_return_appreciation.csv")
+    gates_path = PROC / "tier2_gates.csv"
+    gates = pd.read_csv(gates_path) if gates_path.exists() else pd.DataFrame()
 
     full_tau = float(abl.loc[abl.variant == "Full model", "tau_3y"].iloc[0])
     ft = tau[tau.ranking == "full"].iloc[0]
@@ -104,6 +106,19 @@ def build() -> Path:
     appr["appr_p@10_3y"] = appr["appr_p@10_3y"].map(lambda v: f"{v:.2f}")
     appr = appr.rename(columns={"predictor": "Predictor of forward appreciation",
                                 "appr_tau_3y": "3y τ", "appr_p@10_3y": "3y P@10", "appr_tau_1y": "1y τ"})
+
+    # P6/P7 Tier-2 gates
+    if len(gates):
+        gt = gates.rename(columns={
+            "candidate": "Candidate", "standalone_tau_3y": "standalone 3y τ",
+            "max_abs_corr": "max |corr|", "value_add_delta_tau": "value-add Δτ",
+            "adopted": "adopted?"})
+        gt["95% CI"] = gt.apply(lambda r: f"[{r['ci_lo']:+.3f}, {r['ci_hi']:+.3f}]", axis=1)
+        gt["adopted?"] = gt["adopted?"].map({True: "yes", False: "no"})
+        gt = gt[["Candidate", "standalone 3y τ", "max |corr|", "value-add Δτ", "95% CI", "adopted?"]]
+        gates_tbl = _tbl(gt)
+    else:
+        gates_tbl = "_(run src/tier2_gate.py to generate)_"
 
     # P3 gaps
     g = gaps.copy()
@@ -218,13 +233,33 @@ total-return outcome (addresses W5, the narrow-target critique).
 
 ---
 
+## P6 & P7 — Tier-2 candidate indicators (gated)
+
+Each candidate was tested before adoption: standalone predictive τ, redundancy with existing
+indicators, and whether augmenting the composite at 10% *reliably* improves 3-yr τ (bootstrap CI).
+
+{gates_tbl}
+
+- **Vacancy (P6)** — ACS rental vacancy (chosen over Apartment List for reproducibility). Has
+  standalone signal but is partly redundant with `cost_to_own_vs_rent` and doesn't reliably help.
+- **AI-exposure (P7)** — an industry-level proxy (metro employment share in the highest
+  gen-AI-exposure NAICS sectors) built from cached QCEW, since BLS OEWS occupation files block bot
+  downloads (403). Genuinely non-redundant but weak, with zero reliable value-add.
+
+**Neither is adopted as a scored indicator** — both are kept as panel *context* columns. The
+recurring Tier-2 result: **no new free signal reliably improved the model**, reinforcing that it's
+a parsimonious, honestly-bounded framework (the gate is doing its job).
+
+---
+
 ## Status → what's next
 
 - **Done:** v2 model = de-duplicated 8-indicator scheme (P4); honest framing (real signal,
-  comparable to momentum, beats equal-weight/persistence); CIs reported; price/return gated (P5);
-  UI upgraded (track record, rank-range uncertainty, why-this-rank, compare, regime flag).
-- **Remaining Tier 2** (each gated by the redundancy/ablation test): vacancy (Apartment List),
-  AI-exposure indicator.
+  comparable to momentum, beats equal-weight/persistence); CIs reported; price/return (P5),
+  vacancy (P6), and AI-exposure (P7) all gated out with the model held parsimonious; UI upgraded
+  (track record, rank-range uncertainty, why-this-rank, compare, regime flag, context measures).
+- **Future refinements (data-gated):** occupation-level AI exposure if accessible OEWS data is
+  found; executed-rent / capital-markets data (paid).
 """
     OUT.write_text(md, encoding="utf-8")
     return OUT

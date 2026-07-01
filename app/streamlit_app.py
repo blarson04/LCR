@@ -300,6 +300,13 @@ raw_year = raw[raw["year"] == SCORE_YEAR].set_index("cbsa_code")
 norm_year = norm[norm["year"] == SCORE_YEAR].set_index("cbsa_code")
 pctile = norm_year[list(INDICATORS)].rank(pct=True) * 100
 
+# Context measures — tested as candidate indicators (P6/P7) but gated out
+# (no reliable accuracy gain), kept for description only.
+CTX = {"rental_vacancy": ("Rental vacancy", "lower = healthier"),
+       "ai_exposure": ("AI-exposure (white-collar share)", "higher = more AI-exposed")}
+ctx_year = panel[panel["year"] == SCORE_YEAR].set_index("cbsa_code")
+ctx_pctile = ctx_year[list(CTX)].rank(pct=True) * 100
+
 CUR_REGIME = regime_of(SCORE_YEAR)
 NAT_GROWTH = national_rent_growth(panel, SCORE_YEAR)
 
@@ -478,6 +485,22 @@ if page == "Metro detail":
                .map(lambda v: grad_css(v / 100.0), subset=["Percentile"])
                .set_properties(subset=["Indicator"], **{"font-weight": "600", "color": INK}))
     st.dataframe(dstyler, hide_index=True, use_container_width=True, height=395)
+
+    # Context measures (tested but not scored — P6/P7)
+    ctx_rows = []
+    for col, (label, note) in CTX.items():
+        val = ctx_year[col].get(code, float("nan"))
+        ctx_rows.append({"Context measure": label,
+                         "Value": "—" if pd.isna(val) else f"{val*100:.1f}%",
+                         "Pctile": ctx_pctile[col].get(code, float("nan")), "Note": note})
+    ctx_df = pd.DataFrame(ctx_rows)
+    st.markdown("<div class='cap' style='margin-top:.8rem'><b>Context</b> — tested as candidate "
+                "indicators (vacancy P6, AI-exposure P7) but not scored: neither reliably improved "
+                "accuracy. Shown for description only.</div>", unsafe_allow_html=True)
+    st.dataframe(
+        ctx_df.style.format({"Pctile": "{:.0f}"}).set_properties(
+            subset=["Context measure"], **{"font-weight": "600", "color": INK}),
+        hide_index=True, use_container_width=True)
 
     tcol1, tcol2 = st.columns(2)
     hist = panel[panel["cbsa_code"] == code][["year", "zori"]].dropna()
