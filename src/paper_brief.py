@@ -118,21 +118,23 @@ def build() -> Path:
 
     panel_years = f"{int(panel['year'].min())}–{int(panel['year'].max())}"
     metric = manifest.get("evaluation_metric", {})
+    n_ind = len(config.INDICATORS)
+    mv = config.MODEL_VERSION
 
     # ---- assemble --------------------------------------------------------
-    md = f"""# Multifamily Rent-Growth Screener — Paper Brief
+    md = f"""# Multifamily Rent-Growth Screener — Paper Brief (model v{mv})
 
 *Auto-generated {datetime.now(timezone.utc):%Y-%m-%d} from the model outputs. Regenerate with
 `python src/paper_brief.py`. Every number here is pulled directly from the processed data —
-nothing is hand-typed. Companion source docs: `decision-log.md` (the "why") and
-`v1-build-spec.md` (the "how").*
+nothing is hand-typed. Companion docs: `decision-log.md` (the "why"), `v1-build-spec.md` (v1
+how), `v2-plan.md` + `paper/v2-findings.md` (the rigor pass that produced v2).*
 
 ---
 
 ## 1. Summary (abstract-ready)
 
 A transparent, backtested **screening framework** ranks the **{n_metros} largest US metros**
-by their fundamentals for **3-year forward rent growth**, using only free public data. Ten
+by their fundamentals for **3-year forward rent growth**, using only free public data. {n_ind}
 indicators across five themes are normalized cross-sectionally within each year and combined
 with hand-set weights into a composite score. Walk-forward validation shows the framework is
 **strong in normal regimes** (pre-COVID 3-year weighted Kendall's τ ≈ **{pc3:.2f}**, precision@10
@@ -167,7 +169,7 @@ population floor but fails the rent gate is logged:
 
 ## 3. The model
 
-Ten indicators in five themes; **hand-set weights** (v1), summing to 100%. Each indicator is
+{n_ind} indicators (the v2 de-duplicated set) in five themes; **hand-set weights**, summing to 100%. Each indicator is
 **z-scored across metros within each year** (so a national shock cancels and only the
 metro-to-metro spread survives); "inverse" indicators are sign-flipped so **higher = better**
 everywhere; the weighted sum is the composite score, and metros are ranked within the year.
@@ -244,7 +246,7 @@ record auditable — a core credibility differentiator.
 - No capital-markets data (cap rates, transaction volume) — paid; **rent growth is the proxy for profitability**.
 - **ZORI is asking rent, not executed rent** (can overstate momentum in fast markets).
 - Short usable history (~2015+) → few independent windows → directional, not significance-grade.
-- **v1 weights are hand-set hypotheses, validated but not optimized.**
+- **Weights are hand-set hypotheses, validated but not optimized** (v2 uses the de-duplicated 8-indicator set).
 - Universe frozen once (mild survivorship); Apartment List vacancy signal deferred to v1.1.
 
 ---

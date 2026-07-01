@@ -129,10 +129,39 @@ noted as a hypothesis, not adopted.
 
 ---
 
-## Tier 1 complete → what's next
+## P5 — Price/return dimension (gated)
 
-- **Adopt for v2:** the de-duplicated 8-indicator scheme; frame accuracy honestly (real signal,
-  comparable to momentum, beats equal-weight/persistence); report CIs everywhere.
-- **Tier 2** (each gated by the redundancy/ablation test): price/return dimension, vacancy,
+Tests whether adding home-price/return signals is worthwhile. **Redundancy** (top correlations
+with existing indicators):
+
+| New measure | Existing indicator | corr |
+| --- | --- | --- |
+| price_to_rent | cost_to_own_vs_rent | +1.00 |
+| home_appreciation | trailing_rent_growth | +0.78 |
+| home_appreciation | cost_to_own_vs_rent | -0.64 |
+| price_to_rent | trailing_rent_growth | -0.40 |
+
+`price_to_rent` is the same as the existing `cost_to_own_vs_rent`; `home_appreciation` tracks
+`trailing_rent_growth`. **Predicting forward home-price appreciation:**
+
+| Predictor of forward appreciation | 3y τ | 3y P@10 | 1y τ |
+| --- | --- | --- | --- |
+| rent-growth composite (v2) | 0.320 | 0.55 | 0.373 |
+| price momentum (trailing appr) | 0.256 | 0.38 | 0.528 |
+| high yield (rent/price) | -0.046 | 0.30 | -0.019 |
+| low valuation (-price/rent) | -0.046 | 0.30 | -0.019 |
+
+Valuation/yield "return screens" have ~no predictive signal, while the **rent-growth composite
+predicts appreciation too** (τ ≈ 0.32). **Decision:** do NOT add a yield indicator or a separate
+valuation screen; instead report the model's appreciation skill as a validated secondary
+total-return outcome (addresses W5, the narrow-target critique).
+
+---
+
+## Status → what's next
+
+- **Done:** v2 model = de-duplicated 8-indicator scheme (P4); honest framing (real signal,
+  comparable to momentum, beats equal-weight/persistence); CIs reported; price/return gated (P5);
+  UI upgraded (track record, rank-range uncertainty, why-this-rank, compare, regime flag).
+- **Remaining Tier 2** (each gated by the redundancy/ablation test): vacancy (Apartment List),
   AI-exposure indicator.
-- **Tier 3:** surface the track record + uncertainty in the UI; "why this rank" panel; regime flag.

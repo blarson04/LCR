@@ -39,6 +39,8 @@ def build() -> Path:
     tau = pd.read_csv(PROC / "uncertainty_tau.csv")
     gaps = pd.read_csv(PROC / "uncertainty_gaps.csv")
     wsch = pd.read_csv(PROC / "weight_schemes.csv")
+    pr_red = pd.read_csv(PROC / "price_return_redundancy.csv")
+    pr_appr = pd.read_csv(PROC / "price_return_appreciation.csv")
 
     full_tau = float(abl.loc[abl.variant == "Full model", "tau_3y"].iloc[0])
     ft = tau[tau.ranking == "full"].iloc[0]
@@ -90,6 +92,18 @@ def build() -> Path:
     best_scheme = wsch.sort_values("tau_3y", ascending=False).iloc[0]["scheme"]
     ok = wsch[~wsch["reliably_worse"]].sort_values(["n_ind", "gap_vs_best"])
     rec_scheme = ok.iloc[0]["scheme"] if len(ok) else best_scheme
+
+    # P5 price/return
+    pr_top = (pr_red.reindex(pr_red["corr"].abs().sort_values(ascending=False).index)
+              .groupby("new_measure").head(2))
+    pr_top["corr"] = pr_top["corr"].map(lambda v: f"{v:+.2f}")
+    pr_top = pr_top.rename(columns={"new_measure": "New measure", "indicator": "Existing indicator", "corr": "corr"})
+    appr = pr_appr.copy()
+    for c in ["appr_tau_3y", "appr_tau_1y"]:
+        appr[c] = appr[c].map(lambda v: f"{v:.3f}")
+    appr["appr_p@10_3y"] = appr["appr_p@10_3y"].map(lambda v: f"{v:.2f}")
+    appr = appr.rename(columns={"predictor": "Predictor of forward appreciation",
+                                "appr_tau_3y": "3y τ", "appr_p@10_3y": "3y P@10", "appr_tau_1y": "1y τ"})
 
     # P3 gaps
     g = gaps.copy()
@@ -185,13 +199,32 @@ noted as a hypothesis, not adopted.
 
 ---
 
-## Tier 1 complete → what's next
+## P5 — Price/return dimension (gated)
 
-- **Adopt for v2:** the de-duplicated 8-indicator scheme; frame accuracy honestly (real signal,
-  comparable to momentum, beats equal-weight/persistence); report CIs everywhere.
-- **Tier 2** (each gated by the redundancy/ablation test): price/return dimension, vacancy,
+Tests whether adding home-price/return signals is worthwhile. **Redundancy** (top correlations
+with existing indicators):
+
+{_tbl(pr_top)}
+
+`price_to_rent` is the same as the existing `cost_to_own_vs_rent`; `home_appreciation` tracks
+`trailing_rent_growth`. **Predicting forward home-price appreciation:**
+
+{_tbl(appr)}
+
+Valuation/yield "return screens" have ~no predictive signal, while the **rent-growth composite
+predicts appreciation too** (τ ≈ 0.32). **Decision:** do NOT add a yield indicator or a separate
+valuation screen; instead report the model's appreciation skill as a validated secondary
+total-return outcome (addresses W5, the narrow-target critique).
+
+---
+
+## Status → what's next
+
+- **Done:** v2 model = de-duplicated 8-indicator scheme (P4); honest framing (real signal,
+  comparable to momentum, beats equal-weight/persistence); CIs reported; price/return gated (P5);
+  UI upgraded (track record, rank-range uncertainty, why-this-rank, compare, regime flag).
+- **Remaining Tier 2** (each gated by the redundancy/ablation test): vacancy (Apartment List),
   AI-exposure indicator.
-- **Tier 3:** surface the track record + uncertainty in the UI; "why this rank" panel; regime flag.
 """
     OUT.write_text(md, encoding="utf-8")
     return OUT
