@@ -1,0 +1,9 @@
+comparison,kind,delta,lo,hi,excludes_0
+full - equal_weight,baseline uplift,0.03898560667562295,0.008174703218532283,0.06863330716360112,True
+full - best_single (momentum),baseline uplift,0.052905160847487254,-0.03428161408409969,0.14015231088302782,False
+full - persistence,baseline uplift,0.22883703546055967,0.13825813400322512,0.3394199940814248,True
+drop:cost_to_own_vs_rent (drop helps if >0),ablation delta,0.025433076946325184,-0.0022742573172265146,0.05632892029072392,False
+drop:income_growth (drop helps if >0),ablation delta,0.01464396477531582,-0.018333882554948836,0.04410519438170373,False
+drop:employment_diversity (drop helps if >0),ablation delta,0.007290364653762149,-0.012497358247804805,0.022306508754875963,False
+drop:permits_to_stock (drop helps if >0),ablation delta,-0.03485414048022828,-0.09736349360701144,0.012719535532535013,False
+drop:net_migration (drop helps if >0),ablation delta,-0.1503940911190546,-0.20916391495636316,-0.0715157985993014,True
