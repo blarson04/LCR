@@ -31,7 +31,9 @@ The pseudo-nowcast backtest (rebuild history with the nowcast's proxies — PEP 
 
 **Diagnosis (decomposition confirms it):** pooled 3-yr τ by variant — finalized **0.444**; only-migration-proxied **0.423 (95%)**; pseudo-but-jobs+income-finalized **0.427 (96%)**; full pseudo **0.332 (75%)**. So the migration proxy costs almost nothing, and **carrying forward `job_growth` + `income_growth` accounts for essentially the entire failure**. The nowcast is *one input away*: fresh current-year employment/wage data (CES) would lift retention to ~96%, clearing the 85% gate. CES is deferred only because BLS metro employment needs a bot-blocked area-code crosswalk. **Future work:** source CES (e.g. via FRED's SAE series) and re-run M3 — the nowcast's viability hinges on fresh jobs data, not on migration.
 
-**Consequence:** M5 (surfacing the provisional ranking on the site) is **gated OFF** — the provisional 2025 ranking stays an internal artifact, not a default view. M4 (registry provisional flag + reconciliation) may still be built to freeze the provisional run *as provisional* alongside this negative result.
+**Consequence:** M5 (surfacing the provisional ranking on the site) is **gated OFF** — the provisional 2025 ranking stays an internal artifact, not a default view.
+
+**Final v2.1 disposition (2026-07-02):** the nowcast is **left out of production** and finalized as a documented experiment. Rationale: it fails the pre-committed gate, and the only viable rescue (fresh CES employment/wages) is a *noisier* proxy than the finalized jobs data that produced the 96% ceiling, so it might not clear 85% even if built — forcing a marginal pass with noisier data would cut against the project's rigor-over-reach principle. The CES-via-FRED path is confirmed feasible (FRED's SAE metro series are reachable with our key) and is the **prioritized future step** if v2.1 is revisited; the migration linchpin already works, so the nowcast is one accessible input away from viable. M4 (registry provisional freeze) not built — nothing published to pre-register.
 
 ### 2026-07-02 — v2.1 nowcast M1: migration proxy validated; M3 gate pre-committed
 

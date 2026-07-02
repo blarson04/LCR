@@ -97,3 +97,19 @@ Mean top-10 overlap **6.1/10**.
 
 **Gate (pre-committed):** retain ≥ 85% of pooled 3-yr τ AND mean top-10
 overlap ≥ 7/10 → **FAIL — internal experiment only**.
+
+**Which proxy causes the loss? (pooled 3-yr τ by variant)**
+
+| variant | pooled τ | retention |
+| --- | --- | --- |
+| finalized (all real) | 0.444 | 100% |
+| only migration proxied | 0.423 | 95% |
+| pseudo but jobs+income finalized | 0.427 | 96% |
+| full pseudo-nowcast | 0.332 | 75% |
+
+The migration proxy costs almost nothing; carrying forward `job_growth`+`income_growth` drives the entire failure.
+
+### Decision & recommendation
+Gate **not met** → v2.1 ships as an **internal experiment**; the provisional ranking is NOT surfaced as a site default (M5 gated off). This is a documented negative result.
+
+**The fix is specific and feasible:** the failure is entirely the carried-forward employment/income growth (see decomposition). Fresh current-year metro employment + wages (CES) would lift retention toward the ~96% ceiling and likely clear the gate. CES metro series ARE reachable via FRED's SAE series (verified) — this is the prioritized future step. The migration linchpin already works, so the nowcast is one accessible input away from viable.

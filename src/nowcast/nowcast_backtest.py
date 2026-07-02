@@ -119,6 +119,30 @@ def _write_doc(r):
         "mean_precision@10_fin": "P@10 fin", "mean_precision@10_ps": "P@10 pseudo"})
     m["regime"] = m["regime"].str.replace("_", "-")
     verdict = "PASS — publish provisional nowcast" if r["passed"] else "FAIL — internal experiment only"
+    decomp_path = config.PROCESSED_DIR / "nowcast" / "m3_decomposition.csv"
+    decomp_md = ""
+    if decomp_path.exists():
+        dc = pd.read_csv(decomp_path)
+        decomp_md = ("\n**Which proxy causes the loss? (pooled 3-yr τ by variant)**\n\n"
+                     + _tbl(dc.rename(columns={"variant": "variant", "pooled_tau_3y": "pooled τ",
+                                               "retention": "retention"}),
+                            {"pooled τ": "{:.3f}".format, "retention": "{:.0%}".format})
+                     + "\n\nThe migration proxy costs almost nothing; carrying forward "
+                       "`job_growth`+`income_growth` drives the entire failure.\n")
+    if r["passed"]:
+        decision_md = ("\n### Decision\nGate **passed** — the provisional nowcast may be published "
+                       "with a visible 'provisional' badge and per-indicator provenance.\n")
+    else:
+        decision_md = (
+            "\n### Decision & recommendation\n"
+            "Gate **not met** → v2.1 ships as an **internal experiment**; the provisional ranking is "
+            "NOT surfaced as a site default (M5 gated off). This is a documented negative result.\n\n"
+            "**The fix is specific and feasible:** the failure is entirely the carried-forward "
+            "employment/income growth (see decomposition). Fresh current-year metro employment + "
+            "wages (CES) would lift retention toward the ~96% ceiling and likely clear the gate. "
+            "CES metro series ARE reachable via FRED's SAE series (verified) — this is the "
+            "prioritized future step. The migration linchpin already works, so the nowcast is one "
+            "accessible input away from viable.\n")
     sec = f"""
 
 ---
@@ -143,7 +167,7 @@ Mean top-10 overlap **{r['mean_overlap']:.1f}/10**.
 
 **Gate (pre-committed):** retain ≥ {GATE_TAU_RETENTION*100:.0f}% of pooled 3-yr τ AND mean top-10
 overlap ≥ {GATE_MIN_TOP10:.0f}/10 → **{verdict}**.
-"""
+{decomp_md}{decision_md}"""
     doc = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
     if "## M3 — Pseudo-nowcast" in doc:
         doc = doc.split("\n\n---\n\n## M3 — Pseudo-nowcast")[0]
