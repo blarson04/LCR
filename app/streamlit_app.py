@@ -34,6 +34,7 @@ sys.path.insert(0, str(ROOT))
 import config                                   # noqa: E402
 from src import indicators, normalize           # noqa: E402
 from src import score as score_mod              # noqa: E402
+from src.nowcast import proxy_map as pmap        # noqa: E402
 
 SCORE_YEAR = score_mod.SCORE_YEAR
 INDICATORS = config.INDICATORS
@@ -366,8 +367,20 @@ st.markdown(f"<div style='background:{_bg};border:1px solid {_bd};border-radius:
 # metro dropdown keeps you on the Metro-detail view. Styled as tabs via CSS.
 _views = ["Map", "Rankings", "Metro detail", "Compare", "Track record & method"]
 if len(nowcast):
-    _views.append("2025 outlook (experimental)")
+    _views += ["Accurate vs speculative", "Speculative method"]
 page = st.radio("View", _views, horizontal=True, key="nav", label_visibility="collapsed")
+
+# Reused disclosure banner for the speculative (nowcast) views.
+NOWCAST_BANNER = (
+    "<div style='background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.45);"
+    "border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1.1rem'>"
+    "<div style='color:#EAB308;font-weight:700;font-size:1rem;margin-bottom:.3rem'>"
+    "⚠ Experimental — speculative, preliminary data</div>"
+    f"<div style='color:{BODY};font-size:.9rem;line-height:1.5'>"
+    "The <b>speculative</b> 2025→2028 projections are a <b>nowcast</b> built on live rent/permit data "
+    "plus <b>preliminary proxies</b> for slower-publishing inputs (migration, jobs, income) — "
+    "estimated data that will be revised, so it's inherently more uncertain than the accurate "
+    "(validated 2023) projections. An early, exploratory read, not a firm forecast.</div></div>")
 
 
 # ---- 1. Map ---------------------------------------------------------------
@@ -648,58 +661,87 @@ metro — nothing is hand-picked.""")
         profitability. Weights are hand-set hypotheses, not fitted.""", unsafe_allow_html=True)
 
 
-# ---- 6. 2025 outlook (experimental nowcast) ------------------------------
-if page == "2025 outlook (experimental)":
-    st.markdown(
-        "<div style='background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.45);"
-        "border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.2rem'>"
-        f"<div style='color:#EAB308;font-weight:700;font-size:1.02rem;margin-bottom:.3rem'>"
-        "⚠ Experimental — speculative, preliminary data</div>"
-        f"<div style='color:{BODY};font-size:.92rem;line-height:1.5'>"
-        "This provisional <b>2025→2028</b> ranking is a <b>nowcast</b>: it uses live rent/permit "
-        "data plus <b>preliminary proxies</b> for slower-publishing inputs (migration, jobs, income), "
-        "so most of each score rests on <b>speculative, estimated data that will be revised</b>. It is "
-        "inherently <b>more uncertain than the validated 2023 ranking</b> shown on every other tab — "
-        "especially in volatile periods. Treat it as an early, exploratory read of where the fresh "
-        "data points, not a firm forecast.</div></div>",
-        unsafe_allow_html=True)
+# ---- 6. Accurate vs speculative 3-year projections -----------------------
+if page == "Accurate vs speculative":
+    st.markdown(NOWCAST_BANNER, unsafe_allow_html=True)
+    section("Accurate vs speculative 3-year projections",
+            "Validated 2023 ranking vs the experimental 2025 nowcast — differences reflect real "
+            "market change AND the nowcast's added uncertainty")
+
+    val = rank_year[["cbsa_code", "cbsa_title", "rank"]].rename(columns={"rank": "acc"})
+    spec = nowcast[["cbsa_code", "rank"]].rename(columns={"rank": "spec"})
+    cmp = val.merge(spec, on="cbsa_code")
+    cmp["move"] = cmp["acc"] - cmp["spec"]        # + = rose in the speculative ranking
+
+    c1, c2 = st.columns(2)
+    c1.markdown("<div class='cap'><b>Accurate — validated 2023, top 10</b></div>", unsafe_allow_html=True)
+    for _, r in cmp.sort_values("acc").head(10).iterrows():
+        c1.markdown(f"<div style='font-size:.9rem'>{int(r['acc'])}. {r['cbsa_title'][:34]}</div>",
+                    unsafe_allow_html=True)
+    c2.markdown("<div class='cap'><b>Speculative — 2025 nowcast, top 10</b></div>", unsafe_allow_html=True)
+    for _, r in cmp.sort_values("spec").head(10).iterrows():
+        c2.markdown(f"<div style='font-size:.9rem'>{int(r['spec'])}. {r['cbsa_title'][:34]}</div>",
+                    unsafe_allow_html=True)
+
+    st.markdown("<div class='cap' style='margin-top:1rem'>Full side-by-side "
+                "(<b>Move</b> = rank change from accurate→speculative; + rose, − fell):</div>",
+                unsafe_allow_html=True)
+    tbl = cmp.sort_values("acc")[["cbsa_title", "acc", "spec", "move"]].rename(columns={
+        "cbsa_title": "Metro", "acc": "Accurate (2023)", "spec": "Speculative (2025)", "move": "Move"})
+    mabs = cmp["move"].abs().max() or 1
+    st.dataframe(
+        tbl.style.format({"Accurate (2023)": "{:.0f}", "Speculative (2025)": "{:.0f}", "Move": "{:+.0f}"})
+           .map(lambda v: grad_css(0.5 + 0.5 * v / mabs), subset=["Move"])
+           .set_properties(subset=["Metro"], **{"font-weight": "600", "color": INK}),
+        hide_index=True, use_container_width=True, height=520)
+    st.caption("Because the two rankings are different years, movement mixes genuine 2023→2025 change "
+               "with the nowcast's proxy uncertainty — read big moves as directional, not precise.")
+
+
+# ---- 7. Speculative method (how the nowcast differs) ---------------------
+if page == "Speculative method":
+    st.markdown(NOWCAST_BANNER, unsafe_allow_html=True)
+    section("How the speculative projection works",
+            "The nowcast method, and how it differs from the accurate (validated) ranking")
+    st.markdown(f"""
+The **accurate** ranking scores each metro on **finalized** public data — but the slowest inputs
+(IRS migration, BEA income) publish ~2 years late, which is why it is anchored to **2023**. The
+**speculative** ranking is a **nowcast**: it runs the *same {N_IND}-indicator model, same weights,
+same scoring* — the only thing that changes is **what data feeds it**. Fast inputs (rent, home
+values, permits) use live 2025 data; slow inputs use **preliminary proxies** or the latest
+available value carried forward. It **shortens the data lag; it does not extend the 3-year forecast
+horizon or change the model.**""")
 
     if len(nc_prov):
         by = nc_prov.groupby("provenance")["weight"].sum()
-        section("Provisional 2025 outlook",
-                f"score data provenance — fast {by.get('fast',0)*100:.0f}% · "
-                f"proxy {by.get('proxy',0)*100:.0f}% · carried-forward {by.get('carried_forward',0)*100:.0f}%")
-    nowc = nowcast.copy()
-    mp = nowc.merge(coords, on="cbsa_code", how="left")
-    fig = px.scatter_geo(mp, lat="lat", lon="lon", color="score", scope="usa",
-                         hover_name="cbsa_title", size=[8] * len(mp), size_max=13,
-                         color_continuous_scale=SCORE_SCALE, color_continuous_midpoint=0,
-                         custom_data=["rank", "score"])
-    fig.update_traces(marker=dict(line=dict(width=0.5, color="rgba(255,255,255,0.35)")),
-                      hovertemplate="<b>%{hovertext}</b><br>Provisional rank %{customdata[0]} · "
-                                    "score %{customdata[1]:.3f}<extra></extra>")
-    fig.update_geos(showland=True, landcolor="#17202B", showlakes=False, subunitcolor="#2A3744",
-                    countrycolor="#2A3744", bgcolor="rgba(0,0,0,0)", showframe=False,
-                    coastlinecolor="#2A3744")
-    fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=12, len=0.7), showlegend=False)
-    st.plotly_chart(style_fig(fig, 460), use_container_width=True)
+        st.markdown(f"<div class='cap'>Score data provenance — <b>fast</b> {by.get('fast',0)*100:.0f}% "
+                    f"· <b>proxy</b> {by.get('proxy',0)*100:.0f}% · <b>carried-forward</b> "
+                    f"{by.get('carried_forward',0)*100:.0f}% (so most of each speculative score rests "
+                    "on estimated, not finalized, data).</div>", unsafe_allow_html=True)
 
-    show = nowc[["rank", "cbsa_title", "score", "bucket_Demand", "bucket_Supply",
-                 "bucket_Affordability", "bucket_Momentum", "bucket_Resilience"]].rename(columns={
-        "rank": "Rank", "cbsa_title": "Metro", "score": "Score", "bucket_Demand": "Demand",
-        "bucket_Supply": "Supply", "bucket_Affordability": "Afford.",
-        "bucket_Momentum": "Moment.", "bucket_Resilience": "Resil."})
-    smin, smax = show["Score"].min(), show["Score"].max()
-    numc = ["Score", "Demand", "Supply", "Afford.", "Moment.", "Resil."]
-    st.dataframe(
-        show.style.format({c: "{:+.3f}" for c in numc})
-            .map(lambda v: grad_css((v - smin) / (smax - smin)), subset=["Score"])
-            .set_properties(subset=["Metro"], **{"font-weight": "600", "color": INK}),
-        hide_index=True, use_container_width=True, height=560)
-    st.markdown("<div class='cap'>Provisional — will be reconciled against the finalized score when "
-                "real data lands. The migration proxy (Census PEP) is validated; fresher employment/"
-                "income data is the main planned improvement.</div>",
+    prows = []
+    for k in INDICATORS:
+        pm = pmap.PROXY_MAP.get(k, {})
+        prows.append({"Indicator": PRETTY[k], "In the speculative ranking": pm.get("strategy", ""),
+                      "Accurate source": pm.get("finalized", ""),
+                      "Speculative proxy": pm.get("proxy", "")})
+    st.markdown("<div class='sec' style='font-size:1.05rem;margin-top:.6rem'>What changes, indicator by indicator</div>",
                 unsafe_allow_html=True)
+    st.dataframe(pd.DataFrame(prows).style.set_properties(
+        subset=["Indicator"], **{"font-weight": "600", "color": INK}),
+        hide_index=True, use_container_width=True)
+
+    cols = st.columns(2)
+    cols[0].markdown("""<div class='sec' style='font-size:1.05rem'>Why it's more uncertain</div>
+    Most of the score uses estimated data that gets revised. The **migration proxy (Census PEP) is
+    validated** and tracks the finalized source closely, but the **employment and income figures are
+    carried forward** from the latest finalized year, which is the main source of added noise —
+    especially in fast-moving markets.""", unsafe_allow_html=True)
+    cols[1].markdown("""<div class='sec' style='font-size:1.05rem'>What would sharpen it</div>
+    Fresh current-year employment and wage data (from BLS CES, reachable via FRED) would replace the
+    carried-forward figures and materially tighten the speculative projection. Until then, read it as
+    an early signal and rely on the accurate 2023 ranking for the validated call.""",
+    unsafe_allow_html=True)
 
 
 st.markdown(f"""<hr style='margin-top:2.5rem'>
