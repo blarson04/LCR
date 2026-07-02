@@ -58,3 +58,42 @@ persistent (0.84), so carrying forward a 5%-weight indicator one year is defensi
 M2 — assemble the provisional current-year (2025) nowcast panel (needs the CES job/wage proxy).
 M3 — pseudo-nowcast backtest: rebuild history with proxies only and measure the accuracy cost vs
 the finalized model, with a pre-committed go/no-go gate.
+
+
+---
+
+## M3 — Pseudo-nowcast backtest (accuracy cost)
+
+Rebuilding history with the nowcast's proxies (PEP migration, carried-forward slow
+indicators, live rent/permits) and running the standard walk-forward evaluation:
+
+| h | regime | τ finalized | τ pseudo | P@10 fin | P@10 pseudo |
+| --- | --- | --- | --- | --- | --- |
+| 1 | pre-covid | 0.636 | 0.550 | 0.78 | 0.72 |
+| 1 | shock | 0.349 | 0.237 | 0.45 | 0.40 |
+| 1 | normalization | 0.256 | 0.327 | 0.60 | 0.50 |
+| 1 | POOLED | 0.500 | 0.429 | 0.66 | 0.60 |
+| 3 | pre-covid | 0.588 | 0.480 | 0.85 | 0.77 |
+| 3 | shock | 0.157 | 0.036 | 0.25 | 0.35 |
+| 3 | POOLED | 0.444 | 0.332 | 0.65 | 0.63 |
+
+**3-yr pooled τ:** finalized **0.444** vs pseudo-nowcast **0.332** →
+retention **75%**. Gap **+0.112**, 95% CI
+[+0.038, +0.182] (metro-cluster bootstrap).
+
+**Ranking agreement (pseudo vs finalized), per year:**
+
+| year | spearman | top10_overlap |
+| --- | --- | --- |
+| 2016 | 0.821 | 9/10 |
+| 2017 | 0.881 | 8/10 |
+| 2018 | 0.860 | 8/10 |
+| 2019 | 0.833 | 6/10 |
+| 2021 | 0.661 | 5/10 |
+| 2022 | 0.736 | 4/10 |
+| 2023 | 0.749 | 3/10 |
+
+Mean top-10 overlap **6.1/10**.
+
+**Gate (pre-committed):** retain ≥ 85% of pooled 3-yr τ AND mean top-10
+overlap ≥ 7/10 → **FAIL — internal experiment only**.

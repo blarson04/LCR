@@ -52,39 +52,40 @@ def _latest(df: pd.DataFrame, col: str, before: int) -> pd.Series:
     return d.groupby("cbsa_code")[col].last()
 
 
-def build_nowcast_indicators() -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Return (indicators-with-nowcast-year, provenance summary)."""
+def nowcast_row(year: int, panel: pd.DataFrame, ind: pd.DataFrame, pep: pd.DataFrame) -> pd.DataFrame:
+    """Build the nowcast/pseudo-nowcast indicator row (one per metro) for `year`
+    using the proxy scheme. Shared by M2 (current year) and M3 (historical years)
+    so the pseudo-nowcast test uses identical logic. Uses PEP for the target year
+    if published, else the latest PEP; slow inputs carried from before `year`."""
+    p_y = panel[panel["year"] == year].set_index("cbsa_code")
+    i_y = ind[ind["year"] == year].set_index("cbsa_code")
+    pep_y = pep[pep["year"] == min(year, pep["year"].max())].set_index("cbsa_code")["pep_net_migration"]
+    stock = _latest(panel, "housing_units", year)
+    pop = _latest(panel, "population", year)
+    income = _latest(panel, "per_capita_income", year)
+
+    nc = pd.DataFrame(index=i_y.index)
+    nc["cbsa_title"] = i_y["cbsa_title"]
+    nc["trailing_rent_growth"] = i_y["trailing_rent_growth"]         # fast
+    nc["cost_to_own_vs_rent"] = i_y["cost_to_own_vs_rent"]           # fast
+    nc["permits_to_stock"] = p_y["permits_total"] / stock           # live permits / carried stock
+    nc["net_migration"] = pep_y / pop                               # PEP proxy / carried pop
+    nc["rent_to_income"] = (p_y["zori"] * 12.0) / income            # live rent / carried income
+    for k in ("job_growth", "income_growth", "employment_diversity"):
+        nc[k] = _latest(ind, k, year)                               # carried forward
+    nc = nc.reset_index()
+    nc["year"] = year
+    return nc[ind.columns]
+
+
+def build_nowcast_indicators(year: int = NOWCAST_YEAR) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Return (finalized indicators with `year`'s row replaced by the nowcast row,
+    provenance summary)."""
     panel = indicators.load_panel()
     ind = indicators.compute_indicators(panel)
     pep = census_pep.build_pep_migration_panel()
-
-    p25 = panel[panel["year"] == NOWCAST_YEAR].set_index("cbsa_code")
-    i25 = ind[ind["year"] == NOWCAST_YEAR].set_index("cbsa_code")
-    pep_latest = pep[pep["year"] == pep["year"].max()].set_index("cbsa_code")["pep_net_migration"]
-    stock = _latest(panel, "housing_units", NOWCAST_YEAR)
-    pop = _latest(panel, "population", NOWCAST_YEAR)
-    income = _latest(panel, "per_capita_income", NOWCAST_YEAR)
-
-    nc = pd.DataFrame(index=i25.index)
-    nc["cbsa_title"] = i25["cbsa_title"]
-    # fast (real current-year, already computed by indicators.py)
-    nc["trailing_rent_growth"] = i25["trailing_rent_growth"]
-    nc["cost_to_own_vs_rent"] = i25["cost_to_own_vs_rent"]
-    # proxies
-    nc["permits_to_stock"] = p25["permits_total"] / stock            # live permits / carried stock
-    nc["net_migration"] = pep_latest / pop                           # PEP proxy / carried pop
-    nc["rent_to_income"] = (p25["zori"] * 12.0) / income             # live rent / carried income
-    # carry-forwards (latest finalized indicator value)
-    for k in ("job_growth", "income_growth", "employment_diversity"):
-        nc[k] = _latest(ind, k, NOWCAST_YEAR)
-
-    nc = nc.reset_index()
-    nc["year"] = NOWCAST_YEAR
-    nc = nc[ind.columns]                                             # match column order
-
-    # Splice: finalized indicators for prior years + nowcast row for NOWCAST_YEAR.
-    ind_nc = pd.concat([ind[ind["year"] != NOWCAST_YEAR], nc], ignore_index=True)
-
+    nc = nowcast_row(year, panel, ind, pep)
+    ind_nc = pd.concat([ind[ind["year"] != year], nc], ignore_index=True)
     prov = pd.DataFrame([{"indicator": k, "provenance": PROVENANCE[k],
                           "weight": config.INDICATORS[k]["weight"]} for k in config.INDICATORS])
     return ind_nc, prov
