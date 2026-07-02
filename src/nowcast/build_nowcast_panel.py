@@ -93,11 +93,16 @@ def build_nowcast_indicators(year: int = NOWCAST_YEAR) -> tuple[pd.DataFrame, pd
 
 def build() -> tuple[pd.DataFrame, pd.DataFrame]:
     ind_nc, prov = build_nowcast_indicators()
-    scored = score_mod.score(normalize.normalize(ind_nc))
+    norm = normalize.normalize(ind_nc)
+    scored = score_mod.score(norm)
     ranking = scored[scored["year"] == NOWCAST_YEAR].sort_values("rank").reset_index(drop=True)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ranking.to_csv(OUT_DIR / f"provisional_{NOWCAST_YEAR}_ranking.csv", index=False)
     prov.to_csv(OUT_DIR / "provenance.csv", index=False)
+    # Save the nowcast-year raw + normalized indicators so the site can render the
+    # full speculative forecast (metro detail, percentiles) without recomputing.
+    ind_nc[ind_nc["year"] == NOWCAST_YEAR].to_csv(OUT_DIR / f"nowcast_{NOWCAST_YEAR}_raw.csv", index=False)
+    norm[norm["year"] == NOWCAST_YEAR].to_csv(OUT_DIR / f"nowcast_{NOWCAST_YEAR}_norm.csv", index=False)
     return ranking, prov
 
 

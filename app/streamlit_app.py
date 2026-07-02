@@ -295,16 +295,33 @@ def load_data():
     nowcast = pd.read_csv(nc_path, dtype={"cbsa_code": str}) if nc_path.exists() else pd.DataFrame()
     prov_path = nc_dir / "provenance.csv"
     nc_prov = pd.read_csv(prov_path) if prov_path.exists() else pd.DataFrame()
-    return scored, raw, norm, panel, coords, backtest, registry, nowcast, nc_prov
+    sr = nc_dir / "nowcast_2025_raw.csv"
+    nc_raw = pd.read_csv(sr, dtype={"cbsa_code": str}) if sr.exists() else pd.DataFrame()
+    sn = nc_dir / "nowcast_2025_norm.csv"
+    nc_norm = pd.read_csv(sn, dtype={"cbsa_code": str}) if sn.exists() else pd.DataFrame()
+    return scored, raw, norm, panel, coords, backtest, registry, nowcast, nc_prov, nc_raw, nc_norm
 
 
 inject_css()
-scored, raw, norm, panel, coords, backtest, registry, nowcast, nc_prov = load_data()
+(scored, raw, norm, panel, coords, backtest, registry,
+ nowcast, nc_prov, nc_raw, nc_norm) = load_data()
+SPEC_YEAR = 2025
+HAS_SPEC = len(nowcast) > 0 and len(nc_raw) > 0 and len(nc_norm) > 0
+
 rank_year = scored[scored["year"] == SCORE_YEAR].copy()
 rank_year = rank_year.merge(rank_ranges(norm, SCORE_YEAR), on="cbsa_code", how="left")
 raw_year = raw[raw["year"] == SCORE_YEAR].set_index("cbsa_code")
 norm_year = norm[norm["year"] == SCORE_YEAR].set_index("cbsa_code")
 pctile = norm_year[list(INDICATORS)].rank(pct=True) * 100
+
+# Speculative (2025 nowcast) equivalents, so every view can render either forecast.
+if HAS_SPEC:
+    spec_rank = nowcast.merge(rank_ranges(nc_norm, SPEC_YEAR), on="cbsa_code", how="left")
+    spec_raw = nc_raw.set_index("cbsa_code")
+    spec_norm_year = nc_norm.set_index("cbsa_code")
+    spec_pctile = spec_norm_year[list(INDICATORS)].rank(pct=True) * 100
+else:
+    spec_rank, spec_raw, spec_pctile = rank_year, raw_year, pctile
 
 # Context measures — tested as candidate indicators (P6/P7) but gated out
 # (no reliable accuracy gain), kept for description only.
@@ -365,8 +382,23 @@ st.markdown(f"<div style='background:{_bg};border:1px solid {_bd};border-radius:
 # Stateful nav: unlike st.tabs (which resets to the first tab on every rerun),
 # a keyed radio remembers the selected view in session_state, so changing the
 # metro dropdown keeps you on the Metro-detail view. Styled as tabs via CSS.
+# Forecast edition toggle — Map / Rankings / Metro detail / Compare render whichever
+# forecast is selected (full feature parity for the speculative nowcast).
+if HAS_SPEC:
+    st.markdown("<div class='cap' style='margin-bottom:.2rem'>Forecast edition</div>",
+                unsafe_allow_html=True)
+    forecast = st.radio("Forecast", ["Accurate — validated 2023", "Speculative — 2025 (experimental)"],
+                        horizontal=True, key="forecast", label_visibility="collapsed")
+else:
+    forecast = "Accurate — validated 2023"
+IS_SPEC = forecast.startswith("Speculative")
+A_scored = spec_rank if IS_SPEC else rank_year
+A_raw = spec_raw if IS_SPEC else raw_year
+A_pctile = spec_pctile if IS_SPEC else pctile
+A_year = SPEC_YEAR if IS_SPEC else SCORE_YEAR
+
 _views = ["Map", "Rankings", "Metro detail", "Compare", "Track record & method"]
-if len(nowcast):
+if HAS_SPEC:
     _views += ["Accurate vs speculative", "Speculative method"]
 page = st.radio("View", _views, horizontal=True, key="nav", label_visibility="collapsed")
 
@@ -385,9 +417,12 @@ NOWCAST_BANNER = (
 
 # ---- 1. Map ---------------------------------------------------------------
 if page == "Map":
-    section("Composite score by metro",
-            f"{SCORE_YEAR} cross-section · green = stronger fundamentals · hover for rank & score")
-    mp = rank_year.merge(coords, on="cbsa_code", how="left")
+    if IS_SPEC:
+        st.markdown(NOWCAST_BANNER, unsafe_allow_html=True)
+    section(f"Composite score by metro — {A_year}"
+            + (" (speculative)" if IS_SPEC else ""),
+            f"{A_year} cross-section · green = stronger fundamentals · hover for rank & score")
+    mp = A_scored.merge(coords, on="cbsa_code", how="left")
     fig = px.scatter_geo(
         mp, lat="lat", lon="lon", color="score", scope="usa",
         hover_name="cbsa_title", size=[8] * len(mp), size_max=13,
@@ -414,17 +449,20 @@ if page == "Map":
 
 # ---- 2. Rankings ----------------------------------------------------------
 if page == "Rankings":
-    section(f"Full ranking — {len(rank_year)} metros",
+    if IS_SPEC:
+        st.markdown(NOWCAST_BANNER, unsafe_allow_html=True)
+    section(f"Full ranking — {len(A_scored)} metros · {A_year}"
+            + (" (speculative)" if IS_SPEC else ""),
             "Weighted z-score contribution per bucket · click a header to sort")
-    show = rank_year[["rank", "cbsa_title", "score", "bucket_Demand", "bucket_Supply",
-                      "bucket_Affordability", "bucket_Momentum", "bucket_Resilience",
-                      "n_indicators"]].rename(columns={
+    show = A_scored[["rank", "cbsa_title", "score", "bucket_Demand", "bucket_Supply",
+                     "bucket_Affordability", "bucket_Momentum", "bucket_Resilience",
+                     "n_indicators"]].rename(columns={
         "rank": "Rank", "cbsa_title": "Metro", "score": "Score", "bucket_Demand": "Demand",
         "bucket_Supply": "Supply", "bucket_Affordability": "Afford.",
         "bucket_Momentum": "Moment.", "bucket_Resilience": "Resil.",
         "n_indicators": "Data"})
-    show.insert(1, "Range", (rank_year["rank_lo"].astype(int).astype(str) + "–"
-                             + rank_year["rank_hi"].astype(int).astype(str)).to_numpy())
+    show.insert(1, "Range", (A_scored["rank_lo"].astype(int).astype(str) + "–"
+                             + A_scored["rank_hi"].astype(int).astype(str)).to_numpy())
     smin, smax = show["Score"].min(), show["Score"].max()
     num_cols = ["Score", "Demand", "Supply", "Afford.", "Moment.", "Resil."]
     styler = (show.style
@@ -441,14 +479,17 @@ if page == "Rankings":
 
 # ---- 3. Metro detail ------------------------------------------------------
 if page == "Metro detail":
-    metro = st.selectbox("Select a metro", rank_year.sort_values("cbsa_title")["cbsa_title"],
+    if IS_SPEC:
+        st.markdown(NOWCAST_BANNER, unsafe_allow_html=True)
+    metro = st.selectbox("Select a metro", A_scored.sort_values("cbsa_title")["cbsa_title"],
                          label_visibility="collapsed")
-    row = rank_year[rank_year["cbsa_title"] == metro].iloc[0]
+    row = A_scored[A_scored["cbsa_title"] == metro].iloc[0]
     code = row["cbsa_code"]
-    section(metro, f"Composite rank and the fundamentals behind it · {SCORE_YEAR}")
+    section(metro + (" — speculative 2025" if IS_SPEC else ""),
+            f"Composite rank and the fundamentals behind it · {A_year}")
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Rank", f"#{int(row['rank'])}", help=f"of {len(rank_year)} metros")
+    c1.metric("Rank", f"#{int(row['rank'])}", help=f"of {len(A_scored)} metros")
     c2.metric("Composite score", f"{row['score']:+.3f}")
     c3.metric("Rank range", f"#{int(row['rank_lo'])}–#{int(row['rank_hi'])}",
               help="span across alternative model weightings — the rank's sensitivity")
@@ -461,7 +502,7 @@ if page == "Metro detail":
     PRO_T, CON_T = 65, 35
     pros, cons = [], []
     for k in INDICATORS:
-        p = pctile[k].get(code, float("nan"))
+        p = A_pctile[k].get(code, float("nan"))
         if pd.isna(p):
             continue
         if p >= PRO_T:
@@ -493,8 +534,8 @@ if page == "Metro detail":
     for key in INDICATORS:
         rows.append({"Indicator": PRETTY[key], "Bucket": INDICATORS[key]["bucket"],
                      "Weight": INDICATORS[key]["weight"] * 100,
-                     "Value": raw_year[key].get(code, float("nan")),
-                     "Percentile": pctile[key].get(code, float("nan"))})
+                     "Value": A_raw[key].get(code, float("nan")),
+                     "Percentile": A_pctile[key].get(code, float("nan"))})
     detail = pd.DataFrame(rows)
     st.markdown("<div class='cap'>Percentile vs all metros (100 = best on that indicator; "
                 "direction already applied so higher is always better).</div>",
@@ -505,21 +546,23 @@ if page == "Metro detail":
                .set_properties(subset=["Indicator"], **{"font-weight": "600", "color": INK}))
     st.dataframe(dstyler, hide_index=True, use_container_width=True, height=395)
 
-    # Context measures (tested but not scored — P6/P7)
-    ctx_rows = []
-    for col, (label, note) in CTX.items():
-        val = ctx_year[col].get(code, float("nan"))
-        ctx_rows.append({"Context measure": label,
-                         "Value": "—" if pd.isna(val) else f"{val*100:.1f}%",
-                         "Pctile": ctx_pctile[col].get(code, float("nan")), "Note": note})
-    ctx_df = pd.DataFrame(ctx_rows)
-    st.markdown("<div class='cap' style='margin-top:.8rem'><b>Context</b> — tested as candidate "
-                "indicators (vacancy P6, AI-exposure P7) but not scored: neither reliably improved "
-                "accuracy. Shown for description only.</div>", unsafe_allow_html=True)
-    st.dataframe(
-        ctx_df.style.format({"Pctile": "{:.0f}"}).set_properties(
-            subset=["Context measure"], **{"font-weight": "600", "color": INK}),
-        hide_index=True, use_container_width=True)
+    # Context measures (tested but not scored — P6/P7). Accurate forecast only
+    # (these inputs aren't published for the speculative nowcast year).
+    if not IS_SPEC:
+        ctx_rows = []
+        for col, (label, note) in CTX.items():
+            val = ctx_year[col].get(code, float("nan"))
+            ctx_rows.append({"Context measure": label,
+                             "Value": "—" if pd.isna(val) else f"{val*100:.1f}%",
+                             "Pctile": ctx_pctile[col].get(code, float("nan")), "Note": note})
+        ctx_df = pd.DataFrame(ctx_rows)
+        st.markdown("<div class='cap' style='margin-top:.8rem'><b>Context</b> — tested as candidate "
+                    "indicators (vacancy P6, AI-exposure P7) but not scored: neither reliably improved "
+                    "accuracy. Shown for description only.</div>", unsafe_allow_html=True)
+        st.dataframe(
+            ctx_df.style.format({"Pctile": "{:.0f}"}).set_properties(
+                subset=["Context measure"], **{"font-weight": "600", "color": INK}),
+            hide_index=True, use_container_width=True)
 
     tcol1, tcol2 = st.columns(2)
     hist = panel[panel["cbsa_code"] == code][["year", "zori"]].dropna()
@@ -546,9 +589,12 @@ if page == "Metro detail":
 
 # ---- 4. Compare -----------------------------------------------------------
 if page == "Compare":
-    section("Compare metros", "Pick 2–3 markets to see them side by side")
-    default2 = list(rank_year.sort_values("rank")["cbsa_title"].head(2))
-    picks = st.multiselect("Metros", list(rank_year.sort_values("cbsa_title")["cbsa_title"]),
+    if IS_SPEC:
+        st.markdown(NOWCAST_BANNER, unsafe_allow_html=True)
+    section("Compare metros" + (" (speculative 2025)" if IS_SPEC else ""),
+            "Pick 2–3 markets to see them side by side")
+    default2 = list(A_scored.sort_values("rank")["cbsa_title"].head(2))
+    picks = st.multiselect("Metros", list(A_scored.sort_values("cbsa_title")["cbsa_title"]),
                            default=default2, max_selections=3, label_visibility="collapsed")
     if len(picks) < 2:
         st.info("Select at least two metros to compare.")
@@ -556,14 +602,14 @@ if page == "Compare":
         cols = st.columns(len(picks))
         codes = {}
         for i, mt in enumerate(picks):
-            r = rank_year[rank_year.cbsa_title == mt].iloc[0]
+            r = A_scored[A_scored.cbsa_title == mt].iloc[0]
             codes[mt] = r["cbsa_code"]
             cols[i].metric(mt.split(",")[0], f"#{int(r['rank'])}",
                            help=f"score {r['score']:+.3f} · range #{int(r['rank_lo'])}–#{int(r['rank_hi'])}")
 
         comp = pd.DataFrame({"Indicator": [PRETTY[k] for k in INDICATORS]})
         for mt, code in codes.items():
-            comp[mt.split(",")[0]] = [pctile[k].get(code, float("nan")) for k in INDICATORS]
+            comp[mt.split(",")[0]] = [A_pctile[k].get(code, float("nan")) for k in INDICATORS]
         metro_cols = [mt.split(",")[0] for mt in picks]
         cstyler = comp.style.format({c: "{:.0f}" for c in metro_cols}).set_properties(
             subset=["Indicator"], **{"font-weight": "600", "color": INK})
@@ -575,7 +621,7 @@ if page == "Compare":
 
         blabels = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
         bard = [{"Metro": mt.split(",")[0], "Bucket": b,
-                 "Contribution": rank_year[rank_year.cbsa_title == mt].iloc[0][f"bucket_{b}"]}
+                 "Contribution": A_scored[A_scored.cbsa_title == mt].iloc[0][f"bucket_{b}"]}
                 for mt in picks for b in blabels]
         figb = px.bar(pd.DataFrame(bard), x="Bucket", y="Contribution", color="Metro",
                       barmode="group", color_discrete_sequence=["#2DD4BF", "#8B9DC3", "#E0A458"])
