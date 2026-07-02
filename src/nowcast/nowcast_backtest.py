@@ -150,6 +150,43 @@ overlap ≥ {GATE_MIN_TOP10:.0f}/10 → **{verdict}**.
     OUT.write_text(doc + sec, encoding="utf-8")
 
 
+def decompose() -> pd.DataFrame:
+    """Isolate which proxy drives the accuracy loss (pooled 3y τ per variant)."""
+    panel = indicators.load_panel()
+    ind = indicators.compute_indicators(panel)
+    pep = census_pep.build_pep_migration_panel()
+    py = backtest.usable_pred_years(score_mod.score())
+
+    def pooled(frame):
+        sc = score_mod.score(normalize.normalize(frame))
+        s = backtest.summarize(backtest.evaluate_predictions(
+            sc[["cbsa_code", "year", "score"]], py, (3,)))
+        return float(s[(s.horizon == 3) & (s.regime == "POOLED")].mean_tau.iloc[0])
+
+    rows = [bnp.nowcast_row(y, panel, ind, pep) for y in py]
+    pseudo = pd.concat([ind[~ind["year"].isin(py)], *rows], ignore_index=True)
+    ps_idx = pseudo.set_index(["cbsa_code", "year"])
+
+    mig = ind.copy().set_index(["cbsa_code", "year"])
+    mig.loc[ps_idx.index, "net_migration"] = ps_idx["net_migration"]
+    jobs_final = pseudo.copy().set_index(["cbsa_code", "year"])
+    finx = ind.set_index(["cbsa_code", "year"])
+    for k in ("job_growth", "income_growth"):
+        repl = finx[k].reindex(jobs_final.index)
+        jobs_final[k] = repl.where(repl.notna(), jobs_final[k])
+
+    out = pd.DataFrame([
+        {"variant": "finalized (all real)", "pooled_tau_3y": pooled(ind)},
+        {"variant": "only migration proxied", "pooled_tau_3y": pooled(mig.reset_index())},
+        {"variant": "pseudo but jobs+income finalized", "pooled_tau_3y": pooled(jobs_final.reset_index())},
+        {"variant": "full pseudo-nowcast", "pooled_tau_3y": pooled(pseudo)},
+    ])
+    fin = out.iloc[0]["pooled_tau_3y"]
+    out["retention"] = out["pooled_tau_3y"] / fin
+    out.to_csv(config.PROCESSED_DIR / "nowcast" / "m3_decomposition.csv", index=False)
+    return out
+
+
 def main() -> None:
     r = run()
     (config.PROCESSED_DIR / "nowcast").mkdir(parents=True, exist_ok=True)
