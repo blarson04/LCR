@@ -1,0 +1,9 @@
+indicator,provenance,weight
+net_migration,proxy,0.2
+job_growth,carried_forward,0.12
+income_growth,carried_forward,0.08
+permits_to_stock,proxy,0.25
+rent_to_income,proxy,0.12
+cost_to_own_vs_rent,fast,0.08
+trailing_rent_growth,fast,0.1
+employment_diversity,carried_forward,0.05
