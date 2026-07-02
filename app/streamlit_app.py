@@ -155,7 +155,7 @@ def inject_css() -> None:
       /* Nav (radio styled as tabs) */
       [data-testid="stRadio"] {{ margin-bottom: 1.4rem; }}
       [data-testid="stRadio"] > div {{ gap: 0 !important; }}
-      [data-testid="stRadio"] [role="radiogroup"] {{ gap: 2.9rem; row-gap:.2rem;
+      [data-testid="stRadio"] [role="radiogroup"] {{ gap: 4.25rem; row-gap:.3rem;
           flex-wrap:wrap; border-bottom:1px solid {HAIRLINE}; }}
       [data-testid="stRadio"] label {{ padding:.45rem 0 !important; margin:0 !important; }}
       [data-testid="stRadio"] label > div:first-child {{ display:none !important; }}  /* hide the circle */
