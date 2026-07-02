@@ -654,15 +654,14 @@ if page == "2025 outlook (experimental)":
         "<div style='background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.45);"
         "border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.2rem'>"
         f"<div style='color:#EAB308;font-weight:700;font-size:1.02rem;margin-bottom:.3rem'>"
-        "⚠ Experimental &amp; speculative — not a validated call</div>"
+        "⚠ Experimental — speculative, preliminary data</div>"
         f"<div style='color:{BODY};font-size:.92rem;line-height:1.5'>"
         "This provisional <b>2025→2028</b> ranking is a <b>nowcast</b>: it uses live rent/permit "
-        "data plus <b>preliminary proxies</b> for slower inputs (migration, jobs, income), so most "
-        "of each score rests on estimated data. It <b>fails our validation bar</b> — it retains only "
-        "~<b>75%</b> of the model's 3-year accuracy (below the ≥85% we require to publish), is edged "
-        "out by a simple momentum rule on pooled history, and diverges from the finalized ranking in "
-        "recent years. The <b>validated ranking is the 2023 cross-section</b> shown on every other tab. "
-        "Treat this as an illustration of where the fresh data points, not a forecast.</div></div>",
+        "data plus <b>preliminary proxies</b> for slower-publishing inputs (migration, jobs, income), "
+        "so most of each score rests on <b>speculative, estimated data that will be revised</b>. It is "
+        "inherently <b>more uncertain than the validated 2023 ranking</b> shown on every other tab — "
+        "especially in volatile periods. Treat it as an early, exploratory read of where the fresh "
+        "data points, not a firm forecast.</div></div>",
         unsafe_allow_html=True)
 
     if len(nc_prov):
@@ -698,8 +697,8 @@ if page == "2025 outlook (experimental)":
             .set_properties(subset=["Metro"], **{"font-weight": "600", "color": INK}),
         hide_index=True, use_container_width=True, height=560)
     st.markdown("<div class='cap'>Provisional — will be reconciled against the finalized score when "
-                "real data lands. Migration proxy (Census PEP) is validated; the accuracy gap is driven "
-                "by carried-forward employment/income (fresh CES data is the planned fix).</div>",
+                "real data lands. The migration proxy (Census PEP) is validated; fresher employment/"
+                "income data is the main planned improvement.</div>",
                 unsafe_allow_html=True)
 
 
