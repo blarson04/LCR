@@ -25,6 +25,14 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-02 — v2.1 nowcast M1: migration proxy validated; M3 gate pre-committed
+
+Starting the v2.1 nowcast layer (see `v2.1-nowcast-spec.md`, `paper/nowcast-validation.md`). The layer feeds fast proxies for slow inputs into the **unchanged** frozen v2 scoring path; it shortens the data lag, it does NOT extend the 3-year forecast horizon.
+
+**M1 linchpin result (the make-or-break):** Census PEP net domestic migration proxies the slow IRS migration (v2's one indispensable indicator) very well — level r ≈ 0.99, per-year rank ≈ 0.90 (dipping only in the 2020–21 shock). Substituting PEP into the full v2 composite barely moves the ranking (median Spearman 0.98, top-10 overlap ~9/10). Carry-forward proxies are safe: housing stock YoY rank-persistence 1.00; employment-diversity HHI 0.84. **The linchpin holds → proceed to M2/M3.** proxy_map version 0.1.
+
+**Pre-committed M3 go/no-go gate (decided BEFORE M3 runs, per the guardrail):** publish the nowcast **iff** the pseudo-nowcast retains **≥ 85% of the full model's pooled 3-yr weighted τ** AND its **top-10 overlap with the finalized ranking averages ≥ 7/10**. If it fails, v2.1 ships as an internal experiment with a documented negative result (still a paper paragraph). Choosing thresholds after seeing results would be the same sin as picking the metric after the backtest.
+
 ### 2026-07-01 — Tier-2 candidates gated: vacancy & AI-exposure NOT adopted
 
 Two new signals were tested against the pre-committed gate — standalone predictive τ + redundancy + does-it-*reliably*-improve-τ (metro-cluster bootstrap CI). See `src/tier2_gate.py` and `data/processed/tier2_gates.csv`.
