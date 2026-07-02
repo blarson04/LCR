@@ -289,11 +289,16 @@ def load_data():
     backtest = pd.read_csv(config.PROCESSED_DIR / "backtest_summary.csv")
     reg_path = config.PREDICTIONS_DIR / "registry_index.csv"
     registry = pd.read_csv(reg_path) if reg_path.exists() else pd.DataFrame()
-    return scored, raw, norm, panel, coords, backtest, registry
+    nc_dir = config.PROCESSED_DIR / "nowcast"
+    nc_path = nc_dir / "provisional_2025_ranking.csv"
+    nowcast = pd.read_csv(nc_path, dtype={"cbsa_code": str}) if nc_path.exists() else pd.DataFrame()
+    prov_path = nc_dir / "provenance.csv"
+    nc_prov = pd.read_csv(prov_path) if prov_path.exists() else pd.DataFrame()
+    return scored, raw, norm, panel, coords, backtest, registry, nowcast, nc_prov
 
 
 inject_css()
-scored, raw, norm, panel, coords, backtest, registry = load_data()
+scored, raw, norm, panel, coords, backtest, registry, nowcast, nc_prov = load_data()
 rank_year = scored[scored["year"] == SCORE_YEAR].copy()
 rank_year = rank_year.merge(rank_ranges(norm, SCORE_YEAR), on="cbsa_code", how="left")
 raw_year = raw[raw["year"] == SCORE_YEAR].set_index("cbsa_code")
@@ -359,9 +364,10 @@ st.markdown(f"<div style='background:{_bg};border:1px solid {_bd};border-radius:
 # Stateful nav: unlike st.tabs (which resets to the first tab on every rerun),
 # a keyed radio remembers the selected view in session_state, so changing the
 # metro dropdown keeps you on the Metro-detail view. Styled as tabs via CSS.
-page = st.radio(
-    "View", ["Map", "Rankings", "Metro detail", "Compare", "Track record & method"],
-    horizontal=True, key="nav", label_visibility="collapsed")
+_views = ["Map", "Rankings", "Metro detail", "Compare", "Track record & method"]
+if len(nowcast):
+    _views.append("2025 outlook (experimental)")
+page = st.radio("View", _views, horizontal=True, key="nav", label_visibility="collapsed")
 
 
 # ---- 1. Map ---------------------------------------------------------------
@@ -640,6 +646,61 @@ metro — nothing is hand-picked.""")
         evidence, not statistical proof**. ZORI is asking (not executed) rent. No
         capital-markets data (cap rates, transaction volume); rent growth is the proxy for
         profitability. Weights are hand-set hypotheses, not fitted.""", unsafe_allow_html=True)
+
+
+# ---- 6. 2025 outlook (experimental nowcast) ------------------------------
+if page == "2025 outlook (experimental)":
+    st.markdown(
+        "<div style='background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.45);"
+        "border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.2rem'>"
+        f"<div style='color:#EAB308;font-weight:700;font-size:1.02rem;margin-bottom:.3rem'>"
+        "⚠ Experimental &amp; speculative — not a validated call</div>"
+        f"<div style='color:{BODY};font-size:.92rem;line-height:1.5'>"
+        "This provisional <b>2025→2028</b> ranking is a <b>nowcast</b>: it uses live rent/permit "
+        "data plus <b>preliminary proxies</b> for slower inputs (migration, jobs, income), so most "
+        "of each score rests on estimated data. It <b>fails our validation bar</b> — it retains only "
+        "~<b>75%</b> of the model's 3-year accuracy (below the ≥85% we require to publish), is edged "
+        "out by a simple momentum rule on pooled history, and diverges from the finalized ranking in "
+        "recent years. The <b>validated ranking is the 2023 cross-section</b> shown on every other tab. "
+        "Treat this as an illustration of where the fresh data points, not a forecast.</div></div>",
+        unsafe_allow_html=True)
+
+    if len(nc_prov):
+        by = nc_prov.groupby("provenance")["weight"].sum()
+        section("Provisional 2025 outlook",
+                f"score data provenance — fast {by.get('fast',0)*100:.0f}% · "
+                f"proxy {by.get('proxy',0)*100:.0f}% · carried-forward {by.get('carried_forward',0)*100:.0f}%")
+    nowc = nowcast.copy()
+    mp = nowc.merge(coords, on="cbsa_code", how="left")
+    fig = px.scatter_geo(mp, lat="lat", lon="lon", color="score", scope="usa",
+                         hover_name="cbsa_title", size=[8] * len(mp), size_max=13,
+                         color_continuous_scale=SCORE_SCALE, color_continuous_midpoint=0,
+                         custom_data=["rank", "score"])
+    fig.update_traces(marker=dict(line=dict(width=0.5, color="rgba(255,255,255,0.35)")),
+                      hovertemplate="<b>%{hovertext}</b><br>Provisional rank %{customdata[0]} · "
+                                    "score %{customdata[1]:.3f}<extra></extra>")
+    fig.update_geos(showland=True, landcolor="#17202B", showlakes=False, subunitcolor="#2A3744",
+                    countrycolor="#2A3744", bgcolor="rgba(0,0,0,0)", showframe=False,
+                    coastlinecolor="#2A3744")
+    fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=12, len=0.7), showlegend=False)
+    st.plotly_chart(style_fig(fig, 460), use_container_width=True)
+
+    show = nowc[["rank", "cbsa_title", "score", "bucket_Demand", "bucket_Supply",
+                 "bucket_Affordability", "bucket_Momentum", "bucket_Resilience"]].rename(columns={
+        "rank": "Rank", "cbsa_title": "Metro", "score": "Score", "bucket_Demand": "Demand",
+        "bucket_Supply": "Supply", "bucket_Affordability": "Afford.",
+        "bucket_Momentum": "Moment.", "bucket_Resilience": "Resil."})
+    smin, smax = show["Score"].min(), show["Score"].max()
+    numc = ["Score", "Demand", "Supply", "Afford.", "Moment.", "Resil."]
+    st.dataframe(
+        show.style.format({c: "{:+.3f}" for c in numc})
+            .map(lambda v: grad_css((v - smin) / (smax - smin)), subset=["Score"])
+            .set_properties(subset=["Metro"], **{"font-weight": "600", "color": INK}),
+        hide_index=True, use_container_width=True, height=560)
+    st.markdown("<div class='cap'>Provisional — will be reconciled against the finalized score when "
+                "real data lands. Migration proxy (Census PEP) is validated; the accuracy gap is driven "
+                "by carried-forward employment/income (fresh CES data is the planned fix).</div>",
+                unsafe_allow_html=True)
 
 
 st.markdown(f"""<hr style='margin-top:2.5rem'>

@@ -25,6 +25,10 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-02 — v2.1 nowcast surfaced as a clearly-labeled EXPERIMENTAL view
+
+Follow-up to the M3 gate failure. The pre-committed gate governs whether the nowcast is published as a **validated** call — it failed, so it is NOT presented as validated. Author's decision: still surface the provisional 2025 ranking as an explicitly-labeled **experimental / speculative** tab, behind a prominent banner disclosing it fails the bar (~75% τ retention < 85%), is edged out by a momentum baseline pooled, and diverges from the finalized ranking in recent years. The **validated 2023 ranking remains the default** on every other tab. This is consistent with the gate (a transparently-disclosed experimental view is not the same as a validated publication) and preserves the pre-registration ethos. Accuracy for reference: 3-yr pooled τ 0.332 (finalized 0.444); normal-regime τ 0.480 / precision@10 0.78. Reconciliation against finalized data remains future work.
+
 ### 2026-07-02 — v2.1 nowcast M3: FAILED the pre-committed gate → internal experiment
 
 The pseudo-nowcast backtest (rebuild history with the nowcast's proxies — PEP migration + carry-forward slow indicators + live rent/permits — and run the standard walk-forward) retains only **75%** of the finalized model's pooled 3-yr τ (0.332 vs 0.444; gap +0.112, 95% CI [+0.038, +0.182] — *reliably* below the ≥85% bar) and averages **6.1/10** top-10 overlap (below the ≥7/10 bar). Per the gate committed **before** M3 ran, **the nowcast does NOT publish** — v2.1 ships as an internal experiment with this documented negative result (a finding worth a paragraph in the paper).
