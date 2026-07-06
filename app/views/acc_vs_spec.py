@@ -1,6 +1,6 @@
 """
-Accurate vs speculative — answers one question: how does the provisional 2025
-view differ from the finalized 2023 ranking?
+Validated vs provisional — answers one question: how does the provisional 2025
+view differ from the validated (finalized 2023) ranking?
 """
 
 from __future__ import annotations
@@ -22,11 +22,19 @@ from ui import data, theme  # noqa: E402
 theme.inject_css()
 d = data.load()
 
-st.markdown("# Accurate vs speculative")
-theme.caption("The finalized 2023 ranking beside the provisional 2025 screen. Differences "
-              "mix real market change with the provisional data's added uncertainty — read "
-              "big moves as directional, not precise.")
+st.markdown("# Validated vs provisional")
+theme.caption("The validated (finalized 2023) ranking beside the provisional 2025 screen. "
+              "Differences mix real market change with the provisional data's added "
+              "uncertainty — read big moves as directional, not precise.")
 st.markdown(theme.badge(provisional=True), unsafe_allow_html=True)
+st.markdown(
+    "<div class='cap' style='margin-top:.5rem'><b>How much of a move is noise?</b> The "
+    "provisional configuration was tested on history where the truth is known: it "
+    "<b>failed its pre-committed validation gate</b>, keeping 75% of the model's signal, and "
+    f"its top-10 matched the validated top-10 on only <b>{d['overlap_mean']:.0f} of 10</b> "
+    f"names on average (<b>{d['overlap_last']:.0f}/10</b> in the most recent comparable year). "
+    "That experiment is published as a negative result, and the fix — fresher employment "
+    "data — is pre-registered for a single re-test.</div>", unsafe_allow_html=True)
 st.write("")
 
 val = d["acc_rank"][["cbsa_code", "cbsa_title", "rank"]].rename(columns={"rank": "acc"})
@@ -47,21 +55,21 @@ def _top10(col, title, key):
             unsafe_allow_html=True)
 
 
-_top10(c1, "Accurate — finalized 2023", "acc")
-_top10(c2, "Speculative — provisional 2025", "spec")
+_top10(c1, "Validated — finalized 2023", "acc")
+_top10(c2, "Provisional — experimental 2025", "spec")
 
 st.markdown("## Every market")
-theme.caption("Move = change in rank from the finalized to the provisional screen "
+theme.caption("Move = change in rank from the validated to the provisional screen "
               "(positive = rose).")
 tbl = cmp.sort_values("acc")[["cbsa_title", "acc", "spec", "move"]].rename(columns={
-    "cbsa_title": "Metro", "acc": "Accurate (2023)", "spec": "Speculative (2025)",
+    "cbsa_title": "Metro", "acc": "Validated (2023)", "spec": "Provisional (2025)",
     "move": "Move"})
 st.dataframe(
-    tbl.style.format({"Accurate (2023)": "{:.0f}", "Speculative (2025)": "{:.0f}",
+    tbl.style.format({"Validated (2023)": "{:.0f}", "Provisional (2025)": "{:.0f}",
                       "Move": "{:+.0f}"})
        .map(lambda v: f"color:{theme.POS}" if v > 0 else (f"color:{theme.NEG}" if v < 0 else ""),
             subset=["Move"])
-       .set_properties(subset=["Move", "Accurate (2023)", "Speculative (2025)"],
+       .set_properties(subset=["Move", "Validated (2023)", "Provisional (2025)"],
                        **{"font-variant-numeric": "tabular-nums", "text-align": "right"})
        .set_properties(subset=["Metro"], **{"font-weight": "500"}),
     hide_index=True, use_container_width=True, height=480)

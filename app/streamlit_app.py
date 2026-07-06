@@ -42,8 +42,13 @@ with st.sidebar:
                  key=data.EDITION_KEY, label_visibility="collapsed")
         if data.is_spec(d):
             st.markdown(theme.badge(provisional=True), unsafe_allow_html=True)
-            st.markdown("<div class='cap' style='margin-top:.4rem'>Uses preliminary and "
-                        "proxy data that will be revised.</div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div class='cap' style='margin-top:.4rem'>Uses preliminary and proxy data. "
+                "In backtests this configuration <b>failed its pre-committed validation gate</b> "
+                "(kept 75% of the model's signal) and matched the validated top-10 on only "
+                f"{d['overlap_mean']:.0f} of 10 names on average "
+                f"({d['overlap_last']:.0f}/10 in the most recent year). A fix is "
+                "pre-registered.</div>", unsafe_allow_html=True)
     st.markdown("<div class='cap' style='margin-top:.8rem'>Appearance</div>",
                 unsafe_allow_html=True)
     st.radio("Appearance", ["Light", "Dark"], key=theme.MODE_KEY,
@@ -59,7 +64,7 @@ pages = [
     st.Page("views/compare.py", title="Compare markets"),
 ]
 if d["has_spec"]:
-    pages.append(st.Page("views/acc_vs_spec.py", title="Accurate vs speculative"))
+    pages.append(st.Page("views/acc_vs_spec.py", title="Validated vs provisional"))
 pages.append(st.Page("views/track_record.py", title="Track record"))
 
 st.navigation(pages).run()

@@ -33,8 +33,8 @@ N_IND = len(INDICATORS)
 BUCKETS = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
 
 EDITION_KEY = "edition"
-FINAL_LABEL = "Accurate — finalized 2023"
-SPEC_LABEL = "Speculative — provisional 2025"
+FINAL_LABEL = "Validated — finalized 2023"
+SPEC_LABEL = "Provisional — experimental 2025"
 
 # ---- Plain-language dictionaries -------------------------------------------
 PRETTY = {
@@ -209,12 +209,22 @@ def load() -> dict:
         m3r = m3d[(m3d["horizon"] == 3) & (m3d["regime"] == "pre_covid")]
         if len(m3r):
             spec_tau = float(m3r["mean_tau_ps"].iloc[0])
+    # Provisional-vs-finalized ranking divergence (shown on every provisional
+    # disclosure per the amended gate taxonomy, decision-log 2026-07-06).
+    overlap_mean, overlap_last = float("nan"), float("nan")
+    agree = config.PROCESSED_DIR / "nowcast" / "m3_agreement.csv"
+    if agree.exists():
+        ag = pd.read_csv(agree)
+        if len(ag):
+            overlap_mean = float(ag["top10_overlap"].mean())
+            overlap_last = float(ag.sort_values("year")["top10_overlap"].iloc[-1])
 
     return dict(scored=scored, panel=panel, coords=coords, backtest=backtest,
                 registry=registry, nowcast=nowcast, nc_prov=nc_prov,
                 has_spec=has_spec, acc_rank=acc_rank, acc_raw=acc_raw, acc_pct=acc_pct,
                 spec_rank=spec_rank, spec_raw=spec_raw, spec_pct=spec_pct,
                 ctx_year=ctx_year, ctx_pct=ctx_pct, pc_tau=pc_tau, spec_tau=spec_tau,
+                overlap_mean=overlap_mean, overlap_last=overlap_last,
                 nat_growth=national_rent_growth(panel, SCORE_YEAR),
                 regime=regime_of(SCORE_YEAR))
 
@@ -222,7 +232,7 @@ def load() -> dict:
 def is_spec(d: dict | None = None) -> bool:
     """Current edition from the global sidebar toggle."""
     choice = st.session_state.get(EDITION_KEY, FINAL_LABEL)
-    spec = str(choice).startswith("Speculative")
+    spec = str(choice).startswith("Provisional")
     if d is not None and not d["has_spec"]:
         return False
     return spec

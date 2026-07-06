@@ -72,7 +72,8 @@ measure compares a market **against all the others in the same year**, so a nati
 cancels out and only relative standing counts. Measures where more is worse (heavy homebuilding,
 rents that already stretch incomes) are flipped, so higher always means better. Each measure is
 multiplied by a fixed weight and summed into one composite score, and markets are ranked by it.
-The same formula runs for every market — nothing is hand-picked.
+The same formula runs for every market — no market is ever hand-adjusted. (The weights
+themselves are set by judgment and stress-tested; see Track record.)
 """)
 
 rows = []
@@ -94,7 +95,7 @@ if spec_mode and d["has_spec"]:
     st.markdown(theme.badge(provisional=True), unsafe_allow_html=True)
     st.markdown("""
 The slowest inputs (migration, income) publish about two years late, which is why the
-accurate screen is anchored to 2023. The provisional screen runs the **same model, same
+validated screen is anchored to 2023. The provisional screen runs the **same model, same
 weights, same scoring** — only the data feeding it changes. Fast inputs (rents, home values,
 permits) use live data; slow inputs use preliminary substitutes or the latest available
 value carried forward. It shortens the data lag; it does not extend the three-year horizon
@@ -109,7 +110,7 @@ or change the model.""")
     for k in data.INDICATORS:
         pm = pmap.PROXY_MAP.get(k, {})
         prows.append({"Measure": data.PRETTY[k],
-                      "Accurate source": pm.get("finalized", ""),
+                      "Finalized source": pm.get("finalized", ""),
                       "Provisional approach": pm.get("proxy", "")})
     st.dataframe(
         pd.DataFrame(prows).style.set_properties(subset=["Measure"], **{"font-weight": "500"}),

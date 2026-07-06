@@ -118,7 +118,9 @@ def _write_doc(r):
         "horizon": "h", "regime": "regime", "mean_tau_fin": "τ finalized", "mean_tau_ps": "τ pseudo",
         "mean_precision@10_fin": "P@10 fin", "mean_precision@10_ps": "P@10 pseudo"})
     m["regime"] = m["regime"].str.replace("_", "-")
-    verdict = "PASS — publish provisional nowcast" if r["passed"] else "FAIL — internal experiment only"
+    verdict = ("PASS — publish provisional nowcast" if r["passed"] else
+               "FAIL — published as a negative result; surfaced only as a provisional-"
+               "experimental edition under the amended gate taxonomy (decision log 2026-07-06)")
     decomp_path = config.PROCESSED_DIR / "nowcast" / "m3_decomposition.csv"
     decomp_md = ""
     if decomp_path.exists():

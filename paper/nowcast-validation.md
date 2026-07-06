@@ -96,7 +96,7 @@ retention **75%**. Gap **+0.112**, 95% CI
 Mean top-10 overlap **6.1/10**.
 
 **Gate (pre-committed):** retain ≥ 85% of pooled 3-yr τ AND mean top-10
-overlap ≥ 7/10 → **FAIL — internal experiment only**.
+overlap ≥ 7/10 → **FAIL — published as a negative result; surfaced only as a provisional-experimental edition under the amended gate taxonomy (decision log 2026-07-06)**.
 
 **Which proxy causes the loss? (pooled 3-yr τ by variant)**
 
@@ -113,3 +113,5 @@ The migration proxy costs almost nothing; carrying forward `job_growth`+`income_
 Gate **not met** → v2.1 ships as an **internal experiment**; the provisional ranking is NOT surfaced as a site default (M5 gated off). This is a documented negative result.
 
 **The fix is specific and feasible:** the failure is entirely the carried-forward employment/income growth (see decomposition). Fresh current-year metro employment + wages (CES) would lift retention toward the ~96% ceiling and likely clear the gate. CES metro series ARE reachable via FRED's SAE series (verified) — this is the prioritized future step. The migration linchpin already works, so the nowcast is one accessible input away from viable.
+
+**Disposition (updated 2026-07-06):** the provisional edition is live on the site under the amended taxonomy — labeled provisional-experimental, with the gate failure and the per-year top-10 divergence shown inline. The CES employment/wage fix is pre-committed to a single re-run of this gate, verbatim; pass promotes the edition to validated, fail pulls it. See the decision log entries of 2026-07-06.
