@@ -356,15 +356,14 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ---- Forecast edition toggle (two "tabs"; ALL headers below follow it) -----
+# ---- Top-level tabs: Accurate | Speculative | Accurate vs speculative ------
+tab_opts = ["Accurate — validated 2023"]
 if HAS_SPEC:
-    st.markdown("<div class='cap' style='margin-bottom:.2rem'>Forecast edition</div>",
-                unsafe_allow_html=True)
-    forecast = st.radio("Forecast", ["Accurate — validated 2023", "Speculative — 2025 (experimental)"],
-                        horizontal=True, key="forecast", label_visibility="collapsed")
-else:
-    forecast = "Accurate — validated 2023"
-IS_SPEC = forecast.startswith("Speculative")
+    tab_opts += ["Speculative — 2025 (experimental)", "Accurate vs speculative"]
+main = st.radio("Forecast", tab_opts, horizontal=True, key="forecast", label_visibility="collapsed")
+IS_COMPARE = main == "Accurate vs speculative"
+IS_SPEC = main.startswith("Speculative")
+
 A_scored = spec_rank if IS_SPEC else rank_year
 A_raw = spec_raw if IS_SPEC else raw_year
 A_pctile = spec_pctile if IS_SPEC else pctile
@@ -382,22 +381,24 @@ NOWCAST_BANNER = (
     "estimated data that will be revised, so it's inherently more uncertain than the accurate "
     "(validated 2023) projections. An early, exploratory read, not a firm forecast.</div></div>")
 
-# ---- Edition-aware header: badge + stat band + banner ---------------------
-ed_top = A_scored.sort_values("rank").iloc[0]["cbsa_title"].split("-")[0].split(",")[0]
-if IS_SPEC:
-    badge_html = ("<span style='display:inline-block;font-size:.72rem;font-weight:600;color:#EAB308;"
-                  "background:rgba(234,179,8,.10);border:1px solid rgba(234,179,8,.35);"
-                  f"border-radius:999px;padding:.18rem .6rem'>{SPEC_YEAR} · experimental (speculative)</span>")
-    tau_val, tau_sub = spec_tau, "pre-COVID 3-yr, nowcast"
-    top_sub = f"top {SPEC_YEAR} speculative signal"
-else:
-    badge_html = f"<span class='badge'>{SCORE_YEAR} cross-section</span>"
-    tau_val, tau_sub = pc_tau, "pre-COVID 3-yr, weighted Kendall's τ"
-    top_sub = f"strongest {SCORE_YEAR} fundamentals"
-tau_str = f"τ {tau_val:.2f}" if not pd.isna(tau_val) else "—"
+page = ""
+if not IS_COMPARE:
+    # ---- Edition-aware header: badge + stat band + banner ----
+    ed_top = A_scored.sort_values("rank").iloc[0]["cbsa_title"].split("-")[0].split(",")[0]
+    if IS_SPEC:
+        badge_html = ("<span style='display:inline-block;font-size:.72rem;font-weight:600;color:#EAB308;"
+                      "background:rgba(234,179,8,.10);border:1px solid rgba(234,179,8,.35);"
+                      f"border-radius:999px;padding:.18rem .6rem'>{SPEC_YEAR} · experimental (speculative)</span>")
+        tau_val, tau_sub = spec_tau, "pre-COVID 3-yr, nowcast"
+        top_sub = f"top {SPEC_YEAR} speculative signal"
+    else:
+        badge_html = f"<span class='badge'>{SCORE_YEAR} cross-section</span>"
+        tau_val, tau_sub = pc_tau, "pre-COVID 3-yr, weighted Kendall's τ"
+        top_sub = f"strongest {SCORE_YEAR} fundamentals"
+    tau_str = f"τ {tau_val:.2f}" if not pd.isna(tau_val) else "—"
 
-st.markdown(f"<div style='margin:.1rem 0 1rem'>{badge_html}</div>", unsafe_allow_html=True)
-st.markdown(f"""
+    st.markdown(f"<div style='margin:.1rem 0 1rem'>{badge_html}</div>", unsafe_allow_html=True)
+    st.markdown(f"""
 <div class="statband">
   <div class="stat"><div class="lab">Metros screened</div><div class="val">{len(A_scored)}</div>
        <div class="sub">≥ 500k population, full rent history</div></div>
@@ -410,29 +411,32 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-if IS_SPEC:
-    st.markdown(NOWCAST_BANNER, unsafe_allow_html=True)
-else:
-    _shock_like = CUR_REGIME == "shock" or (not pd.isna(NAT_GROWTH) and NAT_GROWTH > 0.075)
-    if _shock_like:
-        _bg, _bd, _fg, _msg = ("rgba(234,179,8,.10)", "rgba(234,179,8,.35)", "#EAB308",
-            f"<b>Elevated-uncertainty regime.</b> {SCORE_YEAR} conditions resemble a shock "
-            f"(national rent growth {NAT_GROWTH:+.1%}); in shock regimes the backtest shows model "
-            f"reliability drops sharply — treat this ranking with extra caution.")
+    if IS_SPEC:
+        st.markdown(NOWCAST_BANNER, unsafe_allow_html=True)
     else:
-        _bg, _bd, _fg, _msg = ("rgba(45,212,191,.08)", "rgba(45,212,191,.30)", ACCENT,
-            f"<b>Normal regime.</b> {SCORE_YEAR} conditions look typical (national rent growth "
-            f"{NAT_GROWTH:+.1%}); the model is operating within its validated range. Still a "
-            f"screen, not a guarantee — see rank ranges.")
-    st.markdown(f"<div style='background:{_bg};border:1px solid {_bd};border-radius:10px;"
-                f"padding:.6rem .9rem;margin-bottom:1.3rem;font-size:.9rem;color:{BODY}'>"
-                f"<span style='color:{_fg};font-weight:700'>●</span> {_msg}</div>",
-                unsafe_allow_html=True)
+        _shock_like = CUR_REGIME == "shock" or (not pd.isna(NAT_GROWTH) and NAT_GROWTH > 0.075)
+        if _shock_like:
+            _bg, _bd, _fg, _msg = ("rgba(234,179,8,.10)", "rgba(234,179,8,.35)", "#EAB308",
+                f"<b>Elevated-uncertainty regime.</b> {SCORE_YEAR} conditions resemble a shock "
+                f"(national rent growth {NAT_GROWTH:+.1%}); in shock regimes the backtest shows model "
+                f"reliability drops sharply — treat this ranking with extra caution.")
+        else:
+            _bg, _bd, _fg, _msg = ("rgba(45,212,191,.08)", "rgba(45,212,191,.30)", ACCENT,
+                f"<b>Normal regime.</b> {SCORE_YEAR} conditions look typical (national rent growth "
+                f"{NAT_GROWTH:+.1%}); the model is operating within its validated range. Still a "
+                f"screen, not a guarantee — see rank ranges.")
+        st.markdown(f"<div style='background:{_bg};border:1px solid {_bd};border-radius:10px;"
+                    f"padding:.6rem .9rem;margin-bottom:1.3rem;font-size:.9rem;color:{BODY}'>"
+                    f"<span style='color:{_fg};font-weight:700'>●</span> {_msg}</div>",
+                    unsafe_allow_html=True)
 
-_views = ["Map", "Rankings", "Metro detail", "Compare", "Track record & method"]
-if HAS_SPEC:
-    _views += ["Accurate vs speculative", "Speculative method"]
-page = st.radio("View", _views, horizontal=True, key="nav", label_visibility="collapsed")
+    # ---- Edition-dependent sub-nav (separate keys so each remembers its own) ----
+    if IS_SPEC:
+        _views = ["Map", "Rankings", "Metro detail", "Compare", "Speculative method"]
+        page = st.radio("View", _views, horizontal=True, key="nav_spec", label_visibility="collapsed")
+    else:
+        _views = ["Map", "Rankings", "Metro detail", "Compare", "Track record & method"]
+        page = st.radio("View", _views, horizontal=True, key="nav_acc", label_visibility="collapsed")
 
 
 # ---- 1. Map ---------------------------------------------------------------
@@ -720,7 +724,7 @@ metro — nothing is hand-picked.""")
 
 
 # ---- 6. Accurate vs speculative 3-year projections -----------------------
-if page == "Accurate vs speculative":
+if IS_COMPARE:
     st.markdown(NOWCAST_BANNER, unsafe_allow_html=True)
     section("Accurate vs speculative 3-year projections",
             "Validated 2023 ranking vs the experimental 2025 nowcast — differences reflect real "
