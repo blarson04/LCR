@@ -78,10 +78,40 @@ if bl_path.exists():
           .set_properties(subset=["3-yr tau", "Precision@10"],
                           **{"font-variant-numeric": "tabular-nums", "text-align": "right"}),
         hide_index=True, use_container_width=True)
-    theme.caption("All rows use finalized data, so the comparison is apples-to-apples. The "
-                  "composite's edge over the simplest rules is modest and honestly framed: it "
-                  "reliably beats equal weighting and persistence; its edge over pure rent "
-                  "momentum is within noise. (The composite's real-time equivalent is 0.38.)")
+    theme.caption("All rows use finalized data, so the comparison is apples-to-apples. On rank "
+                  "agreement the composite's edge over pure rent momentum is within noise — but "
+                  "see below for where the two differ. (The composite's real-time equivalent "
+                  "is 0.38.)")
+
+# ---- In plain units --------------------------------------------------------
+es_path = config.PROCESSED_DIR / "effect_size_windows.csv"
+if es_path.exists():
+    st.markdown("## In plain units: percentage points of rent growth")
+    st.markdown(
+        "The same comparison translated into money terms: how much more 3-year rent growth did "
+        "each strategy's top-10 markets deliver than the median market, per window?")
+    ew = pd.read_csv(es_path)
+    piv = ew.pivot_table(index="pred_year", columns="strategy", values="top10_pp_vs_median")
+    show = piv[["Composite (model)", "Momentum (trailing rent)", "Equal weight",
+                "Random (50-seed mean)"]].round(1).reset_index().rename(columns={
+        "pred_year": "Window start", "Composite (model)": "This screen",
+        "Momentum (trailing rent)": "Rent momentum", "Equal weight": "Equal weight",
+        "Random (50-seed mean)": "Random"})
+    st.dataframe(
+        show.style.format({c: "{:+.1f}" for c in show.columns if c != "Window start"}
+                          | {"Window start": "{:.0f}"})
+            .map(lambda v: f"color:{theme.POS}" if isinstance(v, float) and v > 0
+                 else (f"color:{theme.NEG}" if isinstance(v, float) and v < 0 else ""),
+                 subset=[c for c in show.columns if c != "Window start"]),
+        hide_index=True, use_container_width=True)
+    cm, mm = piv["Composite (model)"], piv["Momentum (trailing rent)"]
+    theme.caption(
+        f"Pooled: this screen's top-10 beat the median market by {cm.mean():+.1f} pp of 3-year "
+        f"rent growth (momentum {mm.mean():+.1f} pp). The difference shows in the 2021–22 shock: "
+        f"momentum's picks flipped to {mm.loc[2021]:+.1f} and {mm.loc[2022]:+.1f} pp while this "
+        f"screen's held at {cm.loc[2021]:+.1f} and {cm.loc[2022]:+.1f} pp. Even after stripping "
+        f"out what momentum already knows, the screen still adds predictive signal — though the "
+        f"two miss on many of the same markets, so the protection is partial.")
 
 # ---- Honest uncertainty ---------------------------------------------------------
 st.markdown("## How sure are we?")

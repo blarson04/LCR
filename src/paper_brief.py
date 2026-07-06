@@ -137,6 +137,54 @@ def build() -> Path:
             f"**{rt3:.3f}** ({rt3/pool3*100:.0f}% of the ceiling); pre-COVID real-time "
             f"**{rt_pc:.3f}**.\n")
 
+    # v3-P4/P5: economic effect size + momentum orthogonality.
+    effect_md = ""
+    esp = config.PROCESSED_DIR / "effect_size_windows.csv"
+    orp = config.PROCESSED_DIR / "momentum_orthogonality.csv"
+    if esp.exists() and orp.exists():
+        ew = pd.read_csv(esp)
+        orth = pd.read_csv(orp)
+        piv = ew.pivot_table(index="pred_year", columns="strategy",
+                             values="top10_pp_vs_median")
+        keep = ["Composite (model)", "Momentum (trailing rent)", "50/50 blend",
+                "Equal weight", "Random (50-seed mean)"]
+        pt = piv[keep].round(1).reset_index().rename(columns={"pred_year": "Window (T→T+3)"})
+        pp_tbl = _md_table(pt.astype(str))
+        cm = piv["Composite (model)"], piv["Momentum (trailing rent)"]
+        effect_md = f"""
+---
+
+## 5b. Economic effect size & the momentum question (v3 P4–P5)
+
+**Top-10 edge in percentage points of realized 3-yr rent growth vs the universe median**
+(the headline communication metric — τ translated into units investors understand):
+
+{pp_tbl}
+
+Pooled top-10 edge: **composite +{cm[0].mean():.1f} pp**, momentum +{cm[1].mean():.1f} pp,
+50/50 blend +{piv['50/50 blend'].mean():.1f} pp, equal-weight +{piv['Equal weight'].mean():.1f} pp,
+random ≈ {piv['Random (50-seed mean)'].mean():.1f} pp.
+
+**The shock exhibit (the framing decider):** momentum's top-10 edge flipped negative in the
+shock windows (**{cm[1].loc[2021]:+.1f} pp in 2021, {cm[1].loc[2022]:+.1f} pp in 2022**) while the
+composite's held up far better (**{cm[0].loc[2021]:+.1f} pp and {cm[0].loc[2022]:+.1f} pp**) — the
+fundamentals sleeve provided real downside protection exactly where momentum inverted.
+
+**Orthogonality:** after controlling for trailing rent growth, the composite still predicts
+forward growth (partial rank correlation pooled **{orth.partial_after_momentum.mean():+.2f}**,
+positive in every window). But the two strategies' errors co-move (correlation
+**{orth.error_correlation.mean():+.2f}**, rising to ~0.77 in the shock), so the diversification
+is partial. The 50/50 blend edges the composite on τ ({ew[ew.strategy=='50/50 blend'].tau.mean():.2f}
+vs {ew[ew.strategy=='Composite (model)'].tau.mean():.2f}) but has a worse worst-window
+({piv['50/50 blend'].min():+.1f} vs {piv['Composite (model)'].min():+.1f} pp) and a lower pooled
+pp edge — no clear improvement.
+
+**Resulting framing (decided from the evidence, per v3-P4):** *comparable to momentum on rank
+agreement; better where it matters — a higher pp edge, genuine signal beyond momentum, and
+materially smaller top-10 losses in the windows where momentum inverted. Diversification is
+real but partial.*
+"""
+
     # v3-P3 temporal-uncertainty honesty.
     uncertainty_md = ""
     tup = config.PROCESSED_DIR / "temporal_uncertainty.csv"
@@ -264,6 +312,7 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 *Caveat to state plainly: rent history starts ~2015, so windows are few and overlapping →
 **directional evidence, not statistical significance.***
 {uncertainty_md}
+{effect_md}
 
 ---
 

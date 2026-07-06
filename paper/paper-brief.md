@@ -179,6 +179,46 @@ silent about regime risk.
 
 ---
 
+## 5b. Economic effect size & the momentum question (v3 P4–P5)
+
+**Top-10 edge in percentage points of realized 3-yr rent growth vs the universe median**
+(the headline communication metric — τ translated into units investors understand):
+
+| Window (T→T+3) | Composite (model) | Momentum (trailing rent) | 50/50 blend | Equal weight | Random (50-seed mean) |
+| --- | --- | --- | --- | --- | --- |
+| 2016 | 6.6 | 7.2 | 7.2 | 5.5 | 0.5 |
+| 2017 | 7.2 | 6.2 | 6.3 | 4.3 | 0.3 |
+| 2018 | 10.4 | 10.4 | 11.0 | 3.5 | 0.7 |
+| 2019 | 12.2 | 10.6 | 11.6 | 8.2 | 0.5 |
+| 2021 | 1.5 | -1.5 | 0.4 | -4.6 | -0.1 |
+| 2022 | -1.7 | -4.3 | -5.5 | -6.8 | -0.4 |
+
+Pooled top-10 edge: **composite +6.0 pp**, momentum +4.8 pp,
+50/50 blend +5.2 pp, equal-weight +1.7 pp,
+random ≈ 0.2 pp.
+
+**The shock exhibit (the framing decider):** momentum's top-10 edge flipped negative in the
+shock windows (**-1.5 pp in 2021, -4.3 pp in 2022**) while the
+composite's held up far better (**+1.5 pp and -1.7 pp**) — the
+fundamentals sleeve provided real downside protection exactly where momentum inverted.
+
+**Orthogonality:** after controlling for trailing rent growth, the composite still predicts
+forward growth (partial rank correlation pooled **+0.25**,
+positive in every window). But the two strategies' errors co-move (correlation
+**+0.62**, rising to ~0.77 in the shock), so the diversification
+is partial. The 50/50 blend edges the composite on τ (0.45
+vs 0.44) but has a worse worst-window
+(-5.5 vs -1.7 pp) and a lower pooled
+pp edge — no clear improvement.
+
+**Resulting framing (decided from the evidence, per v3-P4):** *comparable to momentum on rank
+agreement; better where it matters — a higher pp edge, genuine signal beyond momentum, and
+materially smaller top-10 losses in the windows where momentum inverted. Diversification is
+real but partial.*
+
+
+---
+
 ## 6. Pre-registration & reproducibility
 
 Every production run is frozen, timestamped, and never edited (registry), making the live track
