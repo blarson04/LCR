@@ -36,18 +36,22 @@ theme.caption(
     f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
     f"rent growth — a {ed['horizon']} screen scored on "
     + ("preliminary data for the current year." if ed["provisional"]
-       else f"the latest complete data ({ed['year']}).")
+       else f"{ed['year']} fundamentals, the latest finalized vintage (the slowest federal "
+            f"inputs publish about two years late, so much of the {ed['horizon']} forecast "
+            f"window has already elapsed).")
 )
 st.markdown(theme.badge(ed["provisional"]), unsafe_allow_html=True)
 
 if not ed["provisional"]:
     if d["regime"] == "shock" or d["nat_growth"] > 0.075:
-        theme.caption(f"Market conditions in {ed['year']} resemble a shock period "
+        theme.caption(f"Conditions in the {ed['year']} scoring year resembled a shock period "
                       f"(national rent growth {d['nat_growth']:+.1%}); the framework is less "
-                      f"reliable in shocks — see Track record.")
+                      f"reliable in shocks — see Track record. This describes the vintage "
+                      f"year, not today.")
     else:
-        theme.caption(f"Market conditions in {ed['year']} look typical (national rent growth "
-                      f"{d['nat_growth']:+.1%}); the screen is operating within its validated range.")
+        theme.caption(f"Conditions in the {ed['year']} scoring year looked typical (national "
+                      f"rent growth {d['nat_growth']:+.1%}), inside the framework's validated "
+                      f"range. This describes the vintage year, not today.")
 st.write("")
 
 # ---- Headline: map + top 10 --------------------------------------------------

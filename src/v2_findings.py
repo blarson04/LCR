@@ -135,6 +135,10 @@ Regenerate with `python src/v2_findings.py`. Companion to `v2-plan.md`.*
 
 ## Bottom line (honest)
 
+*(Vintage note, v3-P2: every τ in this document is a **finalized-data ceiling** — computed on
+revisions no real-time user could have held. The real-time-achievable pooled 3-yr τ is ≈0.38;
+see `paper-brief.md` and `nowcast-validation.md`.)*
+
 The full model has **real, statistically reliable signal** at the 3-year horizon
 (τ = **{full_tau:.3f}**, 95% CI **[{ft.lo:.3f}, {ft.hi:.3f}]** — excludes 0). It reliably beats
 equal-weight and a persistence rule. But with error bars, two comfortable v1 stories do **not**

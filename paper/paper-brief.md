@@ -23,6 +23,8 @@ track record. It is positioned as a *screening framework, not a prediction engin
 - Pre-COVID 3-yr: τ **0.588**, precision@10 **0.85**.  Shock 3-yr: τ **0.157**.
 - Pooled 3-yr τ **0.444** vs. pooled 1-yr τ **0.500** (≈ equal → see finding #3).
 - Worst single window: 3-yr starting **2022** (predicting the post-peak decline), τ **-0.022**.
+- **Vintage rule (v3-P2):** every τ in this brief is a **finalized-data ceiling** unless marked real-time. The **real-time achievable** pooled 3-yr τ — using only proxies/carry-forwards a user could have held at scoring time — is **0.376** (85% of the ceiling); pre-COVID real-time **0.560**.
+
 
 ---
 
@@ -162,6 +164,18 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 
 *Caveat to state plainly: rent history starts ~2015, so windows are few and overlapping →
 **directional evidence, not statistical significance.***
+
+**Uncertainty, honestly stated (v3-P3).** The primary statement is the **per-window range**:
+3-yr τ spanned **[-0.02, +0.62]** across 6
+overlapping windows — calm windows near the top, shock windows near the bottom; no pooled
+average conveys that spread. Jackknife: dropping any single window moves the pooled 3-yr τ only
+within **[0.41, 0.54]**. Because neighboring metros co-move, a
+**state-cluster bootstrap** (41 states) widens the pooled-τ 95% interval to
+**[0.36, 0.55]**, and the equal-weight edge **survives** that
+stricter test (gap CI [+0.009, +0.153]). Metro-cluster
+pooled CIs elsewhere are **cross-sectional only** — conditional on the observed windows and
+silent about regime risk.
+
 
 ---
 

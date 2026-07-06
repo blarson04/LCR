@@ -121,6 +121,42 @@ def build() -> Path:
     n_ind = len(config.INDICATORS)
     mv = config.MODEL_VERSION
 
+    # v3-P2 vintage honesty: real-time (pseudo-nowcast) equivalents.
+    vintage_bullet = ""
+    m3p = config.PROCESSED_DIR / "nowcast" / "m3_summary.csv"
+    if m3p.exists():
+        m3 = pd.read_csv(m3p)
+        def _g(h, r, c):
+            m = m3[(m3.horizon == h) & (m3.regime == r)]
+            return float(m[c].iloc[0]) if len(m) else float("nan")
+        rt3, rt_pc = _g(3, "POOLED", "mean_tau_ps"), _g(3, "pre_covid", "mean_tau_ps")
+        vintage_bullet = (
+            f"- **Vintage rule (v3-P2):** every τ in this brief is a **finalized-data ceiling** "
+            f"unless marked real-time. The **real-time achievable** pooled 3-yr τ — using only "
+            f"proxies/carry-forwards a user could have held at scoring time — is "
+            f"**{rt3:.3f}** ({rt3/pool3*100:.0f}% of the ceiling); pre-COVID real-time "
+            f"**{rt_pc:.3f}**.\n")
+
+    # v3-P3 temporal-uncertainty honesty.
+    uncertainty_md = ""
+    tup = config.PROCESSED_DIR / "temporal_uncertainty.csv"
+    if tup.exists():
+        tu = pd.read_csv(tup).iloc[0]
+        surv = ("**survives**" if bool(tu["eq_edge_survives_state_cluster"])
+                else "**does not survive**")
+        uncertainty_md = f"""
+**Uncertainty, honestly stated (v3-P3).** The primary statement is the **per-window range**:
+3-yr τ spanned **[{tu['win3_min']:+.2f}, {tu['win3_max']:+.2f}]** across {int(tu['win3_n'])}
+overlapping windows — calm windows near the top, shock windows near the bottom; no pooled
+average conveys that spread. Jackknife: dropping any single window moves the pooled 3-yr τ only
+within **[{tu['jk3_min']:.2f}, {tu['jk3_max']:.2f}]**. Because neighboring metros co-move, a
+**state-cluster bootstrap** ({int(tu['n_states'])} states) widens the pooled-τ 95% interval to
+**[{tu['state_tau_lo']:.2f}, {tu['state_tau_hi']:.2f}]**, and the equal-weight edge {surv} that
+stricter test (gap CI [{tu['state_gap_lo']:+.3f}, {tu['state_gap_hi']:+.3f}]). Metro-cluster
+pooled CIs elsewhere are **cross-sectional only** — conditional on the observed windows and
+silent about regime risk.
+"""
+
     # ---- assemble --------------------------------------------------------
     md = f"""# Multifamily Rent-Growth Screener — Paper Brief (model v{mv})
 
@@ -147,6 +183,7 @@ track record. It is positioned as a *screening framework, not a prediction engin
 - Pre-COVID 3-yr: τ **{pc3:.3f}**, precision@10 **{pc3p:.2f}**.  Shock 3-yr: τ **{sh3:.3f}**.
 - Pooled 3-yr τ **{pool3:.3f}** vs. pooled 1-yr τ **{pool1:.3f}** (≈ equal → see finding #3).
 - Worst single window: 3-yr starting **2022** (predicting the post-peak decline), τ **{w2022_tau:.3f}**.
+{vintage_bullet}
 
 ---
 
@@ -226,6 +263,7 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 
 *Caveat to state plainly: rent history starts ~2015, so windows are few and overlapping →
 **directional evidence, not statistical significance.***
+{uncertainty_md}
 
 ---
 
