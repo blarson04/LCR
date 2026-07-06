@@ -42,10 +42,12 @@ OUT = config.ROOT / "paper" / "nowcast-validation.md"
 def _pseudo_scores(pred_years):
     """Score every metro-year with the pseudo-nowcast panel (target years rebuilt
     from proxies; other years finalized so within-year normalization is fair)."""
+    from src.ingest import bls_ces
     panel = indicators.load_panel()
     ind = indicators.compute_indicators(panel)
     pep = census_pep.build_pep_migration_panel()
-    rows = [bnp.nowcast_row(y, panel, ind, pep) for y in pred_years]
+    ces = bls_ces.build_ces_job_growth_panel()
+    rows = [bnp.nowcast_row(y, panel, ind, pep, ces) for y in pred_years]
     ind_ps = pd.concat([ind[~ind["year"].isin(pred_years)], *rows], ignore_index=True)
     return score_mod.score(normalize.normalize(ind_ps))
 
@@ -132,19 +134,17 @@ def _write_doc(r):
                      + "\n\nThe migration proxy costs almost nothing; carrying forward "
                        "`job_growth`+`income_growth` drives the entire failure.\n")
     if r["passed"]:
-        decision_md = ("\n### Decision\nGate **passed** — the provisional nowcast may be published "
-                       "with a visible 'provisional' badge and per-indicator provenance.\n")
+        decision_md = (
+            "\n### Decision\nGate **PASSED** on the pre-committed one-shot CES re-run "
+            "(decision log 2026-07-06): the provisional configuration retains the required signal. "
+            "Per the pre-commitment, the current-year screen is promoted to a **validated** "
+            "edition — published with its vintage and per-indicator provenance displayed.\n")
     else:
         decision_md = (
-            "\n### Decision & recommendation\n"
-            "Gate **not met** → v2.1 ships as an **internal experiment**; the provisional ranking is "
-            "NOT surfaced as a site default (M5 gated off). This is a documented negative result.\n\n"
-            "**The fix is specific and feasible:** the failure is entirely the carried-forward "
-            "employment/income growth (see decomposition). Fresh current-year metro employment + "
-            "wages (CES) would lift retention toward the ~96% ceiling and likely clear the gate. "
-            "CES metro series ARE reachable via FRED's SAE series (verified) — this is the "
-            "prioritized future step. The migration linchpin already works, so the nowcast is one "
-            "accessible input away from viable.\n")
+            "\n### Decision\nGate **NOT MET on the pre-committed one-shot CES re-run** "
+            "(decision log 2026-07-06). Per the binding consequence, the provisional edition is "
+            "**pulled from the site**, and no further proxy iterations may run without a new "
+            "pre-registered specification. This is published negative result #2.\n")
     sec = f"""
 
 ---
@@ -178,9 +178,11 @@ overlap ≥ {GATE_MIN_TOP10:.0f}/10 → **{verdict}**.
 
 def decompose() -> pd.DataFrame:
     """Isolate which proxy drives the accuracy loss (pooled 3y τ per variant)."""
+    from src.ingest import bls_ces
     panel = indicators.load_panel()
     ind = indicators.compute_indicators(panel)
     pep = census_pep.build_pep_migration_panel()
+    ces = bls_ces.build_ces_job_growth_panel()
     py = backtest.usable_pred_years(score_mod.score())
 
     def pooled(frame):
@@ -189,7 +191,7 @@ def decompose() -> pd.DataFrame:
             sc[["cbsa_code", "year", "score"]], py, (3,)))
         return float(s[(s.horizon == 3) & (s.regime == "POOLED")].mean_tau.iloc[0])
 
-    rows = [bnp.nowcast_row(y, panel, ind, pep) for y in py]
+    rows = [bnp.nowcast_row(y, panel, ind, pep, ces) for y in py]
     pseudo = pd.concat([ind[~ind["year"].isin(py)], *rows], ignore_index=True)
     ps_idx = pseudo.set_index(["cbsa_code", "year"])
 

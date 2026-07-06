@@ -17,7 +17,7 @@ only the 8 scored indicators appear here.
 
 from __future__ import annotations
 
-PROXY_MAP_VERSION = "0.1"
+PROXY_MAP_VERSION = "0.2"   # v3-P1: CES employment adopted; AHE wages REJECTED on QA
 
 PROXY_MAP = {
     "net_migration": {
@@ -28,13 +28,15 @@ PROXY_MAP = {
     "job_growth": {
         "strategy": "proxy", "proxy_source": "bls_ces",
         "finalized": "BLS QCEW (~6-9mo)",
-        "proxy": "BLS CES/SAE monthly metro employment (~2mo)",
-        "validated": "pending M1 CES build"},
+        "proxy": "BLS CES monthly metro employment via FRED (~2mo); carry-forward "
+                 "fallback for the few metros without a current series",
+        "validated": "P1 QA: 110/110 mapped; growth rank-agreement vs QCEW 0.90-0.96 every year"},
     "income_growth": {
-        "strategy": "proxy", "proxy_source": "bls_ces_wages",
+        "strategy": "carry_forward",
         "finalized": "BEA regional income (~1.5y)",
-        "proxy": "CES/QCEW wage growth as income-growth proxy",
-        "validated": "pending"},
+        "proxy": "carry forward latest finalized growth (CES avg-hourly-earnings proxy "
+                 "REJECTED in P1 QA: rank agreement vs BEA income growth only 0.0-0.26)",
+        "validated": "P1 QA rejection logged 2026-07-06"},
     "permits_to_stock": {
         "strategy": "proxy", "proxy_source": "bps_monthly",
         "finalized": "Census BPS annual + ACS stock (~1y)",

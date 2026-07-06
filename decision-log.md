@@ -25,6 +25,18 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-06 — v3-P1 CES proxy specification (logged BEFORE the one-shot gate run)
+
+Data QA (`src/nowcast/ces_qa.py`, outputs in `data/processed/nowcast/ces_qa_*.csv`) is complete; per the pre-commitment, the exact proxy specification is recorded here **before** M3 runs, and M3 runs **once**.
+
+**QA findings (coverage + agreement only; no gate metrics were computed):**
+- CES metro total-nonfarm employment via FRED: **110/110** metros mapped (name-based legacy series ids, discovered by search and saved in `ces_qa_coverage.csv`); 103/110 current into 2026. Annual-average growth rank-agrees with the finalized QCEW growth the model uses at **Spearman 0.90–0.96 in every overlap year (2016–2023)** → **adopted** as the `job_growth` proxy.
+- CES average hourly earnings (constructible SMU ids, 110/110 found): growth rank-agrees with finalized BEA income growth at only **0.0–0.26** (composition effects) → **REJECTED**; `income_growth` remains carried-forward. No other wage proxy will be tried for this gate attempt.
+
+**Specification (proxy_map v0.2), changed from v0.1 in exactly one way:** `job_growth` = YoY growth of annual-average CES metro employment for the scoring year (carry-forward fallback for the few metros whose series is stale); every other indicator's treatment is unchanged (PEP migration; live rent/permits/home values; carried income, diversity, stock, population, income denominators). The pseudo-nowcast (M3) applies this identical scheme to historical years. Known limitation, disclosed: FRED serves current CES vintages, not true real-time unrevised prints — same caveat as PEP.
+
+**Gate (verbatim from the 2026-07-06 pre-commitment, one attempt):** pseudo-nowcast retains **≥ 85%** of the finalized model's pooled 3-yr weighted τ **AND** mean top-10 overlap **≥ 7/10**. Pass → the provisional edition is promoted to a validated current screen. Fail → published negative result #2 and the provisional edition is **pulled**. Both outcomes will be published.
+
 ### 2026-07-06 — Gate-taxonomy amendment (acknowledged), edition renames, and the CES re-run pre-commitment
 
 Prompted by the v3 outside critique (`v3-plan.md` §3), which correctly identified that surfacing the failed-gate nowcast as a labeled "experimental" tab was a **reinterpretation of the gate's consequence after seeing the result** — the original gate said "internal experiment," and the "disclosed-experimental ≠ validated publication" rationale was constructed post hoc. We acknowledge that as a governance wobble and formalize the fix:

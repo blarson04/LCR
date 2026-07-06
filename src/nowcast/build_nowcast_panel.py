@@ -41,7 +41,8 @@ PROVENANCE = {
     "permits_to_stock": "proxy",       # live permits / carried housing stock
     "net_migration": "proxy",          # PEP net domestic migration / carried population
     "rent_to_income": "proxy",         # live rent / carried income
-    "job_growth": "carried_forward", "income_growth": "carried_forward",
+    "job_growth": "proxy",             # CES monthly employment via FRED (v3-P1)
+    "income_growth": "carried_forward",  # AHE proxy rejected in P1 QA
     "employment_diversity": "carried_forward",
 }
 
@@ -52,11 +53,14 @@ def _latest(df: pd.DataFrame, col: str, before: int) -> pd.Series:
     return d.groupby("cbsa_code")[col].last()
 
 
-def nowcast_row(year: int, panel: pd.DataFrame, ind: pd.DataFrame, pep: pd.DataFrame) -> pd.DataFrame:
+def nowcast_row(year: int, panel: pd.DataFrame, ind: pd.DataFrame, pep: pd.DataFrame,
+                ces: pd.DataFrame | None = None) -> pd.DataFrame:
     """Build the nowcast/pseudo-nowcast indicator row (one per metro) for `year`
-    using the proxy scheme. Shared by M2 (current year) and M3 (historical years)
-    so the pseudo-nowcast test uses identical logic. Uses PEP for the target year
-    if published, else the latest PEP; slow inputs carried from before `year`."""
+    using the proxy scheme (proxy_map v0.2). Shared by M2 (current year) and M3
+    (historical years) so the pseudo-nowcast test uses identical logic.
+    - PEP for migration (target year if published, else latest PEP)
+    - CES for job_growth (target year; carry-forward fallback where missing)
+    - slow inputs carried from before `year`."""
     p_y = panel[panel["year"] == year].set_index("cbsa_code")
     i_y = ind[ind["year"] == year].set_index("cbsa_code")
     pep_y = pep[pep["year"] == min(year, pep["year"].max())].set_index("cbsa_code")["pep_net_migration"]
@@ -71,7 +75,16 @@ def nowcast_row(year: int, panel: pd.DataFrame, ind: pd.DataFrame, pep: pd.DataF
     nc["permits_to_stock"] = p_y["permits_total"] / stock           # live permits / carried stock
     nc["net_migration"] = pep_y / pop                               # PEP proxy / carried pop
     nc["rent_to_income"] = (p_y["zori"] * 12.0) / income            # live rent / carried income
-    for k in ("job_growth", "income_growth", "employment_diversity"):
+
+    # job_growth: CES proxy for the target year, carry-forward where missing.
+    jg_carry = _latest(ind, "job_growth", year)
+    if ces is not None:
+        ces_y = ces[ces["year"] == year].set_index("cbsa_code")["ces_job_growth"]
+        nc["job_growth"] = ces_y.reindex(nc.index).where(
+            ces_y.reindex(nc.index).notna(), jg_carry.reindex(nc.index))
+    else:
+        nc["job_growth"] = jg_carry
+    for k in ("income_growth", "employment_diversity"):
         nc[k] = _latest(ind, k, year)                               # carried forward
     nc = nc.reset_index()
     nc["year"] = year
@@ -81,10 +94,12 @@ def nowcast_row(year: int, panel: pd.DataFrame, ind: pd.DataFrame, pep: pd.DataF
 def build_nowcast_indicators(year: int = NOWCAST_YEAR) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return (finalized indicators with `year`'s row replaced by the nowcast row,
     provenance summary)."""
+    from src.ingest import bls_ces
     panel = indicators.load_panel()
     ind = indicators.compute_indicators(panel)
     pep = census_pep.build_pep_migration_panel()
-    nc = nowcast_row(year, panel, ind, pep)
+    ces = bls_ces.build_ces_job_growth_panel()
+    nc = nowcast_row(year, panel, ind, pep, ces)
     ind_nc = pd.concat([ind[ind["year"] != year], nc], ignore_index=True)
     prov = pd.DataFrame([{"indicator": k, "provenance": PROVENANCE[k],
                           "weight": config.INDICATORS[k]["weight"]} for k in config.INDICATORS])
