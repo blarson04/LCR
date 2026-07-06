@@ -22,6 +22,7 @@ for _p in (str(ROOT), str(APP)):
         sys.path.insert(0, _p)
 
 from ui import data, theme  # noqa: E402
+import config               # noqa: E402
 
 theme.inject_css()
 d = data.load()
@@ -43,15 +44,21 @@ theme.caption(
 st.markdown(theme.badge(ed["provisional"]), unsafe_allow_html=True)
 
 if not ed["provisional"]:
-    if d["regime"] == "shock" or d["nat_growth"] > 0.075:
-        theme.caption(f"Conditions in the {ed['year']} scoring year resembled a shock period "
-                      f"(national rent growth {d['nat_growth']:+.1%}); the framework is less "
-                      f"reliable in shocks — see Track record. This describes the vintage "
-                      f"year, not today.")
+    # Ex-ante rule only (v3-P6) — no hindsight regime labels feed the flag.
+    if d["nat_growth"] > config.REGIME_FLAG_THRESHOLD:
+        theme.caption(f"Elevated-uncertainty flag: national rent growth in the {ed['year']} "
+                      f"scoring year was {d['nat_growth']:+.1%} — above the "
+                      f"{config.REGIME_FLAG_THRESHOLD:.1%} rule. In the two historical years "
+                      f"this flag fired (2021–22), the screen's accuracy broke down. This "
+                      f"describes the vintage year, not today.")
     else:
         theme.caption(f"Conditions in the {ed['year']} scoring year looked typical (national "
-                      f"rent growth {d['nat_growth']:+.1%}), inside the framework's validated "
-                      f"range. This describes the vintage year, not today.")
+                      f"rent growth {d['nat_growth']:+.1%}, under the "
+                      f"{config.REGIME_FLAG_THRESHOLD:.1%} flag rule), inside the framework's "
+                      f"validated range. This describes the vintage year, not today. "
+                      f"Flag rule, published and tested on history: it fires only in 2021–22 — "
+                      f"exactly the windows where accuracy broke — with no false alarms; it did "
+                      f"not catch 2020, a shock that never moved rents.")
 st.write("")
 
 # ---- Headline: map + top 10 --------------------------------------------------

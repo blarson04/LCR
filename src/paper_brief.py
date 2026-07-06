@@ -185,6 +185,41 @@ materially smaller top-10 losses in the windows where momentum inverted. Diversi
 real but partial.*
 """
 
+    # v3-P6: regime flag validated ex ante.
+    flag_md = ""
+    rfp = config.PROCESSED_DIR / "regime_flag_validation.csv"
+    if rfp.exists():
+        rf = pd.read_csv(rfp)
+        rft = rf.copy()
+        rft["national_rent_growth"] = rft["national_rent_growth"].map(
+            lambda v: f"{v:+.1%}" if pd.notna(v) else "—")
+        for c in ("tau_3y_window", "tau_1y_window"):
+            rft[c] = rft[c].map(lambda v: f"{v:+.2f}" if pd.notna(v) else "—")
+        rft = rft.rename(columns={"year": "Year", "national_rent_growth": "Nat. rent growth",
+                                  "flag_fires": "Flag fires", "hindsight_regime": "Hindsight regime",
+                                  "tau_3y_window": "3y window τ", "tau_1y_window": "1y window τ"})
+        t_f = rf[rf.flag_fires == True]["tau_3y_window"].dropna()    # noqa: E712
+        t_q = rf[rf.flag_fires == False]["tau_3y_window"].dropna()   # noqa: E712
+        flag_md = f"""
+---
+
+## 5c. The regime flag, validated ex ante (v3-P6)
+
+The site's elevated-uncertainty flag uses one rule, computable at scoring time from near-live
+rent data: **flag the scoring year if national (median-metro) YoY asking-rent growth exceeds
+{config.REGIME_FLAG_THRESHOLD:.1%}**. The rule shipped on 2026-07-02, *before* this validation —
+it is tested as-is, not tuned.
+
+{_md_table(rft.astype(str))}
+
+**Result:** the flag fires in **2021 and 2022 only** — exactly the windows where accuracy broke
+(mean flagged 3-yr τ **{t_f.mean():+.2f}** vs unflagged **{t_q.mean():+.2f}**) — with **zero
+false positives** across seven calm years. Disclosed miss: 2020, a demand shock that never moved
+rents (also not a scoreable 3-yr window); rules based on rent speed cannot see shocks that don't
+move rents. The hindsight regime labels remain for backtest *reporting*; the live flag uses only
+this ex-ante rule.
+"""
+
     # v3-P3 temporal-uncertainty honesty.
     uncertainty_md = ""
     tup = config.PROCESSED_DIR / "temporal_uncertainty.csv"
@@ -313,6 +348,7 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 **directional evidence, not statistical significance.***
 {uncertainty_md}
 {effect_md}
+{flag_md}
 
 ---
 

@@ -94,6 +94,15 @@ REGIMES = {
 # --------------------------------------------------------------------------
 # Backtest knobs  (decision-log: "Evaluation metric" / "Winsorize")
 # --------------------------------------------------------------------------
+# Regime/confidence flag rule (v3-P6): the flag fires when national (median-
+# metro) year-over-year asking-rent growth in the SCORING year exceeds this.
+# Uses only scoring-date-available data (ZORI is near-live). The 7.5% value
+# shipped on 2026-07-02, BEFORE the ex-ante validation in src/regime_flag.py —
+# it is validated as-is, not tuned. Known limitation (disclosed): it detects
+# rent-spike regimes (the observed failure mode); a novel shock type that
+# doesn't move rents may not be flagged.
+REGIME_FLAG_THRESHOLD = 0.075
+
 WINSOR_LIMITS = (0.01, 0.99)   # cap rent-growth outliers at 1st / 99th pct
 TAU_RANK_BASIS = "realized"    # weightedtau weighting: "realized" | "predicted" | "symmetric"
 PRECISION_K = 10               # headline metric: precision@10

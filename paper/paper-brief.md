@@ -219,6 +219,36 @@ real but partial.*
 
 ---
 
+## 5c. The regime flag, validated ex ante (v3-P6)
+
+The site's elevated-uncertainty flag uses one rule, computable at scoring time from near-live
+rent data: **flag the scoring year if national (median-metro) YoY asking-rent growth exceeds
+7.5%**. The rule shipped on 2026-07-02, *before* this validation —
+it is tested as-is, not tuned.
+
+| Year | Nat. rent growth | Flag fires | Hindsight regime | 3y window τ | 1y window τ |
+| --- | --- | --- | --- | --- | --- |
+| 2016 | +3.6% | False | pre_covid | +0.62 | +0.73 |
+| 2017 | +4.0% | False | pre_covid | +0.62 | +0.72 |
+| 2018 | +3.9% | False | pre_covid | +0.59 | +0.61 |
+| 2019 | +4.1% | False | pre_covid | +0.52 | +0.48 |
+| 2020 | +4.3% | False | shock | — | — |
+| 2021 | +10.0% | True | shock | +0.34 | +0.50 |
+| 2022 | +10.7% | True | shock | -0.02 | +0.20 |
+| 2023 | +4.1% | False | normalization | — | +0.26 |
+| 2024 | +3.3% | False | normalization | — | — |
+| 2025 | +2.9% | False | normalization | — | — |
+
+**Result:** the flag fires in **2021 and 2022 only** — exactly the windows where accuracy broke
+(mean flagged 3-yr τ **+0.16** vs unflagged **+0.59**) — with **zero
+false positives** across seven calm years. Disclosed miss: 2020, a demand shock that never moved
+rents (also not a scoreable 3-yr window); rules based on rent speed cannot see shocks that don't
+move rents. The hindsight regime labels remain for backtest *reporting*; the live flag uses only
+this ex-ante rule.
+
+
+---
+
 ## 6. Pre-registration & reproducibility
 
 Every production run is frozen, timestamped, and never edited (registry), making the live track
