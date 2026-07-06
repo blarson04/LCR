@@ -97,12 +97,23 @@ def inject_css(reading: bool = False) -> None:
       h2 {{ font-size: 20px; margin-top: 40px; }}
       h3 {{ font-size: 17px; }}
 
-      /* Sidebar: always visible (collapse control removed; expand control is
-         kept so small screens can still open it). */
-      [data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px solid {LINE};
-          min-width: 244px; }}
+      /* Sidebar styling */
+      [data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px solid {LINE}; }}
       [data-testid="stSidebar"] * {{ font-size: 14px; }}
-      [data-testid="stSidebarCollapseButton"] {{ display: none; }}
+      /* Desktop: sidebar is ALWAYS visible — force it open whatever the
+         collapsed state or Streamlit version, and remove the collapse
+         controls. Phones keep the default overlay behavior. */
+      @media (min-width: 992px) {{
+        [data-testid="stSidebar"] {{
+            display: block !important; visibility: visible !important;
+            transform: none !important; margin-left: 0 !important;
+            width: 252px !important; min-width: 252px !important;
+        }}
+        [data-testid="stSidebar"][aria-expanded="false"] {{ transform: none !important; }}
+        [data-testid="stSidebarCollapseButton"], [data-testid="stSidebarCollapsedControl"],
+        [data-testid="collapsedControl"], [data-testid="stExpandSidebarButton"] {{
+            display: none !important; }}
+      }}
 
       [data-testid="stMetric"] {{ background: {SURFACE}; border: 1px solid {LINE};
           border-radius: 8px; padding: .75rem 1rem;

@@ -53,15 +53,13 @@ with st.sidebar:
 
 # ---- Pages ------------------------------------------------------------------
 pages = [
-    st.Page("views/rankings.py", title="Rankings", default=True),
+    st.Page("views/methodology.py", title="About & methodology", default=True),
+    st.Page("views/rankings.py", title="Rankings"),
     st.Page("views/metro_detail.py", title="Metro detail"),
     st.Page("views/compare.py", title="Compare markets"),
 ]
 if d["has_spec"]:
     pages.append(st.Page("views/acc_vs_spec.py", title="Accurate vs speculative"))
-pages += [
-    st.Page("views/track_record.py", title="Track record"),
-    st.Page("views/methodology.py", title="Methodology"),
-]
+pages.append(st.Page("views/track_record.py", title="Track record"))
 
 st.navigation(pages).run()
