@@ -118,8 +118,14 @@ or change the model.""")
     theme.caption("The migration substitute tracks the finalized source closely; the main "
                   "added uncertainty comes from carrying employment and income forward. "
                   "Fresher jobs data is the planned improvement.")
-else:
+elif d["has_spec"]:
     theme.caption("Switch the sidebar to the provisional edition to see how the provisional "
                   "2025 screen is built.")
+else:
+    theme.caption("A provisional current-year screen (built on faster, preliminary data) was "
+                  "developed and tested against a pre-committed validation gate. It missed the "
+                  "bar twice — most recently by a hair (84.7% signal retention vs the 85% "
+                  "required) — so it is not published. Both negative results are documented in "
+                  "the project's decision log; a screen that publishes its failures is the point.")
 
 theme.page_footer()

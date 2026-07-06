@@ -1,6 +1,6 @@
 # Multifamily Rent-Growth Screener — Paper Brief (model v2.0.0)
 
-*Auto-generated 2026-07-01 from the model outputs. Regenerate with
+*Auto-generated 2026-07-06 from the model outputs. Regenerate with
 `python src/paper_brief.py`. Every number here is pulled directly from the processed data —
 nothing is hand-typed. Companion docs: `decision-log.md` (the "why"), `v1-build-spec.md` (v1
 how), `v2-plan.md` + `paper/v2-findings.md` (the rigor pass that produced v2).*

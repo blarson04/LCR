@@ -25,6 +25,14 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-06 — v3-P1 gate OUTCOME: FAIL by a hair → provisional edition PULLED (negative result #2)
+
+The pre-committed one-shot re-run (spec: proxy_map v0.2, CES employment; entry immediately below) was executed once. Result: pseudo-nowcast pooled 3-yr τ **0.376** vs finalized **0.444** → retention **84.66%** (gate: ≥ 85%); mean top-10 overlap **6.7/10** (gate: ≥ 7). Gap +0.068, 95% CI [+0.013, +0.120]. **Both prongs missed — narrowly — and the gate is binding: FAIL.**
+
+Consequence executed as pre-committed: the provisional edition is **pulled from the site** (`config.NOWCAST_PUBLISHED = False`; the sidebar edition toggle and the Validated-vs-provisional page disappear; the About page explains the pulled experiment honestly). No further proxy iterations may run without a new pre-registered specification. We explicitly decline to round 84.66% to 85% or to relitigate the threshold post hoc — a gate that bends at the margin is decoration, and the near-miss is precisely where the discipline has value.
+
+What the attempt established (published, not wasted): the CES employment proxy works (agreement 0.90–0.96 vs QCEW) and moved retention from **74.8% → 84.7%** and overlap from **6.1 → 6.7** — the diagnosis was right, the fix was real, and the remaining gap now sits in the carried-forward income growth (the AHE wage proxy was rejected on QA) and residual PEP noise. Any future attempt requires: a new dated spec entry (e.g., a QA-validated income proxy), the same gate verbatim, one attempt.
+
 ### 2026-07-06 — v3-P1 CES proxy specification (logged BEFORE the one-shot gate run)
 
 Data QA (`src/nowcast/ces_qa.py`, outputs in `data/processed/nowcast/ces_qa_*.csv`) is complete; per the pre-commitment, the exact proxy specification is recorded here **before** M3 runs, and M3 runs **once**.

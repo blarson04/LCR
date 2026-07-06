@@ -182,7 +182,10 @@ def load() -> dict:
         return pd.read_csv(p, dtype={"cbsa_code": str}) if p.exists() else pd.DataFrame()
     nowcast, nc_prov = _csv("provisional_2025_ranking.csv"), _csv("provenance.csv")
     nc_raw, nc_norm = _csv("nowcast_2025_raw.csv"), _csv("nowcast_2025_norm.csv")
-    has_spec = len(nowcast) > 0 and len(nc_raw) > 0 and len(nc_norm) > 0
+    # Gate outcome controls publication (config.NOWCAST_PUBLISHED): the one-shot
+    # CES re-run missed the pre-committed gate, so the edition is pulled.
+    has_spec = (config.NOWCAST_PUBLISHED
+                and len(nowcast) > 0 and len(nc_raw) > 0 and len(nc_norm) > 0)
 
     acc_rank = scored[scored["year"] == SCORE_YEAR].merge(
         rank_ranges(norm, SCORE_YEAR), on="cbsa_code", how="left")

@@ -1,6 +1,6 @@
 # V2 Tier-1 Findings — Rigor Pass (P1-P3)
 
-*Auto-generated 2026-07-01 from the committed analysis outputs
+*Auto-generated 2026-07-06 from the committed analysis outputs
 (`baseline_comparison.csv`, `ablation.csv`, `indicator_correlation.csv`, `uncertainty_*.csv`).
 Regenerate with `python src/v2_findings.py`. Companion to `v2-plan.md`.*
 

@@ -69,36 +69,36 @@ indicators, live rent/permits) and running the standard walk-forward evaluation:
 
 | h | regime | τ finalized | τ pseudo | P@10 fin | P@10 pseudo |
 | --- | --- | --- | --- | --- | --- |
-| 1 | pre-covid | 0.636 | 0.550 | 0.78 | 0.72 |
-| 1 | shock | 0.349 | 0.237 | 0.45 | 0.40 |
-| 1 | normalization | 0.256 | 0.327 | 0.60 | 0.50 |
-| 1 | POOLED | 0.500 | 0.429 | 0.66 | 0.60 |
-| 3 | pre-covid | 0.588 | 0.480 | 0.85 | 0.77 |
-| 3 | shock | 0.157 | 0.036 | 0.25 | 0.35 |
-| 3 | POOLED | 0.444 | 0.332 | 0.65 | 0.63 |
+| 1 | pre-covid | 0.636 | 0.582 | 0.78 | 0.80 |
+| 1 | shock | 0.349 | 0.239 | 0.45 | 0.25 |
+| 1 | normalization | 0.256 | 0.224 | 0.60 | 0.30 |
+| 1 | POOLED | 0.500 | 0.433 | 0.66 | 0.57 |
+| 3 | pre-covid | 0.588 | 0.560 | 0.85 | 0.85 |
+| 3 | shock | 0.157 | 0.008 | 0.25 | 0.30 |
+| 3 | POOLED | 0.444 | 0.376 | 0.65 | 0.67 |
 
-**3-yr pooled τ:** finalized **0.444** vs pseudo-nowcast **0.332** →
-retention **75%**. Gap **+0.112**, 95% CI
-[+0.038, +0.182] (metro-cluster bootstrap).
+**3-yr pooled τ:** finalized **0.444** vs pseudo-nowcast **0.376** →
+retention **84.7%**. Gap **+0.068**, 95% CI
+[+0.013, +0.120] (metro-cluster bootstrap).
 
 **Ranking agreement (pseudo vs finalized), per year:**
 
 | year | spearman | top10_overlap |
 | --- | --- | --- |
-| 2016 | 0.821 | 9/10 |
-| 2017 | 0.881 | 8/10 |
-| 2018 | 0.860 | 8/10 |
-| 2019 | 0.833 | 6/10 |
-| 2021 | 0.661 | 5/10 |
-| 2022 | 0.736 | 4/10 |
-| 2023 | 0.749 | 3/10 |
+| 2016 | 0.937 | 9/10 |
+| 2017 | 0.916 | 9/10 |
+| 2018 | 0.878 | 8/10 |
+| 2019 | 0.839 | 7/10 |
+| 2021 | 0.769 | 4/10 |
+| 2022 | 0.818 | 4/10 |
+| 2023 | 0.881 | 6/10 |
 
-Mean top-10 overlap **6.1/10**.
+Mean top-10 overlap **6.7/10**.
 
 **Gate (pre-committed):** retain ≥ 85% of pooled 3-yr τ AND mean top-10
 overlap ≥ 7/10 → **FAIL — published as a negative result; surfaced only as a provisional-experimental edition under the amended gate taxonomy (decision log 2026-07-06)**.
 
-**Which proxy causes the loss? (pooled 3-yr τ by variant)**
+**Which proxy causes the loss? (attempt #1 decomposition, pre-CES)**
 
 | variant | pooled τ | retention |
 | --- | --- | --- |
@@ -107,11 +107,7 @@ overlap ≥ 7/10 → **FAIL — published as a negative result; surfaced only as
 | pseudo but jobs+income finalized | 0.427 | 96% |
 | full pseudo-nowcast | 0.332 | 75% |
 
-The migration proxy costs almost nothing; carrying forward `job_growth`+`income_growth` drives the entire failure.
+(Attempt #1 context: this decomposition motivated the CES fix — the migration proxy costs ~nothing; the carried growth inputs drove the loss.)
 
-### Decision & recommendation
-Gate **not met** → v2.1 ships as an **internal experiment**; the provisional ranking is NOT surfaced as a site default (M5 gated off). This is a documented negative result.
-
-**The fix is specific and feasible:** the failure is entirely the carried-forward employment/income growth (see decomposition). Fresh current-year metro employment + wages (CES) would lift retention toward the ~96% ceiling and likely clear the gate. CES metro series ARE reachable via FRED's SAE series (verified) — this is the prioritized future step. The migration linchpin already works, so the nowcast is one accessible input away from viable.
-
-**Disposition (updated 2026-07-06):** the provisional edition is live on the site under the amended taxonomy — labeled provisional-experimental, with the gate failure and the per-year top-10 divergence shown inline. The CES employment/wage fix is pre-committed to a single re-run of this gate, verbatim; pass promotes the edition to validated, fail pulls it. See the decision log entries of 2026-07-06.
+### Decision
+Gate **NOT MET on the pre-committed one-shot CES re-run** (decision log 2026-07-06). Per the binding consequence, the provisional edition is **pulled from the site**, and no further proxy iterations may run without a new pre-registered specification. This is published negative result #2.

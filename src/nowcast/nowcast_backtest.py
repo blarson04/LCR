@@ -158,7 +158,7 @@ indicators, live rent/permits) and running the standard walk-forward evaluation:
           "P@10 fin": "{:.2f}".format, "P@10 pseudo": "{:.2f}".format, "h": "{:.0f}".format})}
 
 **3-yr pooled τ:** finalized **{r['fin_tau']:.3f}** vs pseudo-nowcast **{r['ps_tau']:.3f}** →
-retention **{r['retention']*100:.0f}%**. Gap **{r['gap']:+.3f}**, 95% CI
+retention **{r['retention']*100:.1f}%**. Gap **{r['gap']:+.3f}**, 95% CI
 [{r['gap_ci'][0]:+.3f}, {r['gap_ci'][1]:+.3f}] (metro-cluster bootstrap).
 
 **Ranking agreement (pseudo vs finalized), per year:**
@@ -224,7 +224,7 @@ def main() -> None:
 
     print("=== M3 pseudo-nowcast vs finalized ===\n")
     print(f"  3y pooled tau: finalized {r['fin_tau']:.3f}  pseudo {r['ps_tau']:.3f}  "
-          f"retention {r['retention']*100:.0f}%")
+          f"retention {r['retention']*100:.1f}%")
     print(f"  gap {r['gap']:+.3f}  95% CI [{r['gap_ci'][0]:+.3f}, {r['gap_ci'][1]:+.3f}]")
     print(f"  mean top-10 overlap {r['mean_overlap']:.1f}/10")
     print(f"\n  GATE (>= {GATE_TAU_RETENTION*100:.0f}% tau retained AND >= {GATE_MIN_TOP10:.0f}/10 overlap): "

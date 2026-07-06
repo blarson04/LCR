@@ -103,6 +103,13 @@ RANDOM_SEED = 42               # set wherever randomness enters, for reproducibi
 # into every frozen prediction run so the track record is unambiguous.
 MODEL_VERSION = "2.0.0"
 
+# Whether the provisional (nowcast) edition may be shown on the site. Set by
+# gate outcomes ONLY (decision-log entries 2026-07-06): the one-shot CES re-run
+# missed the pre-committed gate (τ retention 84.7% < 85%; mean top-10 overlap
+# 6.7 < 7), so per the binding consequence the edition is pulled. Do not flip
+# this without a new pre-registered gate that passes.
+NOWCAST_PUBLISHED = False
+
 
 def validate_weights() -> None:
     """Fail loudly if the hand-set weights ever stop summing to 1.0."""

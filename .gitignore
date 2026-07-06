@@ -25,3 +25,6 @@ Thumbs.db
 
 # Office lock/temp files (this project lives in OneDrive)
 ~$*
+
+# Local critique/upload packages (derived, not source)
+critique/
