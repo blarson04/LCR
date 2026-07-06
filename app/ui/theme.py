@@ -1,9 +1,13 @@
 """
 theme.py — design tokens + global styling (single source of truth).
 
-Implements the screener-site-design skill: a calm, report-like light site.
-One accent color, serif headings, restrained tables and charts. Page code must
+Implements the screener-site-design skill: a calm, report-like site. One
+accent color, serif headings, restrained tables and charts. Page code must
 never hardcode a hex value — import tokens from here.
+
+Light is the default (per the skill); a dark palette is available as a user
+preference via the sidebar toggle (session key MODE_KEY). Tokens are applied
+per run by inject_css(), so every page reads the active palette.
 """
 
 from __future__ import annotations
@@ -11,28 +15,72 @@ from __future__ import annotations
 import plotly.graph_objects as go
 import streamlit as st
 
-# ---- Palette (skill §1) ----------------------------------------------------
-INK = "#1B2A3B"          # headings, body, table text
-PAPER = "#FBFBF9"        # page background
-SURFACE = "#FFFFFF"      # cards, tables
-LINE = "#E4E6EA"         # hairlines, dividers
-MUTED = "#66707D"        # captions, secondary text, axis labels
-ACCENT = "#2C6E63"       # THE brand color
-POS = "#1E7F4F"          # positive data values only
-NEG = "#B3462E"          # negative data values only
-PROVISIONAL = "#8A6D1D"  # provisional/nowcast badge only
+MODE_KEY = "ui_mode"
 
-GRAY_SERIES = ["#8E98A3", "#B9C0C8", "#D3D8DE"]   # context series in charts
-SEQ_SCALE = [[0.0, "#E7ECEA"], [1.0, ACCENT]]     # map/score sequential scale
-MAP_LAND = "#EFF1ED"
-MAP_BORDER = "#FFFFFF"
+# ---- Palettes (skill §1; dark is the same system on dark surfaces) ---------
+_LIGHT = dict(
+    INK="#1B2A3B", PAPER="#FBFBF9", SURFACE="#FFFFFF", LINE="#E4E6EA",
+    MUTED="#66707D", ACCENT="#2C6E63", POS="#1E7F4F", NEG="#B3462E",
+    PROVISIONAL="#8A6D1D",
+    GRAY_SERIES=["#8E98A3", "#B9C0C8", "#D3D8DE"],
+    SEQ_LOW="#E7ECEA", MAP_LAND="#EFF1ED", MAP_BORDER="#FFFFFF",
+)
+_DARK = dict(
+    INK="#E7ECF1", PAPER="#0F151B", SURFACE="#171E26", LINE="#28313B",
+    MUTED="#8C98A4", ACCENT="#45A492", POS="#3FA574", NEG="#CE6B4E",
+    PROVISIONAL="#D3AC3B",
+    GRAY_SERIES=["#7E8A96", "#5D6873", "#454F59"],
+    SEQ_LOW="#22302B", MAP_LAND="#1B232C", MAP_BORDER="#0F151B",
+)
+
+# Module-level tokens default to light; _apply() swaps them per run.
+globals().update(_LIGHT)
+SEQ_SCALE = [[0.0, _LIGHT["SEQ_LOW"]], [1.0, _LIGHT["ACCENT"]]]
 
 FONT_BODY = "Inter, sans-serif"
 FONT_HEAD = "'Source Serif 4', Georgia, serif"
 
 
+def current_mode() -> str:
+    return st.session_state.get(MODE_KEY, "Light")
+
+
+def _apply_tokens(mode: str) -> None:
+    """Swap the module-level tokens to the active palette (no side effects)."""
+    t = _DARK if mode == "Dark" else _LIGHT
+    globals().update(t)
+    global SEQ_SCALE
+    SEQ_SCALE = [[0.0, t["SEQ_LOW"]], [1.0, t["ACCENT"]]]
+
+
+def sync_native_theme() -> None:
+    """Point Streamlit's own theme (native widgets, dataframes) at the active
+    palette. Must be called AFTER the Appearance widget has rendered: it may
+    trigger a rerun, and a rerun before the widget renders would drop the
+    widget's state and snap the mode back."""
+    mode = current_mode()
+    if st.session_state.get("_applied_mode") == mode:
+        return
+    t = _DARK if mode == "Dark" else _LIGHT
+    try:
+        from streamlit import config as _cfg
+        _cfg.set_option("theme.base", "dark" if mode == "Dark" else "light")
+        _cfg.set_option("theme.backgroundColor", t["PAPER"])
+        _cfg.set_option("theme.secondaryBackgroundColor", t["SURFACE"])
+        _cfg.set_option("theme.textColor", t["INK"])
+        _cfg.set_option("theme.primaryColor", t["ACCENT"])
+    except Exception:
+        pass
+    first = "_applied_mode" not in st.session_state
+    st.session_state["_applied_mode"] = mode
+    if not first:
+        st.rerun()
+
+
 def inject_css(reading: bool = False) -> None:
-    """Global CSS. `reading=True` narrows the column for text-heavy pages."""
+    """Apply the active palette + global CSS. `reading=True` narrows the
+    column for text-heavy pages."""
+    _apply_tokens(current_mode())
     maxw = "860px" if reading else "1100px"
     st.markdown(f"""<style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap');
@@ -49,8 +97,12 @@ def inject_css(reading: bool = False) -> None:
       h2 {{ font-size: 20px; margin-top: 40px; }}
       h3 {{ font-size: 17px; }}
 
-      [data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px solid {LINE}; }}
+      /* Sidebar: always visible (collapse control removed; expand control is
+         kept so small screens can still open it). */
+      [data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px solid {LINE};
+          min-width: 244px; }}
       [data-testid="stSidebar"] * {{ font-size: 14px; }}
+      [data-testid="stSidebarCollapseButton"] {{ display: none; }}
 
       [data-testid="stMetric"] {{ background: {SURFACE}; border: 1px solid {LINE};
           border-radius: 8px; padding: .75rem 1rem;

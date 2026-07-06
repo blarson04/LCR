@@ -23,11 +23,13 @@ for _p in (str(ROOT), str(APP)):
 from ui import data, theme  # noqa: E402
 import config               # noqa: E402
 
-st.set_page_config(page_title="Multifamily Market Screener", layout="wide")
+st.set_page_config(page_title="Multifamily Market Screener", layout="wide",
+                   initial_sidebar_state="expanded")
 
+theme.inject_css()   # applies the saved light/dark preference before anything renders
 d = data.load()
 
-# ---- Sidebar: brand + the one global control -------------------------------
+# ---- Sidebar: brand + the global controls ----------------------------------
 with st.sidebar:
     st.markdown(
         f"<div style='font-family:{theme.FONT_HEAD};font-size:19px;font-weight:600;"
@@ -42,6 +44,12 @@ with st.sidebar:
             st.markdown(theme.badge(provisional=True), unsafe_allow_html=True)
             st.markdown("<div class='cap' style='margin-top:.4rem'>Uses preliminary and "
                         "proxy data that will be revised.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='cap' style='margin-top:.8rem'>Appearance</div>",
+                unsafe_allow_html=True)
+    st.radio("Appearance", ["Light", "Dark"], key=theme.MODE_KEY,
+             horizontal=True, label_visibility="collapsed")
+    # Sync Streamlit's native theme AFTER the widget renders (may rerun once).
+    theme.sync_native_theme()
 
 # ---- Pages ------------------------------------------------------------------
 pages = [
