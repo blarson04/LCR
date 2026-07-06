@@ -1,11 +1,10 @@
-# Streamlit theme — the fine-grained look is done with injected CSS in the app;
-# this sets the base (dark) palette so native widgets match.
+# Baseline theme per the screener-site-design skill; ui/theme.py CSS refines it.
 [theme]
-base = "dark"
-primaryColor = "#2DD4BF"          # bright teal accent (reads well on dark)
-backgroundColor = "#0C1118"       # near-black page
-secondaryBackgroundColor = "#131A23"
-textColor = "#E6EDF3"             # near-white
+base = "light"
+primaryColor = "#2C6E63"
+backgroundColor = "#FBFBF9"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1B2A3B"
 font = "sans serif"
 
 [client]

@@ -1,0 +1,139 @@
+"""
+Rankings — answers one question: which markets look strongest?
+
+Headline view = map + top-10 list (the point in 10 seconds). The full table
+and the numeric breakdown live behind expanders (progressive disclosure).
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+
+APP = Path(__file__).resolve().parents[1]
+ROOT = APP.parent
+for _p in (str(ROOT), str(APP)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+from ui import data, theme  # noqa: E402
+
+theme.inject_css()
+d = data.load()
+ed = data.edition(d)
+rank = ed["rank"].sort_values("rank").reset_index(drop=True)
+rank[["strength", "drag"]] = rank.apply(
+    lambda r: pd.Series(data.strength_drag(r)), axis=1)
+
+# ---- Header -----------------------------------------------------------------
+st.markdown("# Market rankings")
+theme.caption(
+    f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
+    f"rent growth — a {ed['horizon']} screen scored on "
+    + ("preliminary data for the current year." if ed["provisional"]
+       else f"the latest complete data ({ed['year']}).")
+)
+st.markdown(theme.badge(ed["provisional"]), unsafe_allow_html=True)
+
+if not ed["provisional"]:
+    if d["regime"] == "shock" or d["nat_growth"] > 0.075:
+        theme.caption(f"Market conditions in {ed['year']} resemble a shock period "
+                      f"(national rent growth {d['nat_growth']:+.1%}); the framework is less "
+                      f"reliable in shocks — see Track record.")
+    else:
+        theme.caption(f"Market conditions in {ed['year']} look typical (national rent growth "
+                      f"{d['nat_growth']:+.1%}); the screen is operating within its validated range.")
+st.write("")
+
+# ---- Headline: map + top 10 --------------------------------------------------
+col_map, col_top = st.columns([7, 3], gap="large")
+
+with col_map:
+    mp = rank.merge(d["coords"], on="cbsa_code", how="left")
+    mp["strength_txt"] = mp["strength"].where(mp["strength"] != "—", "Broadly average")
+    fig = px.scatter_geo(
+        mp, lat="lat", lon="lon", color="score", scope="usa",
+        hover_name="cbsa_title", size=[8] * len(mp), size_max=12,
+        color_continuous_scale=theme.SEQ_SCALE,
+        custom_data=["rank", "score", "strength_txt"])
+    fig.update_traces(
+        marker=dict(line=dict(width=0.6, color=theme.MAP_BORDER)),
+        hovertemplate="<b>%{hovertext}</b><br>Rank %{customdata[0]} · score "
+                      "%{customdata[1]:+.2f}<br>%{customdata[2]}<extra></extra>")
+    fig.update_geos(showland=True, landcolor=theme.MAP_LAND, showlakes=False,
+                    subunitcolor=theme.MAP_BORDER, countrycolor=theme.MAP_BORDER,
+                    coastlinecolor=theme.MAP_BORDER, bgcolor="rgba(0,0,0,0)", showframe=False)
+    fig.add_trace(go.Scattergeo(
+        lat=[v[0] for v in data.STATE_CENTROIDS.values()],
+        lon=[v[1] for v in data.STATE_CENTROIDS.values()],
+        text=list(data.STATE_CENTROIDS), mode="text",
+        textfont=dict(family="Inter, sans-serif", size=9, color=theme.MUTED),
+        hoverinfo="skip", showlegend=False))
+    fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=10, len=0.6,
+                                              tickfont=dict(color=theme.MUTED)))
+    st.plotly_chart(theme.style_fig(fig, 470), use_container_width=True)
+    top3 = [t.split(",")[0].split("-")[0] for t in rank.head(3)["cbsa_title"]]
+    theme.caption(f"Darker green = stronger fundamentals. {top3[0]} leads the {ed['year']} "
+                  f"screen; {top3[1]} and {top3[2]} round out the top three.")
+
+with col_top:
+    st.markdown("### Top 10")
+    rows_html = ""
+    for _, r in rank.head(10).iterrows():
+        color = theme.POS if r["score"] >= 0 else theme.NEG
+        rows_html += (
+            f"<div style='padding:.42rem 0;border-bottom:1px solid {theme.LINE}'>"
+            f"<span style='color:{theme.MUTED};display:inline-block;width:1.6rem'>{int(r['rank'])}</span>"
+            f"<span style='font-weight:500'>{r['cbsa_title'].split(',')[0][:26]}</span>"
+            f"<span style='float:right;color:{color};font-variant-numeric:tabular-nums'>"
+            f"{r['score']:+.2f}</span>"
+            f"<div class='cap' style='margin-left:1.6rem'>{r['strength']}</div></div>")
+    st.markdown(rows_html, unsafe_allow_html=True)
+
+# ---- Full table (progressive disclosure) -------------------------------------
+with st.expander(f"See all {len(rank)} markets"):
+    tbl = pd.DataFrame({
+        "Rank": [f"{int(r['rank'])} ({int(r['rank_lo'])}–{int(r['rank_hi'])})"
+                 for _, r in rank.iterrows()],
+        "Metro": rank["cbsa_title"],
+        "Score": rank["score"],
+        "Top strength": rank["strength"],
+        "Top drag": rank["drag"],
+    })
+    styler = (tbl.style
+              .format({"Score": "{:+.2f}"})
+              .map(lambda v: f"color:{theme.POS}" if v >= 0 else f"color:{theme.NEG}",
+                   subset=["Score"])
+              .set_properties(subset=["Score"], **{"font-variant-numeric": "tabular-nums",
+                                                   "text-align": "right"})
+              .set_properties(subset=["Metro"], **{"font-weight": "500"}))
+    st.dataframe(styler, hide_index=True, use_container_width=True, height=520,
+                 column_config={"Rank": st.column_config.TextColumn(
+                     help="Range reflects statistical uncertainty in the score.")})
+    theme.caption("Rank ranges show the span across several reasonable model weightings — "
+                  "treat this as a screen, not a precise ordering. Strength and drag are the "
+                  "themes that helped or hurt each market's score the most.")
+
+with st.expander("Advanced view — how each score breaks down"):
+    theme.caption("Contribution of each theme to the composite score, in standardized units "
+                  "(0 = the average market that year; positive helps, negative hurts).")
+    adv = rank[["rank", "cbsa_title", "score", "bucket_Demand", "bucket_Supply",
+                "bucket_Affordability", "bucket_Momentum", "bucket_Resilience"]].rename(
+        columns={"rank": "Rank", "cbsa_title": "Metro", "score": "Score",
+                 "bucket_Demand": "Demand", "bucket_Supply": "Supply",
+                 "bucket_Affordability": "Affordability", "bucket_Momentum": "Momentum",
+                 "bucket_Resilience": "Resilience"})
+    num_cols = ["Score", "Demand", "Supply", "Affordability", "Momentum", "Resilience"]
+    st.dataframe(
+        adv.style.format({c: "{:+.2f}" for c in num_cols})
+           .set_properties(subset=num_cols, **{"font-variant-numeric": "tabular-nums",
+                                               "text-align": "right"})
+           .set_properties(subset=["Metro"], **{"font-weight": "500"}),
+        hide_index=True, use_container_width=True, height=420)
+
+theme.page_footer()
