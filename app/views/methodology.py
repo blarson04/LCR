@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 APP = Path(__file__).resolve().parents[1]
@@ -22,6 +23,7 @@ for _p in (str(ROOT), str(APP)):
 
 from ui import data, theme          # noqa: E402
 from src.nowcast import proxy_map as pmap  # noqa: E402
+import config                        # noqa: E402
 
 theme.inject_css(reading=True)
 d = data.load()
@@ -29,6 +31,57 @@ spec_mode = data.is_spec(d)
 
 st.markdown("# About this project")
 theme.caption("What the screener is, who built it, and how the score works — in plain terms.")
+st.write("")
+
+# ---- The one-minute version (claim → evidence → limitations) -----------------
+st.markdown("## The one-minute version")
+st.markdown(
+    "A backtested screen of the 110 largest US rental markets, built on free public data. "
+    "In calm markets its top-10 picks have meaningfully out-grown the median market; in the "
+    "2021–22 shock its edge largely disappeared — and it says so.")
+
+bt = d["backtest"]
+_pc = bt[(bt.horizon == 3) & (bt.regime == "pre_covid")]
+pc_prec = float(_pc["mean_precision@10"].iloc[0]) if len(_pc) else float("nan")
+_sh = bt[(bt.horizon == 3) & (bt.regime == "shock")]
+sh_tau = float(_sh["mean_tau"].iloc[0]) if len(_sh) else float("nan")
+
+pp_pooled, pp_win = float("nan"), None
+es_path = config.PROCESSED_DIR / "effect_size_windows.csv"
+if es_path.exists():
+    ew = pd.read_csv(es_path)
+    comp = ew[ew.strategy == "Composite (model)"].sort_values("pred_year")
+    pp_pooled = float(comp["top10_pp_vs_median"].mean())
+    pp_win = comp
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Top-10 edge", f"+{pp_pooled:.1f} pp",
+          help="Extra 3-year rent growth of the screen's top-10 markets vs the median market, "
+               "averaged over six backtest windows (finalized data).")
+c2.metric("Calm-market accuracy", f"{pc_prec:.0%}",
+          help=f"Pre-COVID windows: share of top-10 picks landing in the top quarter of "
+               f"markets (finalized data; τ {d['pc_tau']:.2f}, real-time equivalent "
+               f"τ {d['spec_tau']:.2f}).")
+c3.metric("In the 2021–22 shock", f"τ {sh_tau:.2f}",
+          help="Rank agreement with realized growth in shock windows — the edge largely "
+               "disappears, and the site flags such periods.")
+
+if pp_win is not None and len(pp_win):
+    figp = px.bar(pp_win, x="pred_year", y="top10_pp_vs_median")
+    figp.update_traces(marker_color=[theme.POS if v >= 0 else theme.NEG
+                                     for v in pp_win["top10_pp_vs_median"]],
+                       marker_line_width=0)
+    figp.update_xaxes(title=None, dtick=1)
+    figp.update_yaxes(title="Top-10 edge (pp, 3-yr)")
+    st.plotly_chart(theme.style_fig(figp, 230), use_container_width=True)
+    theme.caption("Per backtest window: the top-10's extra 3-year rent growth vs the median "
+                  "market. Four calm windows between +6.6 and +12.2 points; roughly flat in "
+                  "the 2021–22 shock — where a pure rent-momentum strategy flipped firmly "
+                  "negative.")
+st.markdown("[See the rankings](rankings) · [Full track record & every caveat](track_record)")
+theme.caption("A research screen, not a forecast: numbers above use finalized data (the "
+              "real-time equivalent is about 15% lower), windows overlap, and shock periods "
+              "break the edge.")
 st.write("")
 
 # ---- Purpose, simply ---------------------------------------------------------
