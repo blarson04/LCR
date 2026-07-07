@@ -25,6 +25,10 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-07 — v3 build-spec Phase 2 complete: candidate coverage audit (no accuracy computed)
+
+Acquisition + coverage only, per the Phase 0 separation. Results (full table: `data/candidate_coverage.md`): **C1/C2/C3** (CREMI multifamily absorption, NOI, asset price) — 108/110 coverage, 1995–2026Q1 → proceed to Phase 3 gates. **C6a** (Δ vacancy, from panel, 110/110) and **C6b** (Δ unemployment via CREMI MSAUR, 108/110) → proceed. **C4 ZORDI** — 110/110 but history starts 2020-06 → killed for the annual model exactly as pre-registered (live-layer candidate only). **C5 insurance burden** — rejected on acquisition: no ACS summary table exists (IPUMS microdata requires a registered extract, failing free reproducibility); the expense channel is partially covered by C2. Also observed and logged, NOT candidates (list closed): CREMI carries metro `Market.Cap.Rate` and `Occupancy.Rate` — free metro cap rates soften a stated limitation; candidacy would need a new dated entry. Phase 3 (five gates, one attempt each) and Phase 4 (industry baseline) may now run.
+
 ### 2026-07-07 — v3 build-spec Phase 0: pre-registration of the Tier-3 candidate gates and the industry baseline
 
 `v3-build-spec.md` (committed 03eddef) folds the Arbor–Chandan benchmark review into a phased build. **Reconciliation first, because the spec was drafted before this week's execution:** its Phase 1 is complete and partially superseded — P1.1's CES re-run was executed 2026-07-06 (**FAIL, 84.66%**, edition pulled) and the staleness problem was subsequently solved by the **lagged-vintage gate (PASS, 95.52%)**; the CES gate is spent and **must not be re-run**. P1.2/P1.3 (vintage-honest reporting, temporal uncertainty) and all of Phase 5 (momentum orthogonality, pp effect sizes, ex-ante regime flag) shipped this week. Phase 6's carried Tier-3 items are largely done or superseded by the vintage edition; the §4 presentation adoptions and Phase 7 remain.
