@@ -40,7 +40,7 @@ BEA_RAW_DIR.mkdir(parents=True, exist_ok=True)
 
 _BEA_URL = "https://apps.bea.gov/api/data"
 _LINE = {"personal_income": 1, "population": 2}   # CAINC1 line codes
-BEA_YEARS = list(range(2015, 2024))               # 2023 is the latest county vintage
+BEA_YEARS = list(range(2015, 2025))               # county vintage Y releases ~Nov Y+1; 2024 added 2026-07-07
 
 
 def get_key() -> str:
@@ -60,7 +60,7 @@ def _fetch_county_line(line_code: int, *, refresh: bool = False) -> pd.DataFrame
     Fetch one CAINC1 line (personal income or population) for all counties and
     all BEA_YEARS, caching the raw JSON. Returns [county_fips, year, value].
     """
-    cache = BEA_RAW_DIR / f"cainc1_line{line_code}.json"
+    cache = BEA_RAW_DIR / f"cainc1_line{line_code}_to{max(BEA_YEARS)}.json"
     if cache.exists() and not refresh:
         raw = json.loads(cache.read_text())
     else:

@@ -46,7 +46,8 @@ _VAC_FORRENT = "B25004_002E"  # B25004: vacant units 'for rent'
 _VAC_RENTER = "B25003_003E"   # B25003: renter-occupied units (vacancy-rate denominator)
 
 # ACS1 release years we attempt for the population panel (2020 has no ACS1).
-ACS1_YEARS = (2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023)
+# ACS year Y releases ~Sep Y+1; 2024 added 2026-07-07 (v3.1 lagged-vintage work).
+ACS1_YEARS = (2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024)
 
 
 def get_key() -> str:

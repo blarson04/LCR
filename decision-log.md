@@ -25,6 +25,16 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-07 — v3.1 "lagged-vintage screen" specification (logged BEFORE its one-shot gate run)
+
+**Motivation (author):** a 2023→2026 screen is ~80% elapsed — no business can act on it. Rather than re-iterating current-year proxies, we move the *vintage*: ACS 2024 (Sep 2025) and BEA county income 2024 (Nov 2025) are now published, so a **2024-vintage screen (a 2024→2027 call, roughly half remaining)** can be built almost entirely on finalized data. Ingest windows extended accordingly (ACS1 + BEA through 2024; panel rebuilt — 2024 row: population/stock/income 110/110, QCEW jobs/pay/HHI 108/110, rents/permits complete).
+
+**Specification (proxy scheme v0.3 — exactly one substitution):** score year T with all finalized inputs; `net_migration` = Census PEP net domestic migration for T (the M1-validated proxy, level r≈0.99 / rank ≈0.90) over ACS population T. The two metros with a QCEW-2024 transition gap (Cleveland, Dayton) carry jobs/pay/diversity from 2023 (disclosed fallback). Nothing else changes; the frozen v2 model is untouched. Cadence going forward: refresh each year when the T-vintage federal data lands (~Nov T+1).
+
+**Full disclosure of priors (anti-gate-shopping):** the attempt-1 decomposition (published 2026-07-02, before this design) already showed the "only migration proxied" configuration retains ~95% of pooled 3-yr τ. This spec is *informed by that diagnosis* — that is what decompositions are for — and the gate is run regardless, fresh, with both prongs.
+
+**Gate (identical thresholds, one attempt, both outcomes published):** historical pseudo-test substituting PEP-for-IRS in every usable scoring year must retain **≥ 85%** of the finalized model's pooled 3-yr weighted τ **AND** average top-10 overlap **≥ 7/10**. Pass → the 2024-vintage screen is published as a **validated current screen** (vintage-labeled, registry-frozen). Fail → negative result #3, nothing ships.
+
 ### 2026-07-06 — v3-P1 gate OUTCOME: FAIL by a hair → provisional edition PULLED (negative result #2)
 
 The pre-committed one-shot re-run (spec: proxy_map v0.2, CES employment; entry immediately below) was executed once. Result: pseudo-nowcast pooled 3-yr τ **0.376** vs finalized **0.444** → retention **84.66%** (gate: ≥ 85%); mean top-10 overlap **6.7/10** (gate: ≥ 7). Gap +0.068, 95% CI [+0.013, +0.120]. **Both prongs missed — narrowly — and the gate is binding: FAIL.**
