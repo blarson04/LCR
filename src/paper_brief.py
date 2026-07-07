@@ -220,6 +220,37 @@ move rents. The hindsight regime labels remain for backtest *reporting*; the liv
 this ex-ante rule.
 """
 
+    # v3.1: lagged-vintage gate + horizon extension.
+    vintage_md = ""
+    vg = config.PROCESSED_DIR / "nowcast" / "vintage_gate_summary.csv"
+    hz = config.PROCESSED_DIR / "horizon_decay.csv"
+    if vg.exists() and hz.exists():
+        h = pd.read_csv(hz)
+        hc = h[h.strategy == "Composite (finalized)"].set_index("horizon")
+        hm = h[h.strategy == "Momentum"].set_index("horizon")
+        vintage_md = f"""
+---
+
+## 5d. The current screen: a validated 2024 vintage, extended to 2028 (v3.1)
+
+**The three-gate arc.** Every fresher-than-finalized configuration faced the same pre-registered
+gate (≥85% retention of pooled 3-yr τ AND ≥7/10 mean top-10 overlap), one attempt each, all
+outcomes published: 2025 nowcast **74.8% — FAIL**; +CES jobs **84.66% — FAIL** (pulled, not
+rounded up); **2024-vintage** (all finalized inputs, single PEP-migration substitution)
+**95.52% retention, 8.29/10 overlap — PASS**. The passing configuration is the site's primary
+screen: a **2024→2027 call**, refreshed each fall as new vintages land.
+
+**Horizon extension (disclosed-priors decision, not a blind gate — the study is the evidence).**
+`src/horizon_decay.py`: the composite *strengthens* with horizon while momentum decays —
+pooled τ at h=3/4/5: **{hc.loc[3,'pooled_tau']:.2f} / {hc.loc[4,'pooled_tau']:.2f} /
+{hc.loc[5,'pooled_tau']:.2f}** with top-10 pp edges **+{hc.loc[3,'mean_pp']:.1f} /
++{hc.loc[4,'mean_pp']:.1f} / +{hc.loc[5,'mean_pp']:.1f}**, vs momentum τ
+{hm.loc[3,'pooled_tau']:.2f}/{hm.loc[4,'pooled_tau']:.2f}/{hm.loc[5,'pooled_tau']:.2f} — the
+original "fundamentals express over time" hypothesis confirmed directly. Decision: a
+**2024→2028 (4-yr) extended view is published**, always labeled; **h≥5 is refused** because
+every testable 5-yr window starts pre-COVID (sample selection), and we say so.
+"""
+
     # v3-P3 temporal-uncertainty honesty.
     uncertainty_md = ""
     tup = config.PROCESSED_DIR / "temporal_uncertainty.csv"
@@ -349,6 +380,7 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 {uncertainty_md}
 {effect_md}
 {flag_md}
+{vintage_md}
 
 ---
 

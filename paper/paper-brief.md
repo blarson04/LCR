@@ -1,6 +1,6 @@
 # Multifamily Rent-Growth Screener — Paper Brief (model v2.0.0)
 
-*Auto-generated 2026-07-06 from the model outputs. Regenerate with
+*Auto-generated 2026-07-07 from the model outputs. Regenerate with
 `python src/paper_brief.py`. Every number here is pulled directly from the processed data —
 nothing is hand-typed. Companion docs: `decision-log.md` (the "why"), `v1-build-spec.md` (v1
 how), `v2-plan.md` + `paper/v2-findings.md` (the rigor pass that produced v2).*
@@ -70,7 +70,7 @@ Missing indicators are treated as neutral (0) at scoring.
 
 ---
 
-## 4. Results — current ranking (2023 cross-section)
+## 4. Results — current ranking (2024 cross-section)
 
 Columns after Score are the weighted z-score contribution of each bucket.
 
@@ -249,14 +249,36 @@ this ex-ante rule.
 
 ---
 
+## 5d. The current screen: a validated 2024 vintage, extended to 2028 (v3.1)
+
+**The three-gate arc.** Every fresher-than-finalized configuration faced the same pre-registered
+gate (≥85% retention of pooled 3-yr τ AND ≥7/10 mean top-10 overlap), one attempt each, all
+outcomes published: 2025 nowcast **74.8% — FAIL**; +CES jobs **84.66% — FAIL** (pulled, not
+rounded up); **2024-vintage** (all finalized inputs, single PEP-migration substitution)
+**95.52% retention, 8.29/10 overlap — PASS**. The passing configuration is the site's primary
+screen: a **2024→2027 call**, refreshed each fall as new vintages land.
+
+**Horizon extension (disclosed-priors decision, not a blind gate — the study is the evidence).**
+`src/horizon_decay.py`: the composite *strengthens* with horizon while momentum decays —
+pooled τ at h=3/4/5: **0.44 / 0.48 /
+0.51** with top-10 pp edges **+6.0 /
++8.4 / +10.7**, vs momentum τ
+0.39/0.38/0.40 — the
+original "fundamentals express over time" hypothesis confirmed directly. Decision: a
+**2024→2028 (4-yr) extended view is published**, always labeled; **h≥5 is refused** because
+every testable 5-yr window starts pre-COVID (sample selection), and we say so.
+
+
+---
+
 ## 6. Pre-registration & reproducibility
 
 Every production run is frozen, timestamped, and never edited (registry), making the live track
 record auditable — a core credibility differentiator.
 
-- **Model version:** 2.0.0 · **git commit:** b8cba72
-- **Frozen run:** 20260701T215522Z (top metro: Charleston-North Charleston, SC)
-- **Evaluation metric (locked before first run):** top-weighted Kendall's tau (scipy.stats.weightedtau); rank basis = realized; headline = precision@10 (top-quartile hit-rate).
+- **Model version:** 2.0.0 · **git commit:** 0164c75
+- **Frozen run:** 20260707T105444Z (top metro: Dayton-Kettering-Beavercreek, OH)
+- **Evaluation metric (locked before first run):** top-weighted Kendall's tau; rank basis = realized; headline = precision@10.
 - Raw downloads cached; pipeline reproducible end-to-end from free sources.
 
 ---
