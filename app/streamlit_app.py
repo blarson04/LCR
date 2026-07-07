@@ -56,16 +56,21 @@ with st.sidebar:
     # Sync Streamlit's native theme AFTER the widget renders (may rerun once).
     theme.sync_native_theme()
 
-# ---- Pages ------------------------------------------------------------------
-pages = [
-    st.Page("views/methodology.py", title="About & methodology", default=True),
-    st.Page("views/rankings.py", title="Rankings"),
+# ---- Pages: a report's table of contents (reading order, tools, fine print) ---
+report = [
+    st.Page("views/overview.py", title="Overview", default=True),
+    st.Page("views/themes.py", title="What drives the rankings"),
+    st.Page("views/rankings.py", title="Full rankings"),
     st.Page("views/spotlight.py", title="Market spotlight"),
+]
+explore = [
     st.Page("views/metro_detail.py", title="Metro detail"),
     st.Page("views/compare.py", title="Compare markets"),
 ]
+fine_print = [st.Page("views/track_record.py", title="Track record")]
 if d["has_spec"]:
-    pages.append(st.Page("views/acc_vs_spec.py", title="Validated vs provisional"))
-pages.append(st.Page("views/track_record.py", title="Track record"))
+    fine_print.append(st.Page("views/acc_vs_spec.py", title="Validated vs provisional"))
+fine_print.append(st.Page("views/methodology.py", title="Methodology & about"))
 
-st.navigation(pages).run()
+st.navigation({"The report": report, "Explore a market": explore,
+               "The fine print": fine_print}).run()

@@ -36,8 +36,8 @@ def main() -> None:
 
     # 3. Every site page renders without exception, in both themes.
     from streamlit.testing.v1 import AppTest
-    views = ["rankings", "spotlight", "metro_detail", "compare", "track_record",
-             "methodology"]
+    views = ["overview", "themes", "rankings", "spotlight", "metro_detail", "compare",
+             "track_record", "methodology"]
     for view in views:
         for mode in ("Light", "Dark"):
             at = AppTest.from_file(str(ROOT / "app" / "views" / f"{view}.py"),

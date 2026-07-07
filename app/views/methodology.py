@@ -12,7 +12,6 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 
 APP = Path(__file__).resolve().parents[1]
@@ -23,106 +22,14 @@ for _p in (str(ROOT), str(APP)):
 
 from ui import data, theme          # noqa: E402
 from src.nowcast import proxy_map as pmap  # noqa: E402
-import config                        # noqa: E402
 
 theme.inject_css(reading=True)
 d = data.load()
 spec_mode = data.is_spec(d)
 
-st.markdown("# About this project")
-theme.caption("What the screener is, who built it, and how the score works, in plain terms.")
-st.write("")
-
-# ---- Key findings (claim → evidence → limitations) ---------------------------
-bt = d["backtest"]
-_pc = bt[(bt.horizon == 3) & (bt.regime == "pre_covid")]
-pc_prec = float(_pc["mean_precision@10"].iloc[0]) if len(_pc) else float("nan")
-_sh = bt[(bt.horizon == 3) & (bt.regime == "shock")]
-sh_tau = float(_sh["mean_tau"].iloc[0]) if len(_sh) else float("nan")
-
-pp_pooled, pp_mom, pp_win = float("nan"), float("nan"), None
-es_path = config.PROCESSED_DIR / "effect_size_windows.csv"
-if es_path.exists():
-    ew = pd.read_csv(es_path)
-    comp = ew[ew.strategy == "Composite (model)"].sort_values("pred_year")
-    pp_pooled = float(comp["top10_pp_vs_median"].mean())
-    mom = ew[ew.strategy == "Momentum (trailing rent)"]
-    if len(mom):
-        pp_mom = float(mom["top10_pp_vs_median"].mean())
-    pp_win = comp
-
-ind_tau, full_tau = float("nan"), float("nan")
-ib_path = config.PROCESSED_DIR / "industry_baseline.csv"
-if ib_path.exists():
-    ib = pd.read_csv(ib_path)
-    if len(ib):
-        ind_tau = float(ib["tau_3y"].iloc[0])
-        full_tau = float(ib["full_tau_3y"].iloc[0])
-
-vr = (d["vint_rank"] if d.get("has_vintage") else d["acc_rank"]).sort_values("rank")
-top_row = vr.iloc[0]
-top_city = top_row["cbsa_title"].split(",")[0]
-s1, s2 = data.top_strengths(top_row)
-lift = " and ".join(s.lower() for s in (s1, s2) if s) or "balanced fundamentals"
-vyear = data.VINTAGE_YEAR if d.get("has_vintage") else data.SCORE_YEAR
-stay_txt = ""
-if len(d["prior_rank"]) and d.get("has_vintage"):
-    prior_top = set(d["prior_rank"].nsmallest(10, "prior_rank")["cbsa_code"])
-    stay = len(prior_top & set(vr.head(10)["cbsa_code"]))
-    stay_txt = (f" {stay} of the prior edition's top ten stay in the top ten, "
-                f"and every rank is published with an uncertainty range.")
-
-st.markdown("## Key findings")
-st.markdown(f"""
-- **{top_city} leads the current screen** (a {vyear}–{vyear+3} outlook), lifted most
-  by {lift}.{stay_txt}
-- **The screen's top-10 markets out-grew the median market by {pp_pooled:+.1f} points of
-  rent growth** over three years, averaged across six completed backtest windows.
-  Picking on recent rent growth alone earned {pp_mom:+.1f}; the gap widens the further
-  out you look.
-- **Every measure had to earn its place by test.** An industry-style market scorecard
-  rebuilt from free data barely beats chance at the same prediction task
-  ({ind_tau:.2f} on a -1 to +1 rank-agreement scale, vs {full_tau:.2f} for this
-  screen), and two of this project's own configurations failed their validation gates
-  and were published as negative results.
-""")
-st.markdown(
-    "A backtested screen of the 110 largest US rental markets, built on free public data. "
-    "The current edition is a **validated 2024-vintage screen forecasting 2024–27** (with a "
-    "supported extension to 2028). Its configuration passed a pre-registered validation "
-    "gate after two earlier configurations failed theirs and were published as negative "
-    "results. In calm markets its top-10 picks have meaningfully out-grown the median "
-    "market; in the 2021–22 shock its edge largely disappeared, and it says so.")
-
-c2, c3 = st.columns(2)
-c2.metric("Calm-market accuracy", f"{pc_prec:.0%}",
-          help=f"Share of top-10 picks landing in the top quarter of markets in pre-COVID "
-               f"windows, on finalized data. Rank agreement, on a -1 to +1 scale "
-               f"(weighted Kendall's tau): {d['pc_tau']:.2f} finalized, "
-               f"{d['spec_tau']:.2f} real-time.")
-c3.metric("In the 2021–22 shock", f"{sh_tau:.2f}",
-          help="Agreement between the screen's ranking and realized growth in the 2021–22 "
-               "shock windows, on the same -1 to +1 scale. The edge largely disappears, "
-               "and the site flags such periods.")
-
-if pp_win is not None and len(pp_win):
-    figp = px.bar(pp_win, x="pred_year", y="top10_pp_vs_median")
-    figp.update_traces(marker_color=[theme.POS if v >= 0 else theme.NEG
-                                     for v in pp_win["top10_pp_vs_median"]],
-                       marker_line_width=0)
-    figp.update_xaxes(title="3-year window, by start year", dtick=1)
-    figp.update_yaxes(title="Top-10 edge (pp, 3-yr)")
-    st.plotly_chart(theme.style_fig(figp, 230), use_container_width=True)
-    theme.caption("Each bar is a completed 3-year backtest window, labeled by its start year. "
-                  "The 2022 bar covers 2022–25 and is the most recent window that has finished. "
-                  "Four calm windows came in between +6.6 and +12.2 points; the 2021–22 shock "
-                  "windows were roughly flat, where a pure rent-momentum strategy flipped firmly "
-                  "negative. The current screen's own window (2024–27) is graded when 2027 "
-                  "data closes.")
-st.markdown("[See the rankings](rankings) · [Full track record & every caveat](track_record)")
-theme.caption("A research screen, not a forecast: numbers above use finalized data (the "
-              "real-time equivalent is about 15% lower), windows overlap, and shock periods "
-              "break the edge.")
+st.markdown("# Methodology & about")
+theme.caption("How the score is built, where every number comes from, and who built it. "
+              "The findings themselves are on the Overview page.")
 st.write("")
 
 # ---- Purpose, simply ---------------------------------------------------------

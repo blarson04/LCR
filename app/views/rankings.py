@@ -30,21 +30,19 @@ ed = data.edition(d)
 rank = ed["rank"].sort_values("rank").reset_index(drop=True)
 rank[["strength", "drag"]] = rank.apply(
     lambda r: pd.Series(data.strength_drag(r)), axis=1)
-rank[["strength_1", "strength_2"]] = rank.apply(
-    lambda r: pd.Series(data.top_strengths(r)), axis=1)
 # Change vs the frozen prior edition (only meaningful for the vintage screen).
 show_change = bool(ed.get("vintage")) and len(d["prior_rank"]) > 0
 if show_change:
     rank = rank.merge(d["prior_rank"], on="cbsa_code", how="left")
 
 # ---- Header -----------------------------------------------------------------
-st.markdown("# Market rankings")
+st.markdown("# Full rankings")
 if ed.get("vintage"):
     theme.caption(
-        f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
-        f"rent growth: a {ed['horizon']} screen scored on {ed['year']} data, the newest "
-        f"vintage validated for publication (its configuration passed a pre-registered gate "
-        f"at 95.5% signal retention; see Track record).")
+        f"Where all {len(rank)} markets stand: a {ed['horizon']} screen scored on "
+        f"{ed['year']} data, the newest vintage validated for publication (its "
+        f"configuration passed a pre-registered gate at 95.5% signal retention; see "
+        f"Track record).")
 else:
     theme.caption(
         f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
@@ -78,53 +76,35 @@ if not ed["provisional"]:
                       f"not catch 2020, a shock that never moved rents.")
 st.write("")
 
-# ---- Headline: map + top 10 --------------------------------------------------
-col_map, col_top = st.columns([7, 3], gap="large")
-
-with col_map:
-    mp = rank.merge(d["coords"], on="cbsa_code", how="left")
-    mp["strength_txt"] = mp["strength"].where(mp["strength"] != "–", "Broadly average")
-    fig = px.scatter_geo(
-        mp, lat="lat", lon="lon", color="score", scope="usa",
-        hover_name="cbsa_title", size=[8] * len(mp), size_max=12,
-        color_continuous_scale=theme.SEQ_SCALE,
-        custom_data=["rank", "score", "strength_txt"])
-    fig.update_traces(
-        marker=dict(line=dict(width=0.6, color=theme.MAP_BORDER)),
-        hovertemplate="<b>%{hovertext}</b><br>Rank %{customdata[0]} · score "
-                      "%{customdata[1]:+.2f}<br>%{customdata[2]}<extra></extra>")
-    fig.update_geos(showland=True, landcolor=theme.MAP_LAND, showlakes=False,
-                    subunitcolor=theme.MAP_BORDER, countrycolor=theme.MAP_BORDER,
-                    coastlinecolor=theme.MAP_BORDER, bgcolor="rgba(0,0,0,0)", showframe=False)
-    fig.add_trace(go.Scattergeo(
-        lat=[v[0] for v in data.STATE_CENTROIDS.values()],
-        lon=[v[1] for v in data.STATE_CENTROIDS.values()],
-        text=list(data.STATE_CENTROIDS), mode="text",
-        textfont=dict(family="Inter, sans-serif", size=9, color=theme.MUTED),
-        hoverinfo="skip", showlegend=False))
-    fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=10, len=0.6,
-                                              tickfont=dict(color=theme.MUTED)))
-    st.plotly_chart(theme.style_fig(fig, 470), use_container_width=True)
-    top3 = [t.split(",")[0].split("-")[0] for t in rank.head(3)["cbsa_title"]]
-    theme.caption(f"Darker green = stronger fundamentals. {top3[0]} leads the {ed['year']} "
-                  f"screen; {top3[1]} and {top3[2]} round out the top three.")
-
-with col_top:
-    st.markdown("### Top 10")
-    rows_html = ""
-    for _, r in rank.head(10).iterrows():
-        color = theme.POS if r["score"] >= 0 else theme.NEG
-        strengths = " · ".join(s for s in (r["strength_1"], r["strength_2"]) if s) \
-            or "Broadly average"
-        rows_html += (
-            f"<div style='padding:.42rem 0;border-bottom:1px solid {theme.LINE}'>"
-            f"<span style='color:{theme.MUTED};display:inline-block;width:1.6rem'>{int(r['rank'])}</span>"
-            f"<span style='font-weight:500'>{r['cbsa_title'].split(',')[0][:26]}</span>"
-            f"<span style='float:right;color:{color};font-variant-numeric:tabular-nums'>"
-            f"{r['score']:+.2f}</span>"
-            f"<div class='cap' style='margin-left:1.6rem'>{strengths}</div></div>")
-    st.markdown(rows_html, unsafe_allow_html=True)
-    theme.caption("Each market shows the one or two themes that lift its score most.")
+# ---- Headline: the map --------------------------------------------------------
+mp = rank.merge(d["coords"], on="cbsa_code", how="left")
+mp["strength_txt"] = mp["strength"].where(mp["strength"] != "–", "Broadly average")
+fig = px.scatter_geo(
+    mp, lat="lat", lon="lon", color="score", scope="usa",
+    hover_name="cbsa_title", size=[8] * len(mp), size_max=12,
+    color_continuous_scale=theme.SEQ_SCALE,
+    custom_data=["rank", "score", "strength_txt"])
+fig.update_traces(
+    marker=dict(line=dict(width=0.6, color=theme.MAP_BORDER)),
+    hovertemplate="<b>%{hovertext}</b><br>Rank %{customdata[0]} · score "
+                  "%{customdata[1]:+.2f}<br>%{customdata[2]}<extra></extra>")
+fig.update_geos(showland=True, landcolor=theme.MAP_LAND, showlakes=False,
+                subunitcolor=theme.MAP_BORDER, countrycolor=theme.MAP_BORDER,
+                coastlinecolor=theme.MAP_BORDER, bgcolor="rgba(0,0,0,0)", showframe=False)
+fig.add_trace(go.Scattergeo(
+    lat=[v[0] for v in data.STATE_CENTROIDS.values()],
+    lon=[v[1] for v in data.STATE_CENTROIDS.values()],
+    text=list(data.STATE_CENTROIDS), mode="text",
+    textfont=dict(family="Inter, sans-serif", size=9, color=theme.MUTED),
+    hoverinfo="skip", showlegend=False))
+fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=10, len=0.6,
+                                          tickfont=dict(color=theme.MUTED)))
+st.plotly_chart(theme.style_fig(fig, 470), use_container_width=True)
+top3 = [t.split(",")[0].split("-")[0] for t in rank.head(3)["cbsa_title"]]
+theme.caption(f"Darker green = stronger fundamentals. {top3[0]} leads the {ed['year']} "
+              f"screen; {top3[1]} and {top3[2]} round out the top three. The top 10 with "
+              f"their strengths are on the Overview page; every market's rank, range, and "
+              f"drivers are in the table below.")
 
 # ---- Full table (progressive disclosure) -------------------------------------
 with st.expander(f"See all {len(rank)} markets"):

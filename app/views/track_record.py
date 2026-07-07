@@ -31,6 +31,23 @@ theme.caption("How the screen would have performed historically, in the data a u
               "actually have had, plus the frozen record of every published run.")
 st.write("")
 
+bt = d["backtest"]
+_pc = bt[(bt.horizon == 3) & (bt.regime == "pre_covid")]
+pc_prec = float(_pc["mean_precision@10"].iloc[0]) if len(_pc) else float("nan")
+_sh = bt[(bt.horizon == 3) & (bt.regime == "shock")]
+sh_tau = float(_sh["mean_tau"].iloc[0]) if len(_sh) else float("nan")
+c1, c2 = st.columns(2)
+c1.metric("Calm-market accuracy", f"{pc_prec:.0%}",
+          help=f"Share of top-10 picks landing in the top quarter of markets in pre-COVID "
+               f"windows, on finalized data. Rank agreement, on a -1 to +1 scale "
+               f"(weighted Kendall's tau): {d['pc_tau']:.2f} finalized, "
+               f"{d['spec_tau']:.2f} real-time.")
+c2.metric("In the 2021–22 shock", f"{sh_tau:.2f}",
+          help="Agreement between the screen's ranking and realized growth in the 2021–22 "
+               "shock windows, on the same -1 to +1 scale. The edge largely disappears, "
+               "and the site flags such periods.")
+st.write("")
+
 # ---- Backtest, two vintages --------------------------------------------------
 st.markdown("## Backtest: what was achievable in real time")
 st.markdown(
