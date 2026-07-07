@@ -83,6 +83,44 @@ def _fetch_county_line(line_code: int, *, refresh: bool = False) -> pd.DataFrame
     return df[["GeoFips", "year", "value"]].rename(columns={"GeoFips": "county_fips"})
 
 
+# Connecticut geography splice (data-repair spec, decision-log 2026-07-07 D4):
+# BEA's county table carries the DISCONTINUED CT counties with real values only
+# through 2023 and the new planning regions only from 2024, so the standard
+# crosswalk (planning regions) finds zeros before 2024. For years <= 2023 the
+# old counties are mapped to the new CBSAs via the old OMB metro definitions;
+# per-capita ratios damp the boundary difference across the 2023->2024 seam.
+_CT_LEGACY_COUNTY_TO_CBSA = {
+    "09003": "25540", "09007": "25540", "09013": "25540",   # Hartford+Middlesex+Tolland
+    "09009": "35300",                                        # New Haven County
+    "09001": "14860",                                        # Fairfield County
+}
+_CT_SPLICE_LAST_LEGACY_YEAR = 2023
+
+
+def state_pc_income_growth(state_fips: str, year: int, *, refresh: bool = False) -> float:
+    """YoY growth of STATE per-capita personal income (SAINC1 line 3) — the
+    boundary-stable series used to chain CT metros across the 2023->2024
+    geography seam (D4 QA amendment, decision-log 2026-07-07)."""
+    cache = BEA_RAW_DIR / f"sainc1_pc_{state_fips}_{year}.json"
+    if cache.exists() and not refresh:
+        raw = json.loads(cache.read_text())
+    else:
+        params = {
+            "UserID": get_key(), "method": "GetData", "datasetname": "Regional",
+            "TableName": "SAINC1", "GeoFips": state_fips, "LineCode": 3,
+            "Year": f"{year - 1},{year}", "ResultFormat": "json",
+        }
+        resp = requests.get(_BEA_URL, params=params, timeout=120)
+        results = resp.json().get("BEAAPI", {}).get("Results", {})
+        if "Data" not in results:
+            raise RuntimeError(f"BEA SAINC1 {state_fips} failed: {str(results)[:200]}")
+        raw = results["Data"]
+        cache.write_text(json.dumps(raw))
+    vals = {int(x["TimePeriod"]): float(str(x["DataValue"]).replace(",", ""))
+            for x in raw}
+    return vals[year] / vals[year - 1] - 1.0
+
+
 def build_income_panel(*, refresh: bool = False) -> pd.DataFrame:
     """
     Metro income panel: [cbsa_code, cbsa_title, year, personal_income,
@@ -96,10 +134,26 @@ def build_income_panel(*, refresh: bool = False) -> pd.DataFrame:
               .merge(pop.rename(columns={"value": "population_bea"}),
                      on=["county_fips", "year"], how="inner"))
 
+    xwalk = crosswalk.load()
+    titles = dict(zip(xwalk["cbsa_code"], xwalk["cbsa_title"]))
     frames = []
     for yr, g in county.groupby("year"):
+        if yr <= _CT_SPLICE_LAST_LEGACY_YEAR:
+            # Planning-region rows are zeros in these years; keep them out so
+            # they can't overwrite the legacy-county aggregation with 0.
+            legacy = g[g["county_fips"].isin(_CT_LEGACY_COUNTY_TO_CBSA)]
+            g = g[~g["county_fips"].str.startswith("09")]
+        else:
+            legacy = g.iloc[0:0]
         metro = crosswalk.aggregate_counties_to_cbsa(
             g, "county_fips", ["personal_income", "population_bea"], how="sum")
+        if len(legacy):
+            lg = (legacy.assign(cbsa_code=legacy["county_fips"]
+                                .map(_CT_LEGACY_COUNTY_TO_CBSA))
+                  .groupby("cbsa_code")[["personal_income", "population_bea"]]
+                  .sum().reset_index())
+            lg["cbsa_title"] = lg["cbsa_code"].map(titles)
+            metro = pd.concat([metro, lg], ignore_index=True)
         metro["year"] = yr
         frames.append(metro)
     panel = pd.concat(frames, ignore_index=True)

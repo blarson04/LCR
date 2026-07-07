@@ -14,17 +14,17 @@ by their fundamentals for **3-year forward rent growth**, using only free public
 indicators across five themes are normalized cross-sectionally within each year and combined
 with hand-set weights into a composite score. Walk-forward validation shows the framework is
 **strong in normal regimes** (pre-COVID 3-year weighted Kendall's τ ≈ **0.59**, precision@10
-≈ **85%**) and **breaks down during the 2020–22 shock** (τ ≈ **0.16**) — an expected,
+≈ **85%**) and **breaks down during the 2020–22 shock** (τ ≈ **0.13**) — an expected,
 honestly-reported result. Every run is frozen to a pre-registration registry for an auditable
 track record. It is positioned as a *screening framework, not a prediction engine*.
 
 **Headline numbers**
 - Universe: **110 metros**, scored on the **2023** cross-section; panel spans **2015–2025**.
-- Pre-COVID 3-yr: τ **0.588**, precision@10 **0.85**.  Shock 3-yr: τ **0.157**.
-- Pooled 3-yr τ **0.444** vs. pooled 1-yr τ **0.500** (≈ equal → see finding #3).
-- Worst single window: 3-yr starting **2022** (predicting the post-peak decline), τ **-0.022**.
-- **Vintage rule (v3-P2):** every τ in this brief is a **finalized-data ceiling** unless marked real-time. The **real-time achievable** pooled 3-yr τ — using only proxies/carry-forwards a user could have held at scoring time — is **0.376** (85% of the ceiling); pre-COVID real-time **0.560**.
-- **Versus industry practice (v3 Phase 4):** a free replica of the leading industry conditions index scores pooled 3-yr τ **0.113** vs the composite's **0.444** (gap +0.331, 95% CI [+0.202, +0.483]) — and it is NOT re-packaged momentum (corr +0.21); see §5f.
+- Pre-COVID 3-yr: τ **0.586**, precision@10 **0.85**.  Shock 3-yr: τ **0.132**.
+- Pooled 3-yr τ **0.435** vs. pooled 1-yr τ **0.491** (≈ equal → see finding #3).
+- Worst single window: 3-yr starting **2022** (predicting the post-peak decline), τ **-0.042**.
+- **Vintage rule (v3-P2):** every τ in this brief is a **finalized-data ceiling** unless marked real-time. The **real-time achievable** pooled 3-yr τ — using only proxies/carry-forwards a user could have held at scoring time — is **0.376** (87% of the ceiling); pre-COVID real-time **0.560**.
+- **Versus industry practice (v3 Phase 4):** a free replica of the leading industry conditions index scores pooled 3-yr τ **0.108** vs the composite's **0.435** (gap +0.327, 95% CI [+0.195, +0.481]) — and it is NOT re-packaged momentum (corr +0.21); see §5f.
 
 
 ---
@@ -79,36 +79,36 @@ Columns after Score are the weighted z-score contribution of each bucket.
 
 | Rank | Metro | Score | Demand | Supply | Afford. | Moment. | Resil. |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Charleston-North Charleston, SC | +0.545 | +0.669 | -0.292 | -0.040 | +0.171 | +0.038 |
-| 2 | Akron, OH | +0.506 | -0.073 | +0.291 | +0.117 | +0.138 | +0.034 |
-| 3 | Omaha, NE-IA | +0.455 | +0.080 | +0.038 | +0.166 | +0.149 | +0.022 |
-| 4 | Port St. Lucie, FL | +0.441 | +0.944 | -0.361 | -0.166 | +0.011 | +0.013 |
-| 5 | Chattanooga, TN-GA | +0.413 | +0.407 | +0.026 | -0.015 | +0.018 | -0.023 |
-| 6 | Lexington-Fayette, KY | +0.388 | +0.102 | +0.063 | +0.079 | +0.145 | -0.000 |
-| 7 | Madison, WI | +0.384 | +0.034 | -0.128 | +0.177 | +0.275 | +0.025 |
-| 8 | Buffalo-Cheektowaga, NY | +0.382 | -0.102 | +0.310 | +0.037 | +0.099 | +0.039 |
-| 9 | Albany-Schenectady-Troy, NY | +0.376 | +0.024 | +0.244 | +0.086 | +0.014 | +0.008 |
-| 10 | Dayton-Kettering-Beavercreek, OH | +0.375 | -0.070 | +0.237 | +0.106 | +0.099 | +0.003 |
-| 11 | Tulsa, OK | +0.369 | +0.257 | +0.044 | +0.105 | -0.014 | -0.023 |
-| 12 | St. Louis, MO-IL | +0.340 | -0.057 | +0.212 | +0.127 | +0.074 | -0.015 |
-| 13 | Huntsville, AL | +0.339 | +0.693 | -0.412 | +0.102 | -0.021 | -0.023 |
-| 14 | Portland-South Portland, ME | +0.334 | +0.214 | +0.060 | -0.013 | +0.071 | +0.001 |
-| 15 | Deltona-Daytona Beach-Ormond Beach, FL | +0.299 | +0.687 | -0.232 | -0.151 | -0.013 | +0.008 |
+| 1 | Charleston-North Charleston, SC | +0.546 | +0.670 | -0.292 | -0.040 | +0.171 | +0.037 |
+| 2 | Akron, OH | +0.505 | -0.073 | +0.291 | +0.117 | +0.138 | +0.033 |
+| 3 | Omaha, NE-IA | +0.456 | +0.080 | +0.038 | +0.167 | +0.149 | +0.022 |
+| 4 | Port St. Lucie, FL | +0.440 | +0.945 | -0.361 | -0.167 | +0.011 | +0.012 |
+| 5 | Chattanooga, TN-GA | +0.413 | +0.408 | +0.026 | -0.015 | +0.018 | -0.024 |
+| 6 | Lexington-Fayette, KY | +0.388 | +0.103 | +0.063 | +0.079 | +0.145 | -0.001 |
+| 7 | Madison, WI | +0.384 | +0.035 | -0.128 | +0.177 | +0.275 | +0.025 |
+| 8 | Buffalo-Cheektowaga, NY | +0.382 | -0.101 | +0.310 | +0.037 | +0.099 | +0.038 |
+| 9 | Albany-Schenectady-Troy, NY | +0.376 | +0.025 | +0.244 | +0.087 | +0.014 | +0.007 |
+| 10 | Tulsa, OK | +0.369 | +0.257 | +0.044 | +0.105 | -0.014 | -0.023 |
+| 11 | St. Louis, MO-IL | +0.340 | -0.057 | +0.212 | +0.127 | +0.074 | -0.016 |
+| 12 | Huntsville, AL | +0.340 | +0.694 | -0.412 | +0.102 | -0.021 | -0.024 |
+| 13 | Portland-South Portland, ME | +0.333 | +0.215 | +0.060 | -0.013 | +0.071 | +0.000 |
+| 14 | Bridgeport-Stamford-Danbury, CT | +0.306 | -0.173 | +0.256 | +0.161 | +0.021 | +0.040 |
+| 15 | Deltona-Daytona Beach-Ormond Beach, FL | +0.299 | +0.688 | -0.232 | -0.152 | -0.013 | +0.007 |
 
 **Bottom 10**
 
 | Rank | Metro | Score | Demand | Supply | Afford. | Moment. | Resil. |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 101 | Killeen-Temple, TX | -0.413 | -0.048 | -0.167 | -0.062 | -0.114 | -0.023 |
-| 102 | Memphis, TN-MS-AR | -0.414 | -0.479 | +0.169 | -0.013 | -0.051 | -0.041 |
-| 103 | Provo-Orem-Lehi, UT | -0.451 | +0.093 | -0.452 | +0.003 | -0.082 | -0.012 |
-| 104 | El Paso, TX | -0.456 | -0.215 | +0.172 | -0.221 | +0.123 | -0.316 |
-| 105 | Boise City, ID | -0.483 | +0.217 | -0.527 | +0.054 | -0.183 | -0.044 |
-| 106 | Stockton-Lodi, CA | -0.483 | -0.246 | +0.132 | -0.280 | -0.112 | +0.023 |
-| 107 | Modesto, CA | -0.522 | -0.504 | +0.248 | -0.231 | -0.041 | +0.007 |
-| 108 | Lakeland-Winter Haven, FL | -0.542 | +0.567 | -0.695 | -0.404 | -0.052 | +0.042 |
-| 109 | Riverside-San Bernardino-Ontario, CA | -0.730 | -0.274 | +0.002 | -0.410 | -0.069 | +0.020 |
-| 110 | McAllen-Edinburg-Mission, TX | -0.870 | -0.250 | -0.285 | -0.242 | +0.000 | -0.094 |
+| 101 | Killeen-Temple, TX | -0.415 | -0.048 | -0.167 | -0.062 | -0.114 | -0.024 |
+| 102 | Memphis, TN-MS-AR | -0.416 | -0.480 | +0.169 | -0.013 | -0.051 | -0.041 |
+| 103 | Provo-Orem-Lehi, UT | -0.452 | +0.092 | -0.452 | +0.002 | -0.082 | -0.013 |
+| 104 | El Paso, TX | -0.457 | -0.215 | +0.172 | -0.222 | +0.123 | -0.315 |
+| 105 | Boise City, ID | -0.484 | +0.217 | -0.527 | +0.054 | -0.183 | -0.044 |
+| 106 | Stockton-Lodi, CA | -0.487 | -0.248 | +0.132 | -0.282 | -0.112 | +0.023 |
+| 107 | Modesto, CA | -0.526 | -0.506 | +0.248 | -0.232 | -0.041 | +0.006 |
+| 108 | Lakeland-Winter Haven, FL | -0.546 | +0.567 | -0.695 | -0.406 | -0.052 | +0.041 |
+| 109 | Riverside-San Bernardino-Ontario, CA | -0.734 | -0.275 | +0.002 | -0.412 | -0.069 | +0.019 |
+| 110 | McAllen-Edinburg-Mission, TX | -0.872 | -0.251 | -0.285 | -0.243 | +0.000 | -0.094 |
 
 *Pattern: supply-constrained, affordable, steady-demand metros rise to the top; metros that
 over-built and then saw rents fall (Austin, Boise, Riverside) sit at the bottom — the model
@@ -127,39 +127,39 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 
 | Horizon (y) | Regime | Windows | Mean weighted-τ | Mean precision@10 |
 | --- | --- | --- | --- | --- |
-| 1 | pre-covid | 4 | 0.636 | 0.78 |
-| 1 | shock | 2 | 0.349 | 0.45 |
-| 1 | normalization | 1 | 0.256 | 0.60 |
-| 1 | POOLED | 7 | 0.500 | 0.66 |
-| 3 | pre-covid | 4 | 0.588 | 0.85 |
-| 3 | shock | 2 | 0.157 | 0.25 |
-| 3 | POOLED | 6 | 0.444 | 0.65 |
+| 1 | pre-covid | 4 | 0.635 | 0.78 |
+| 1 | shock | 2 | 0.343 | 0.45 |
+| 1 | normalization | 1 | 0.211 | 0.50 |
+| 1 | POOLED | 7 | 0.491 | 0.64 |
+| 3 | pre-covid | 4 | 0.586 | 0.85 |
+| 3 | shock | 2 | 0.132 | 0.25 |
+| 3 | POOLED | 6 | 0.435 | 0.65 |
 
 **Every window**
 
 | Horizon (y) | Pred. year | Regime | Metros | weighted-τ | precision@10 |
 | --- | --- | --- | --- | --- | --- |
-| 3 | 2016 | pre-covid | 110 | 0.620 | 0.80 |
-| 3 | 2017 | pre-covid | 110 | 0.625 | 0.90 |
-| 3 | 2018 | pre-covid | 110 | 0.586 | 0.70 |
-| 3 | 2019 | pre-covid | 110 | 0.520 | 1.00 |
-| 3 | 2021 | shock | 110 | 0.336 | 0.40 |
-| 3 | 2022 | shock | 110 | -0.022 | 0.10 |
-| 1 | 2016 | pre-covid | 110 | 0.732 | 0.80 |
-| 1 | 2017 | pre-covid | 110 | 0.724 | 1.00 |
-| 1 | 2018 | pre-covid | 110 | 0.613 | 0.80 |
-| 1 | 2019 | pre-covid | 110 | 0.475 | 0.50 |
+| 3 | 2016 | pre-covid | 110 | 0.616 | 0.80 |
+| 3 | 2017 | pre-covid | 110 | 0.623 | 0.90 |
+| 3 | 2018 | pre-covid | 110 | 0.580 | 0.70 |
+| 3 | 2019 | pre-covid | 110 | 0.524 | 1.00 |
+| 3 | 2021 | shock | 110 | 0.307 | 0.40 |
+| 3 | 2022 | shock | 110 | -0.042 | 0.10 |
+| 1 | 2016 | pre-covid | 110 | 0.729 | 0.80 |
+| 1 | 2017 | pre-covid | 110 | 0.725 | 1.00 |
+| 1 | 2018 | pre-covid | 110 | 0.606 | 0.80 |
+| 1 | 2019 | pre-covid | 110 | 0.479 | 0.50 |
 | 1 | 2021 | shock | 110 | 0.502 | 0.60 |
-| 1 | 2022 | shock | 110 | 0.196 | 0.30 |
-| 1 | 2023 | normalization | 110 | 0.256 | 0.60 |
+| 1 | 2022 | shock | 110 | 0.184 | 0.30 |
+| 1 | 2023 | normalization | 110 | 0.211 | 0.50 |
 
 **Three findings for the paper**
 1. **It works in normal times.** Pre-COVID 3-yr τ ≈ 0.59, precision@10 ≈ 85% — the
    top-10 picks landed in the realized top quartile ~85% of the time.
-2. **It breaks down in the shock, as expected.** Shock 3-yr τ ≈ 0.16; the 2022-start window
-   (predicting the post-peak correction) is slightly negative (τ -0.02). This vindicates
+2. **It breaks down in the shock, as expected.** Shock 3-yr τ ≈ 0.13; the 2022-start window
+   (predicting the post-peak correction) is slightly negative (τ -0.04). This vindicates
    the rule never to fit weights on the shock regime, and is reported rather than hidden.
-3. **3-year ≈ 1-year (τ 0.44 vs 0.50).** The decision log hypothesized the model
+3. **3-year ≈ 1-year (τ 0.43 vs 0.49).** The decision log hypothesized the model
    would do *better* at 3y if it captured fundamentals over momentum; instead they're comparable,
    suggesting momentum and fundamentals contribute similarly — a candidate for fitted-weight work.
 
@@ -167,13 +167,13 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 **directional evidence, not statistical significance.***
 
 **Uncertainty, honestly stated (v3-P3).** The primary statement is the **per-window range**:
-3-yr τ spanned **[-0.02, +0.62]** across 6
+3-yr τ spanned **[-0.04, +0.62]** across 6
 overlapping windows — calm windows near the top, shock windows near the bottom; no pooled
 average conveys that spread. Jackknife: dropping any single window moves the pooled 3-yr τ only
-within **[0.41, 0.54]**. Because neighboring metros co-move, a
+within **[0.40, 0.53]**. Because neighboring metros co-move, a
 **state-cluster bootstrap** (41 states) widens the pooled-τ 95% interval to
-**[0.36, 0.55]**, and the equal-weight edge **survives** that
-stricter test (gap CI [+0.009, +0.153]). Metro-cluster
+**[0.34, 0.55]**, and the equal-weight edge **survives** that
+stricter test (gap CI [+0.013, +0.151]). Metro-cluster
 pooled CIs elsewhere are **cross-sectional only** — conditional on the observed windows and
 silent about regime risk.
 
@@ -204,11 +204,11 @@ composite's held up far better (**+1.5 pp and -1.7 pp**) — the
 fundamentals sleeve provided real downside protection exactly where momentum inverted.
 
 **Orthogonality:** after controlling for trailing rent growth, the composite still predicts
-forward growth (partial rank correlation pooled **+0.25**,
+forward growth (partial rank correlation pooled **+0.24**,
 positive in every window). But the two strategies' errors co-move (correlation
 **+0.62**, rising to ~0.77 in the shock), so the diversification
 is partial. The 50/50 blend edges the composite on τ (0.45
-vs 0.44) but has a worse worst-window
+vs 0.43) but has a worse worst-window
 (-5.5 vs -1.7 pp) and a lower pooled
 pp edge — no clear improvement.
 
@@ -231,17 +231,17 @@ it is tested as-is, not tuned.
 | --- | --- | --- | --- | --- | --- |
 | 2016 | +3.6% | False | pre_covid | +0.62 | +0.73 |
 | 2017 | +4.0% | False | pre_covid | +0.62 | +0.72 |
-| 2018 | +3.9% | False | pre_covid | +0.59 | +0.61 |
+| 2018 | +3.9% | False | pre_covid | +0.58 | +0.61 |
 | 2019 | +4.1% | False | pre_covid | +0.52 | +0.48 |
 | 2020 | +4.3% | False | shock | — | — |
-| 2021 | +10.0% | True | shock | +0.34 | +0.50 |
-| 2022 | +10.7% | True | shock | -0.02 | +0.20 |
-| 2023 | +4.1% | False | normalization | — | +0.26 |
+| 2021 | +10.0% | True | shock | +0.31 | +0.50 |
+| 2022 | +10.7% | True | shock | -0.04 | +0.18 |
+| 2023 | +4.1% | False | normalization | — | +0.21 |
 | 2024 | +3.3% | False | normalization | — | — |
 | 2025 | +2.9% | False | normalization | — | — |
 
 **Result:** the flag fires in **2021 and 2022 only** — exactly the windows where accuracy broke
-(mean flagged 3-yr τ **+0.16** vs unflagged **+0.59**) — with **zero
+(mean flagged 3-yr τ **+0.13** vs unflagged **+0.59**) — with **zero
 false positives** across seven calm years. Disclosed miss: 2020, a demand shock that never moved
 rents (also not a scoreable 3-yr window); rules based on rent speed cannot see shocks that don't
 move rents. The hindsight regime labels remain for backtest *reporting*; the live flag uses only
@@ -261,7 +261,7 @@ screen: a **2024→2027 call**, refreshed each fall as new vintages land.
 
 **Horizon extension (disclosed-priors decision, not a blind gate — the study is the evidence).**
 `src/horizon_decay.py`: the composite *strengthens* with horizon while momentum decays —
-pooled τ at h=3/4/5: **0.44 / 0.48 /
+pooled τ at h=3/4/5: **0.43 / 0.47 /
 0.51** with top-10 pp edges **+6.0 /
 +8.4 / +10.7**, vs momentum τ
 0.39/0.38/0.40 — the
@@ -319,16 +319,16 @@ walk-forward:
 
 | Ranking rule | Pooled 3-yr τ | Precision@10 |
 | --- | --- | --- |
-| Full model (composite) | +0.444 | 0.65 |
+| Full model (composite) | +0.435 | 0.65 |
 | Best single indicator | +0.391 | 0.65 |
 | Momentum only (trailing rent) | +0.391 | 0.65 |
-| Equal weight (8 ind.) | +0.368 | 0.52 |
+| Equal weight (8 ind.) | +0.358 | 0.52 |
 | Persistence (trailing h-yr) | +0.216 | 0.38 |
-| Industry-style index (equal weight) | +0.113 | 0.28 |
-| Random (avg of seeds) | -0.010 | 0.25 |
+| Industry-style index (equal weight) | +0.108 | 0.28 |
+| Random (avg of seeds) | -0.012 | 0.25 |
 
-**Gap: composite − industry replica = +0.331 pooled 3-yr τ (95%
-metro-cluster CI [+0.202, +0.483])** — the largest reliable
+**Gap: composite − industry replica = +0.327 pooled 3-yr τ (95%
+metro-cluster CI [+0.195, +0.481])** — the largest reliable
 edge over any baseline tested; the industry-style index lands *below persistence* and above
 only random.
 
@@ -356,8 +356,8 @@ of equal-weight conditions indices at our task, not any vendor's product at thei
 Every production run is frozen, timestamped, and never edited (registry), making the live track
 record auditable — a core credibility differentiator.
 
-- **Model version:** 2.0.0 · **git commit:** 0164c75
-- **Frozen run:** 20260707T105444Z (top metro: Dayton-Kettering-Beavercreek, OH)
+- **Model version:** 2.0.0 · **git commit:** 205b915
+- **Frozen run:** 20260707T225018Z (top metro: Fresno, CA)
 - **Evaluation metric (locked before first run):** top-weighted Kendall's tau; rank basis = realized; headline = precision@10.
 - Raw downloads cached; pipeline reproducible end-to-end from free sources.
 

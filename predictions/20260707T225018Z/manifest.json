@@ -1,0 +1,40 @@
+{
+  "timestamp_utc": "20260707T225018Z",
+  "model_version": "2.0.0",
+  "git_commit": "205b915",
+  "score_year": 2024,
+  "run_type": "validated_lagged_vintage",
+  "gate": {
+    "spec": "decision-log 2026-07-07 (v3.1)",
+    "retention": 0.9552,
+    "mean_top10_overlap": 8.29,
+    "result": "PASS"
+  },
+  "substitutions": {
+    "net_migration": "Census PEP / ACS population",
+    "qcew_gap_carry": [
+      "job_growth",
+      "income_growth",
+      "employment_diversity",
+      "(Cleveland, Dayton only)"
+    ]
+  },
+  "n_metros": 110,
+  "top_metro": "Fresno, CA",
+  "top_score": 0.5898276623507467,
+  "weights": {
+    "net_migration": 0.2,
+    "job_growth": 0.12,
+    "income_growth": 0.08,
+    "permits_to_stock": 0.25,
+    "rent_to_income": 0.12,
+    "cost_to_own_vs_rent": 0.08,
+    "trailing_rent_growth": 0.1,
+    "employment_diversity": 0.05
+  },
+  "files": {
+    "panel_snapshot.parquet": "a1f5a3ac2558855b1798c7b78ea58b47254ca3ba7bfe06de5d299308c6a4d120",
+    "ranking.csv": "7b8908996afbef0da8deaf01f0e052032fc4e8d3cac44c60aa7be672a4e494cb",
+    "scores.parquet": "371178f8562499eaf01d7e33ceaed3a5dc052749ad767f3916dec50a9f8a2d56"
+  }
+}

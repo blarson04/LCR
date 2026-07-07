@@ -124,10 +124,13 @@ if d.get("has_vintage") and not spec_mode:
                      "data vintage.")})
         theme.caption(f"The data ledger for the current {data.VINTAGE_YEAR}-vintage screen: "
                       "what feeds each measure and how fresh it is. "
-                      "* Cleveland and Dayton carry 2023 employment values; their 2024 "
-                      "employment file had a reporting gap when the screen was scored (a "
-                      "disclosed substitution). No accuracy number on this site is "
-                      "published without its data vintage.")
+                      "* Connecticut redrew its government geography between 2023 and "
+                      "2024, so the three Connecticut metros' 2024 job and income growth "
+                      "are chained from 2023 using validated boundary-stable substitutes "
+                      "(a Census employment series and Connecticut's statewide income "
+                      "growth); a disclosed substitution for those three markets only. "
+                      "No accuracy number on this site is published without its data "
+                      "vintage.")
 
 if spec_mode and d["has_spec"]:
     st.markdown("## The provisional screen")

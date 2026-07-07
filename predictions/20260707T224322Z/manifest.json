@@ -1,0 +1,40 @@
+{
+  "timestamp_utc": "20260707T224322Z",
+  "model_version": "2.0.0",
+  "git_commit": "205b915",
+  "score_year": 2024,
+  "run_type": "validated_lagged_vintage",
+  "gate": {
+    "spec": "decision-log 2026-07-07 (v3.1)",
+    "retention": 0.9552,
+    "mean_top10_overlap": 8.29,
+    "result": "PASS"
+  },
+  "substitutions": {
+    "net_migration": "Census PEP / ACS population",
+    "qcew_gap_carry": [
+      "job_growth",
+      "income_growth",
+      "employment_diversity",
+      "(Cleveland, Dayton only)"
+    ]
+  },
+  "n_metros": 110,
+  "top_metro": "Hartford-West Hartford-East Hartford, CT",
+  "top_score": 0.8249277440486439,
+  "weights": {
+    "net_migration": 0.2,
+    "job_growth": 0.12,
+    "income_growth": 0.08,
+    "permits_to_stock": 0.25,
+    "rent_to_income": 0.12,
+    "cost_to_own_vs_rent": 0.08,
+    "trailing_rent_growth": 0.1,
+    "employment_diversity": 0.05
+  },
+  "files": {
+    "panel_snapshot.parquet": "06fbc38876489f7417358eb4aa16dec9815b40c0a8a86b894829cb95a2f2eaeb",
+    "ranking.csv": "e879bca276de460f0722fb80dc3659b7601f65080b8d982b3acf1f8b229e9da1",
+    "scores.parquet": "85bb8f4fd9853a262f9132820cf81720633098ac05d19ea2718cf121980a6938"
+  }
+}

@@ -32,7 +32,9 @@ if ed.get("vintage"):
     theme.caption("One measure in this vintage is an early estimate: migration uses the "
                   "Census population-estimate substitute (validated against the finalized "
                   "IRS series, which arrives about two years later). Everything else is "
-                  "finalized data.")
+                  "finalized data, except the three Connecticut metros, whose 2024 job "
+                  "and income growth are chained across a state geography change (see "
+                  "Methodology & about for the ledger).")
 st.write("")
 
 metro = st.selectbox("Choose a market", rank.sort_values("cbsa_title")["cbsa_title"])

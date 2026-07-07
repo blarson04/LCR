@@ -35,6 +35,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import config                       # noqa: E402
 from src.ingest import census, zillow, irs_migration, permits, bls, bea, fred  # noqa: E402
+from src.ingest import bls_ces  # noqa: E402
 
 PANEL_START = config.RENT_HISTORY_START   # 2015
 
@@ -125,6 +126,42 @@ def assemble_panel(universe: pd.DataFrame) -> pd.DataFrame:
     zhvi = zillow.zhvi_long_annual()
     zhvi = zhvi.assign(cbsa_code=zhvi["region_id"].map(rid_to_cbsa))
     zhvi = zhvi[zhvi["cbsa_code"].notna()][["cbsa_code", "year", "zhvi"]]
+
+    # ---- Data-repair splices (decision-log 2026-07-07, D1 and D5) ----------
+    # D1: Zillow publishes no metro ZHVI for Dayton or Poughkeepsie; build
+    # their series from county ZHVI on the current boundary.
+    ZHVI_COUNTY_METROS = {"19430", "28880"}
+    czhvi = zillow.county_zhvi_metro_annual(ZHVI_COUNTY_METROS)
+    zhvi = pd.concat([zhvi[~zhvi["cbsa_code"].isin(ZHVI_COUNTY_METROS)],
+                      czhvi], ignore_index=True)
+    # D4b (QA amendment): the CT income splice's cross-seam growth failed
+    # face-validity QA (Hartford read +10.6%, a +5-sigma outlier, because the
+    # planning-region geography is richer than the legacy counties). Chain the
+    # 2024 income level from 2023 with the boundary-stable CT STATE per-capita
+    # income growth instead.
+    CT_CES_CHAIN = {"25540", "14860", "35300"}
+    ct_inc_growth = bea.state_pc_income_growth("09000", 2024)
+    for c in sorted(CT_CES_CHAIN):
+        base = inc.loc[(inc["cbsa_code"] == c) & (inc["year"] == 2023),
+                       "per_capita_income"]
+        if len(base) and pd.notna(base.iloc[0]):
+            inc.loc[(inc["cbsa_code"] == c) & (inc["year"] == 2024),
+                    "per_capita_income"] = float(base.iloc[0]) * (1.0 + ct_inc_growth)
+    print(f"    [D4b] CT metros' 2024 income chained via CT state growth "
+          f"({ct_inc_growth:+.2%})")
+    # D5: QCEW's CT files jump from county-based to planning-region boundaries
+    # between 2023 and 2024 (a level break that read as fake job losses).
+    # Chain the 2024 level with the validated CES growth substitute instead.
+    ces = bls_ces.build_ces_job_growth_panel()
+    for c in sorted(CT_CES_CHAIN):
+        g24 = ces[(ces["cbsa_code"] == c) & (ces["year"] == 2024)]["ces_job_growth"]
+        base = emp.loc[(emp["cbsa_code"] == c) & (emp["year"] == 2023), "total_emp"]
+        if len(g24) and len(base) and pd.notna(base.iloc[0]):
+            chained = float(base.iloc[0]) * (1.0 + float(g24.iloc[0]))
+            emp.loc[(emp["cbsa_code"] == c) & (emp["year"] == 2024),
+                    "total_emp"] = chained
+            print(f"    [D5] {c}: 2024 employment chained via CES growth "
+                  f"({float(g24.iloc[0]):+.2%})")
 
     mtg = (fred.to_annual(fred.fetch_series("MORTGAGE30US"), how="mean")
            .rename("mortgage_rate_30y").reset_index())   # [year, mortgage_rate_30y]

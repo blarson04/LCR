@@ -34,30 +34,36 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import config  # noqa: E402
+from src import crosswalk  # noqa: E402
 
 BLS_RAW_DIR = config.RAW_DIR / "qcew"
 BLS_RAW_DIR.mkdir(parents=True, exist_ok=True)
 
 _AGG_TOTAL = 40   # MSA, all industries, all ownership
-_AGG_SECTOR = 44  # MSA, by NAICS sector (private, own_code 5)
+_AGG_SECTOR = 44  # MSA, by NAICS sector, by ownership
+_AGG_TOTAL_COUNTY = 70   # county equivalents of the two MSA levels
+_AGG_SECTOR_COUNTY = 74
 
 
-# The 2023 OMB delineation renumbered a few CBSAs, but QCEW still files them
-# under their OLD codes. ACS already uses the new codes, so without these
-# overrides these metros get zero employment data. (Poughkeepsie/28880 is NOT
-# here: QCEW only carries it from 2024 under C2888, which the default rule
-# already produces — its earlier years are a genuine gap.)
-QCEW_AREA_OVERRIDES = {
-    "17410": "C1746",   # Cleveland, OH (was CBSA 17460)
-    "19430": "C1938",   # Dayton, OH    (was CBSA 19380)
-}
+# The 2023 OMB delineation renumbered a few CBSAs. QCEW filed them under the
+# OLD codes through 2023 and switched to the NEW codes with the 2024 files
+# (verified 2026-07-07: C1938/C1746 return 404 for 2024; C1943/C1741 exist).
+# Dayton keeps the same three counties across the renumbering, so a year-aware
+# area code yields a boundary-consistent series. Cleveland's new definition
+# adds Ashtabula County, and Poughkeepsie/28880 has no pre-2024 MSA file at
+# all, so both are built from COUNTY files on the current boundary instead
+# (data-repair spec, decision-log 2026-07-07 D2/D3).
+QCEW_YEAR_AWARE_OVERRIDES = {"19430": ("C1938", "C1943")}   # (<=2023, >=2024)
+QCEW_NEW_CODE_FROM = 2024
+QCEW_COUNTY_ROLLUP = {"17410", "28880"}   # Cleveland OH, Kiryas Joel-Poughkeepsie NY
 
 
-def qcew_area_code(cbsa_code: str) -> str:
+def qcew_area_code(cbsa_code: str, year: int | None = None) -> str:
     """CBSA code (5-digit string) -> QCEW area code, e.g. '12420' -> 'C1242'."""
     cbsa_code = str(cbsa_code)
-    if cbsa_code in QCEW_AREA_OVERRIDES:
-        return QCEW_AREA_OVERRIDES[cbsa_code]
+    if cbsa_code in QCEW_YEAR_AWARE_OVERRIDES:
+        old, new = QCEW_YEAR_AWARE_OVERRIDES[cbsa_code]
+        return new if (year is not None and year >= QCEW_NEW_CODE_FROM) else old
     return "C" + cbsa_code[:4]
 
 
@@ -70,7 +76,11 @@ _MAX_RETRIES = 4
 
 def fetch_metro_year(cbsa_code: str, year: int, *, refresh: bool = False) -> pd.DataFrame:
     """Download one metro-year QCEW area file, caching raw CSV to data/raw/qcew/."""
-    area = qcew_area_code(cbsa_code)
+    return _fetch_area_year(qcew_area_code(cbsa_code, year), year, refresh=refresh)
+
+
+def _fetch_area_year(area: str, year: int, *, refresh: bool = False) -> pd.DataFrame:
+    """Download one QCEW area-year file (MSA 'C####' or county FIPS), cached."""
     cache = BLS_RAW_DIR / f"{area}_{year}.csv"
     if cache.exists() and not refresh:
         return pd.read_csv(cache)
@@ -99,19 +109,58 @@ def fetch_metro_year(cbsa_code: str, year: int, *, refresh: bool = False) -> pd.
                        f"{_MAX_RETRIES} tries: {last_err}")
 
 
+def _member_counties(cbsa_code: str) -> list[str]:
+    xw = crosswalk.load()
+    return xw[xw["cbsa_code"] == str(cbsa_code)]["county_fips"].tolist()
+
+
+def _totals_and_sectors(cbsa_code: str, year: int, *,
+                        refresh: bool = False) -> tuple[float, float, pd.DataFrame]:
+    """(total_emp, avg_annual_pay, sector cells) for one metro-year.
+
+    MSA path: read the metro area file (agglvl 40/44). County-rollup path
+    (QCEW_COUNTY_ROLLUP): read each member county's file (agglvl 70/74) and
+    aggregate on the current boundary — identical cell semantics, so HHI and
+    the AI-exposure share mean the same thing on both paths.
+    """
+    if str(cbsa_code) in QCEW_COUNTY_ROLLUP:
+        tot_emp, tot_wages = 0.0, 0.0
+        any_total, cells = False, []
+        for fips in _member_counties(cbsa_code):
+            df = _fetch_area_year(fips, year, refresh=refresh)
+            t = df[(df["agglvl_code"] == _AGG_TOTAL_COUNTY) & (df["own_code"] == 0)]
+            if len(t) and float(t["annual_avg_emplvl"].iloc[0]) > 0:
+                e = float(t["annual_avg_emplvl"].iloc[0])
+                tot_emp += e
+                tot_wages += e * float(t["avg_annual_pay"].iloc[0])
+                any_total = True
+            cells.append(df[df["agglvl_code"] == _AGG_SECTOR_COUNTY]
+                         [["own_code", "industry_code", "annual_avg_emplvl"]])
+        sectors = (pd.concat(cells, ignore_index=True)
+                   .groupby(["own_code", "industry_code"], as_index=False)
+                   ["annual_avg_emplvl"].sum()) if cells else pd.DataFrame(
+                       columns=["own_code", "industry_code", "annual_avg_emplvl"])
+        total_emp = tot_emp if any_total else np.nan
+        avg_pay = (tot_wages / tot_emp) if tot_emp > 0 else np.nan
+        return total_emp, avg_pay, sectors
+
+    df = fetch_metro_year(cbsa_code, year, refresh=refresh)
+    total = df[df["agglvl_code"] == _AGG_TOTAL]
+    total_emp = float(total["annual_avg_emplvl"].iloc[0]) if len(total) else np.nan
+    avg_pay = float(total["avg_annual_pay"].iloc[0]) if len(total) else np.nan
+    sectors = df[df["agglvl_code"] == _AGG_SECTOR][
+        ["own_code", "industry_code", "annual_avg_emplvl"]]
+    return total_emp, avg_pay, sectors
+
+
 def summarize_metro_year(cbsa_code: str, year: int, *, refresh: bool = False) -> dict:
     """
     Reduce one metro-year QCEW file to the three scalars the panel needs:
     total_emp, avg_annual_pay, emp_hhi.
     """
-    df = fetch_metro_year(cbsa_code, year, refresh=refresh)
+    total_emp, avg_pay, sectors = _totals_and_sectors(cbsa_code, year, refresh=refresh)
 
-    total = df[df["agglvl_code"] == _AGG_TOTAL]
-    total_emp = float(total["annual_avg_emplvl"].iloc[0]) if len(total) else np.nan
-    avg_pay = float(total["avg_annual_pay"].iloc[0]) if len(total) else np.nan
-
-    sectors = df[df["agglvl_code"] == _AGG_SECTOR]
-    emp = sectors["annual_avg_emplvl"]
+    emp = pd.to_numeric(sectors["annual_avg_emplvl"], errors="coerce")
     emp = emp[emp > 0]                       # drop suppressed/zero sectors
     if emp.sum() > 0:
         shares = emp / emp.sum()
@@ -132,8 +181,8 @@ _AI_EXPOSED_SECTORS = {"51", "52", "54", "55"}
 
 def ai_exposure_share(cbsa_code: str, year: int, *, refresh: bool = False) -> float:
     """Metro employment share in high-AI-exposure white-collar sectors (0..1)."""
-    df = fetch_metro_year(cbsa_code, year, refresh=refresh)
-    sec = df[df["agglvl_code"] == _AGG_SECTOR][["industry_code", "annual_avg_emplvl"]].copy()
+    _, _, sec = _totals_and_sectors(cbsa_code, year, refresh=refresh)
+    sec = sec[["industry_code", "annual_avg_emplvl"]].copy()
     sec["emp"] = pd.to_numeric(sec["annual_avg_emplvl"], errors="coerce")
     total = sec["emp"].sum()
     exposed = sec[sec["industry_code"].astype(str).isin(_AI_EXPOSED_SECTORS)]["emp"].sum()

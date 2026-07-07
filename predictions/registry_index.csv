@@ -2,3 +2,5 @@ timestamp_utc,model_version,git_commit,score_year,n_metros,top_metro
 20260628T123304Z,1.0.0,f60b5f7,2023,110,"Charleston-North Charleston, SC"
 20260701T215522Z,2.0.0,b8cba72,2023,110,"Charleston-North Charleston, SC"
 20260707T105444Z,2.0.0,0164c75,2024,110,"Dayton-Kettering-Beavercreek, OH"
+20260707T224322Z,2.0.0,205b915,2024,110,"Hartford-West Hartford-East Hartford, CT"
+20260707T225018Z,2.0.0,205b915,2024,110,"Fresno, CA"

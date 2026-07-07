@@ -90,18 +90,21 @@ CTX = {"rental_vacancy": ("Rental vacancy", "lower = healthier"),
        "ai_exposure": ("AI-exposure (white-collar share)", "higher = more AI-exposed")}
 
 # Per-measure source + vintage ledger for the current (2024-vintage) screen
-# (build-spec §4.5; the vintage-honesty rule made visible). The starred QCEW
-# note is the disclosed Cleveland/Dayton 2024 transition gap.
+# (build-spec §4.5; the vintage-honesty rule made visible). Starred rows carry
+# a disclosed substitution for the three Connecticut metros, whose government
+# geography changed between 2023 and 2024 (see the ledger caption).
 VINTAGE_SOURCES = {
     "net_migration": ("Census population estimates, net domestic migration (a validated "
                       "substitute for the slower IRS data)", "2024"),
     "job_growth": ("BLS employment census (QCEW)", "2024 *"),
-    "income_growth": ("BEA county personal income, rolled up to metros", "2024"),
+    "income_growth": ("BEA county personal income, rolled up to metros", "2024 *"),
     "permits_to_stock": ("Census building permits over ACS housing stock", "2024"),
     "rent_to_income": ("Zillow rent index vs BEA income", "2024"),
-    "cost_to_own_vs_rent": ("Zillow home values vs rents, with mortgage rates (FRED)", "2024"),
+    "cost_to_own_vs_rent": ("Zillow home values vs rents, with mortgage rates (FRED); "
+                            "built from county home values for Dayton and Poughkeepsie, "
+                            "which Zillow does not publish at the metro level", "2024"),
     "trailing_rent_growth": ("Zillow rent index (ZORI)", "2024"),
-    "employment_diversity": ("BLS employment census (QCEW), industry mix", "2024 *"),
+    "employment_diversity": ("BLS employment census (QCEW), industry mix", "2024"),
 }
 
 STATE_CENTROIDS = {
@@ -203,12 +206,21 @@ def load() -> dict:
     reg_path = config.PREDICTIONS_DIR / "registry_index.csv"
     registry = pd.read_csv(reg_path) if reg_path.exists() else pd.DataFrame()
 
-    # Prior edition's frozen ranks (change-vs-edition column) + the committed
-    # monthly rent-trend extract (Market spotlight chart).
-    prior_path = config.PROCESSED_DIR / "ranking_2023.csv"
-    prior_rank = (pd.read_csv(prior_path, dtype={"cbsa_code": str})
-                  [["cbsa_code", "rank"]].rename(columns={"rank": "prior_rank"})
-                  if prior_path.exists() else pd.DataFrame())
+    # Prior edition's frozen ranks (change-vs-edition column): read from the
+    # REGISTRY (immutable), not the regenerable working CSV, so "Vs 2023"
+    # always compares against the edition as published, even after data
+    # corrections change the recomputed 2023 cross-section.
+    prior_rank = pd.DataFrame()
+    if len(registry):
+        r23 = registry[(registry["score_year"] == 2023)
+                       & (registry["model_version"].astype(str).str.startswith("2."))]
+        if len(r23):
+            ts = r23.sort_values("timestamp_utc")["timestamp_utc"].iloc[-1]
+            rp = config.PREDICTIONS_DIR / ts / "ranking.csv"
+            if rp.exists():
+                prior_rank = (pd.read_csv(rp, dtype={"cbsa_code": str})
+                              [["cbsa_code", "rank"]]
+                              .rename(columns={"rank": "prior_rank"}))
     trend_path = config.PROCESSED_DIR / "spotlight_rent_trend.csv"
     rent_trend = (pd.read_csv(trend_path, dtype={"cbsa_code": str})
                   if trend_path.exists() else pd.DataFrame())

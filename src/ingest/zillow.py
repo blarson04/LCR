@@ -113,6 +113,60 @@ def zhvi_long_annual(df: pd.DataFrame | None = None, *, refresh: bool = False) -
     return _annualize(df, "zhvi")
 
 
+# County ZHVI: the fallback source for metros Zillow does not publish at the
+# metro level (Dayton OH, Kiryas Joel-Poughkeepsie NY — data-repair spec,
+# decision-log 2026-07-07 D1).
+COUNTY_ZHVI_URL = (
+    "https://files.zillowstatic.com/research/public_csvs/zhvi/"
+    "County_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+)
+
+
+def fetch_zhvi_county(*, refresh: bool = False) -> pd.DataFrame:
+    return _download(COUNTY_ZHVI_URL, "County_zhvi_sfrcondo_sm_sa_month.csv",
+                     refresh=refresh)
+
+
+def county_zhvi_metro_annual(cbsa_codes, *, refresh: bool = False) -> pd.DataFrame:
+    """[cbsa_code, year, zhvi] for the given metros, built as the BEA-county-
+    population-weighted mean of member counties' ZHVI (an approximation of
+    Zillow's own metro aggregation, disclosed)."""
+    from src import crosswalk           # local imports: avoid module cycles
+    from src.ingest import bea
+
+    wanted = crosswalk.load()
+    wanted = wanted[wanted["cbsa_code"].isin({str(c) for c in cbsa_codes})]
+
+    df = fetch_zhvi_county(refresh=refresh)
+    df = df.copy()
+    df["county_fips"] = (df["StateCodeFIPS"].astype(int).astype(str).str.zfill(2)
+                         + df["MunicipalCodeFIPS"].astype(int).astype(str).str.zfill(3))
+    sub = df[df["county_fips"].isin(set(wanted["county_fips"]))]
+
+    month_cols = [c for c in sub.columns if str(c)[:2] == "20"]
+    long = sub.melt(id_vars=["county_fips"], value_vars=month_cols,
+                    var_name="date", value_name="zhvi").dropna(subset=["zhvi"])
+    long["year"] = long["date"].str[:4].astype(int)
+    ann = (long.groupby(["county_fips", "year"])["zhvi"]
+           .agg(["mean", "count"]).reset_index()
+           .rename(columns={"mean": "zhvi"}))
+    ann = ann[(ann["count"] >= MIN_MONTHS_PER_YEAR)
+              & (ann["year"] >= config.RENT_HISTORY_START)]
+
+    pop = (bea._fetch_county_line(bea._LINE["population"])
+           .rename(columns={"value": "w"}))
+    m = ann.merge(pop, on=["county_fips", "year"], how="left").sort_values("year")
+    # Weight years BEA hasn't published yet with the county's latest weight.
+    m["w"] = m.groupby("county_fips")["w"].transform(
+        lambda s: s.where(s > 0).ffill().bfill())
+    m = m.merge(wanted[["county_fips", "cbsa_code"]], on="county_fips")
+    m["wz"] = m["zhvi"] * m["w"]
+    out = m.groupby(["cbsa_code", "year"], as_index=False)[["wz", "w"]].sum()
+    out["zhvi"] = out["wz"] / out["w"]
+    return out[["cbsa_code", "year", "zhvi"]].sort_values(
+        ["cbsa_code", "year"]).reset_index(drop=True)
+
+
 def metros_with_full_coverage(annual: pd.DataFrame | None = None, *,
                               latest_start: int | None = None) -> pd.DataFrame:
     """
