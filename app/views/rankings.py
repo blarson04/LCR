@@ -33,15 +33,26 @@ rank[["strength", "drag"]] = rank.apply(
 
 # ---- Header -----------------------------------------------------------------
 st.markdown("# Market rankings")
-theme.caption(
-    f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
-    f"rent growth — a {ed['horizon']} screen scored on "
-    + ("preliminary data for the current year." if ed["provisional"]
-       else f"{ed['year']} fundamentals, the latest finalized vintage (the slowest federal "
-            f"inputs publish about two years late, so much of the {ed['horizon']} forecast "
-            f"window has already elapsed).")
-)
-st.markdown(theme.badge(ed["provisional"]), unsafe_allow_html=True)
+if ed.get("vintage"):
+    theme.caption(
+        f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
+        f"rent growth — a {ed['horizon']} screen scored on {ed['year']} data, the newest "
+        f"vintage validated for publication (its configuration passed a pre-registered gate "
+        f"at 95.5% signal retention; see Track record).")
+else:
+    theme.caption(
+        f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
+        f"rent growth — a {ed['horizon']} screen scored on "
+        + ("preliminary data for the current year." if ed["provisional"]
+           else f"{ed['year']} fundamentals, the latest finalized vintage (the slowest federal "
+                f"inputs publish about two years late, so much of the {ed['horizon']} forecast "
+                f"window has already elapsed)."))
+st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
+if ed.get("vintage"):
+    theme.caption(f"Extended horizon: this same ranking is also supported one year further "
+                  f"out ({ed['year']}→{ed['year']+4}) — in backtests the 4-year view was, if "
+                  f"anything, stronger (top-10 edge +8.4 points of rent growth vs +6.0 at "
+                  f"3 years). Beyond that we do not publish: the data cannot validate it.")
 
 if not ed["provisional"]:
     # Ex-ante rule only (v3-P6) — no hindsight regime labels feed the flag.

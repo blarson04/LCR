@@ -37,8 +37,11 @@ st.write("")
 st.markdown("## The one-minute version")
 st.markdown(
     "A backtested screen of the 110 largest US rental markets, built on free public data. "
-    "In calm markets its top-10 picks have meaningfully out-grown the median market; in the "
-    "2021–22 shock its edge largely disappeared — and it says so.")
+    "The current edition is a **validated 2024-vintage screen forecasting 2024–27** (with a "
+    "supported extension to 2028) — its configuration passed a pre-registered validation "
+    "gate after two earlier configurations failed theirs and were published as negative "
+    "results. In calm markets its top-10 picks have meaningfully out-grown the median "
+    "market; in the 2021–22 shock its edge largely disappeared — and it says so.")
 
 bt = d["backtest"]
 _pc = bt[(bt.horizon == 3) & (bt.regime == "pre_covid")]
@@ -175,10 +178,12 @@ elif d["has_spec"]:
     theme.caption("Switch the sidebar to the provisional edition to see how the provisional "
                   "2025 screen is built.")
 else:
-    theme.caption("A provisional current-year screen (built on faster, preliminary data) was "
-                  "developed and tested against a pre-committed validation gate. It missed the "
-                  "bar twice — most recently by a hair (84.7% signal retention vs the 85% "
-                  "required) — so it is not published. Both negative results are documented in "
-                  "the project's decision log; a screen that publishes its failures is the point.")
+    theme.caption("How the current screen earned publication: two fresher-data configurations "
+                  "failed their pre-registered validation gate (74.8% and 84.66% signal "
+                  "retention vs the 85% required — the second missed by a third of a point "
+                  "and was pulled anyway). The third, built on newly finalized 2024 data with "
+                  "a single validated substitute for slow migration data, passed at 95.5% and "
+                  "is what this site shows. All three outcomes are published; a screen that "
+                  "publishes its failures is the point. See Track record.")
 
 theme.page_footer()

@@ -28,6 +28,7 @@ from src import score as score_mod  # noqa: E402
 
 SCORE_YEAR = score_mod.SCORE_YEAR
 SPEC_YEAR = 2025
+VINTAGE_YEAR = 2024   # gate-passed lagged-vintage screen (decision log 2026-07-07)
 INDICATORS = config.INDICATORS
 N_IND = len(INDICATORS)
 BUCKETS = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
@@ -200,7 +201,24 @@ def load() -> dict:
     else:
         spec_rank, spec_raw, spec_pct = acc_rank, acc_raw, acc_pct
 
-    ctx_year = panel[panel["year"] == SCORE_YEAR].set_index("cbsa_code")
+    # Validated lagged-vintage screen (gate PASSED 2026-07-07): primary edition.
+    vdir = config.PROCESSED_DIR / "vintage"
+    def _vcsv(name):
+        p = vdir / name
+        return pd.read_csv(p, dtype={"cbsa_code": str}) if p.exists() else pd.DataFrame()
+    v_rank_raw = _vcsv(f"vintage_{VINTAGE_YEAR}_ranking.csv")
+    v_raw = _vcsv(f"vintage_{VINTAGE_YEAR}_raw.csv")
+    v_norm = _vcsv(f"vintage_{VINTAGE_YEAR}_norm.csv")
+    has_vintage = len(v_rank_raw) > 0 and len(v_raw) > 0 and len(v_norm) > 0
+    if has_vintage:
+        vint_rank = v_rank_raw.merge(rank_ranges(v_norm, VINTAGE_YEAR), on="cbsa_code", how="left")
+        vint_raw = v_raw.set_index("cbsa_code")
+        vint_pct = v_norm.set_index("cbsa_code")[list(INDICATORS)].rank(pct=True) * 100
+    else:
+        vint_rank, vint_raw, vint_pct = acc_rank, acc_raw, acc_pct
+
+    primary_year = VINTAGE_YEAR if has_vintage else SCORE_YEAR
+    ctx_year = panel[panel["year"] == primary_year].set_index("cbsa_code")
     ctx_pct = ctx_year[list(CTX)].rank(pct=True) * 100
 
     pc = backtest[(backtest["horizon"] == 3) & (backtest["regime"] == "pre_covid")]
@@ -226,10 +244,12 @@ def load() -> dict:
                 registry=registry, nowcast=nowcast, nc_prov=nc_prov,
                 has_spec=has_spec, acc_rank=acc_rank, acc_raw=acc_raw, acc_pct=acc_pct,
                 spec_rank=spec_rank, spec_raw=spec_raw, spec_pct=spec_pct,
+                has_vintage=has_vintage, vint_rank=vint_rank, vint_raw=vint_raw,
+                vint_pct=vint_pct, primary_year=primary_year,
                 ctx_year=ctx_year, ctx_pct=ctx_pct, pc_tau=pc_tau, spec_tau=spec_tau,
                 overlap_mean=overlap_mean, overlap_last=overlap_last,
-                nat_growth=national_rent_growth(panel, SCORE_YEAR),
-                regime=regime_of(SCORE_YEAR))
+                nat_growth=national_rent_growth(panel, primary_year),
+                regime=regime_of(primary_year))
 
 
 def is_spec(d: dict | None = None) -> bool:
@@ -242,11 +262,17 @@ def is_spec(d: dict | None = None) -> bool:
 
 
 def edition(d: dict) -> dict:
-    """The active edition's frames + labels, in one place."""
+    """The active edition's frames + labels, in one place. Primary = the
+    gate-passed 2024-vintage screen when its outputs exist."""
     if is_spec(d):
         return dict(rank=d["spec_rank"], raw=d["spec_raw"], pct=d["spec_pct"],
-                    year=SPEC_YEAR, provisional=True,
-                    horizon=f"{SPEC_YEAR}→{SPEC_YEAR+3}")
+                    year=SPEC_YEAR, provisional=True, vintage=False,
+                    badge_label=None, horizon=f"{SPEC_YEAR}→{SPEC_YEAR+3}")
+    if d.get("has_vintage"):
+        return dict(rank=d["vint_rank"], raw=d["vint_raw"], pct=d["vint_pct"],
+                    year=VINTAGE_YEAR, provisional=False, vintage=True,
+                    badge_label=f"Validated · {VINTAGE_YEAR} vintage",
+                    horizon=f"{VINTAGE_YEAR}→{VINTAGE_YEAR+3}")
     return dict(rank=d["acc_rank"], raw=d["acc_raw"], pct=d["acc_pct"],
-                year=SCORE_YEAR, provisional=False,
-                horizon=f"{SCORE_YEAR}→{SCORE_YEAR+3}")
+                year=SCORE_YEAR, provisional=False, vintage=False,
+                badge_label=None, horizon=f"{SCORE_YEAR}→{SCORE_YEAR+3}")

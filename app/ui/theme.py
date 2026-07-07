@@ -143,11 +143,11 @@ def caption(text: str) -> None:
     st.markdown(f"<div class='cap'>{text}</div>", unsafe_allow_html=True)
 
 
-def badge(provisional: bool) -> str:
+def badge(provisional: bool, label: str | None = None) -> str:
     """HTML badge; provisional data must always carry its badge (skill §4)."""
     if provisional:
         return "<span class='badge-provisional'>Provisional — based on preliminary data</span>"
-    return "<span class='badge-final'>Finalized 2023</span>"
+    return f"<span class='badge-final'>{label or 'Finalized 2023'}</span>"
 
 
 def style_fig(fig: go.Figure, height: int = 380) -> go.Figure:

@@ -27,7 +27,12 @@ rank = ed["rank"]
 st.markdown("# Metro detail")
 theme.caption("Why a market ranks where it does — its score, the themes driving it, "
               "and each measure in plain terms.")
-st.markdown(theme.badge(ed["provisional"]), unsafe_allow_html=True)
+st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
+if ed.get("vintage"):
+    theme.caption("One measure in this vintage is an early estimate: migration uses the "
+                  "Census population-estimate substitute (validated against the finalized "
+                  "IRS series, which arrives about two years later). Everything else is "
+                  "finalized data.")
 st.write("")
 
 metro = st.selectbox("Choose a market", rank.sort_values("cbsa_title")["cbsa_title"])
@@ -122,7 +127,18 @@ if len(hist) > 1:
                 f"{abs(chg):.0%} since {int(hist['year'].iloc[0])} (Zillow index, annual "
                 f"average).</div>", unsafe_allow_html=True)
 
-traj = d["scored"][d["scored"]["cbsa_code"] == code][["year", "rank"]].dropna().sort_values("year")
+# Trajectory: finalized-vintage years only, plus the validated 2024-vintage
+# point — never the unvalidated later rows of the finalized frame (which have
+# missing migration and would silently mix vintages; v3-plan critique).
+traj = (d["scored"][(d["scored"]["cbsa_code"] == code)
+                    & (d["scored"]["year"] <= data.SCORE_YEAR)]
+        [["year", "rank"]].dropna().sort_values("year"))
+if ed.get("vintage"):
+    vrow = ed["rank"][ed["rank"]["cbsa_code"] == code]
+    if len(vrow):
+        traj = pd.concat([traj, pd.DataFrame(
+            {"year": [ed["year"]], "rank": [int(vrow["rank"].iloc[0])]})],
+            ignore_index=True).sort_values("year")
 if len(traj) > 1:
     figr = px.line(traj, x="year", y="rank", markers=True)
     figr.update_traces(line=dict(color=theme.GRAY_SERIES[0], width=2.2),

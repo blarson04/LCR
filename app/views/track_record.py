@@ -148,10 +148,24 @@ if len(d["registry"]):
     rt = rt[["Run (UTC)", "Version", "Year", "Markets", "Top-ranked market"]]
     st.dataframe(rt, hide_index=True, use_container_width=True)
 theme.caption("These are frozen live predictions — distinct from the retrospective backtest "
-              "above. A provisional current-year screen was also tested twice against a "
-              "pre-committed gate and missed both times (most recently 84.7% signal retention "
-              "vs the 85% required); both negative results are published, and that edition is "
-              "not shown.")
+              "above. The 2024-vintage entry is the site's current screen; it publishes "
+              "because its configuration passed a pre-registered validation gate.")
+
+st.markdown("## Three gates, two failures, one pass")
+st.markdown(
+    "Every fresher-than-finalized configuration had to pass the same pre-registered gate "
+    "(retain ≥85% of the model's signal and match the top-10 on ≥7 of 10 names) in a single "
+    "attempt, with the outcome published either way:\n\n"
+    "1. **2025 screen, five estimated inputs** — kept 74.8% of the signal. **Failed;** "
+    "not published.\n"
+    "2. **2025 screen, fresher jobs data** — kept 84.66%. **Failed by a third of a point** — "
+    "we did not round it up; the edition was pulled.\n"
+    "3. **2024-vintage screen, one estimated input** (the validated migration substitute) — "
+    "kept **95.5%**, matched the top-10 on 8.3/10. **Passed**, and is what you see on this "
+    "site today, extended one further year (to 2028) after a separate horizon study.")
+theme.caption("A validation bar that never fails anything proves nothing. Ours failed two of "
+              "three attempts — including one at a margin of 0.34 points — which is exactly "
+              "why the one that passed means something.")
 
 st.markdown("## Honest limits")
 st.markdown(

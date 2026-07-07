@@ -27,7 +27,7 @@ rank = ed["rank"]
 st.markdown("# Compare markets")
 theme.caption("Two or three markets side by side — where each stands on every measure, "
               "and which themes drive the difference.")
-st.markdown(theme.badge(ed["provisional"]), unsafe_allow_html=True)
+st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 st.write("")
 
 default2 = list(rank.sort_values("rank")["cbsa_title"].head(2))
