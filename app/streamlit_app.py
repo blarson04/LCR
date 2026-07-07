@@ -60,6 +60,7 @@ with st.sidebar:
 pages = [
     st.Page("views/methodology.py", title="About & methodology", default=True),
     st.Page("views/rankings.py", title="Rankings"),
+    st.Page("views/spotlight.py", title="Market spotlight"),
     st.Page("views/metro_detail.py", title="Metro detail"),
     st.Page("views/compare.py", title="Compare markets"),
 ]

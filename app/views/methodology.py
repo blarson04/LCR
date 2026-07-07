@@ -33,8 +33,59 @@ st.markdown("# About this project")
 theme.caption("What the screener is, who built it, and how the score works, in plain terms.")
 st.write("")
 
-# ---- The one-minute version (claim → evidence → limitations) -----------------
-st.markdown("## The one-minute version")
+# ---- Key findings (claim → evidence → limitations) ---------------------------
+bt = d["backtest"]
+_pc = bt[(bt.horizon == 3) & (bt.regime == "pre_covid")]
+pc_prec = float(_pc["mean_precision@10"].iloc[0]) if len(_pc) else float("nan")
+_sh = bt[(bt.horizon == 3) & (bt.regime == "shock")]
+sh_tau = float(_sh["mean_tau"].iloc[0]) if len(_sh) else float("nan")
+
+pp_pooled, pp_mom, pp_win = float("nan"), float("nan"), None
+es_path = config.PROCESSED_DIR / "effect_size_windows.csv"
+if es_path.exists():
+    ew = pd.read_csv(es_path)
+    comp = ew[ew.strategy == "Composite (model)"].sort_values("pred_year")
+    pp_pooled = float(comp["top10_pp_vs_median"].mean())
+    mom = ew[ew.strategy == "Momentum (trailing rent)"]
+    if len(mom):
+        pp_mom = float(mom["top10_pp_vs_median"].mean())
+    pp_win = comp
+
+ind_tau, full_tau = float("nan"), float("nan")
+ib_path = config.PROCESSED_DIR / "industry_baseline.csv"
+if ib_path.exists():
+    ib = pd.read_csv(ib_path)
+    if len(ib):
+        ind_tau = float(ib["tau_3y"].iloc[0])
+        full_tau = float(ib["full_tau_3y"].iloc[0])
+
+vr = (d["vint_rank"] if d.get("has_vintage") else d["acc_rank"]).sort_values("rank")
+top_row = vr.iloc[0]
+top_city = top_row["cbsa_title"].split(",")[0]
+s1, s2 = data.top_strengths(top_row)
+lift = " and ".join(s.lower() for s in (s1, s2) if s) or "balanced fundamentals"
+vyear = data.VINTAGE_YEAR if d.get("has_vintage") else data.SCORE_YEAR
+stay_txt = ""
+if len(d["prior_rank"]) and d.get("has_vintage"):
+    prior_top = set(d["prior_rank"].nsmallest(10, "prior_rank")["cbsa_code"])
+    stay = len(prior_top & set(vr.head(10)["cbsa_code"]))
+    stay_txt = (f" {stay} of the prior edition's top ten stay in the top ten, "
+                f"and every rank is published with an uncertainty range.")
+
+st.markdown("## Key findings")
+st.markdown(f"""
+- **{top_city} leads the current screen** (a {vyear}–{vyear+3} outlook), lifted most
+  by {lift}.{stay_txt}
+- **The screen's top-10 markets out-grew the median market by {pp_pooled:+.1f} points of
+  rent growth** over three years, averaged across six completed backtest windows.
+  Picking on recent rent growth alone earned {pp_mom:+.1f}; the gap widens the further
+  out you look.
+- **Every measure had to earn its place by test.** An industry-style market scorecard
+  rebuilt from free data barely beats chance at the same prediction task
+  ({ind_tau:.2f} on a -1 to +1 rank-agreement scale, vs {full_tau:.2f} for this
+  screen), and two of this project's own configurations failed their validation gates
+  and were published as negative results.
+""")
 st.markdown(
     "A backtested screen of the 110 largest US rental markets, built on free public data. "
     "The current edition is a **validated 2024-vintage screen forecasting 2024–27** (with a "
@@ -43,31 +94,16 @@ st.markdown(
     "results. In calm markets its top-10 picks have meaningfully out-grown the median "
     "market; in the 2021–22 shock its edge largely disappeared, and it says so.")
 
-bt = d["backtest"]
-_pc = bt[(bt.horizon == 3) & (bt.regime == "pre_covid")]
-pc_prec = float(_pc["mean_precision@10"].iloc[0]) if len(_pc) else float("nan")
-_sh = bt[(bt.horizon == 3) & (bt.regime == "shock")]
-sh_tau = float(_sh["mean_tau"].iloc[0]) if len(_sh) else float("nan")
-
-pp_pooled, pp_win = float("nan"), None
-es_path = config.PROCESSED_DIR / "effect_size_windows.csv"
-if es_path.exists():
-    ew = pd.read_csv(es_path)
-    comp = ew[ew.strategy == "Composite (model)"].sort_values("pred_year")
-    pp_pooled = float(comp["top10_pp_vs_median"].mean())
-    pp_win = comp
-
-c1, c2, c3 = st.columns(3)
-c1.metric("Top-10 edge", f"+{pp_pooled:.1f} pp",
-          help="Extra 3-year rent growth of the screen's top-10 markets vs the median market, "
-               "averaged over six backtest windows (finalized data).")
+c2, c3 = st.columns(2)
 c2.metric("Calm-market accuracy", f"{pc_prec:.0%}",
-          help=f"Pre-COVID windows: share of top-10 picks landing in the top quarter of "
-               f"markets (finalized data; τ {d['pc_tau']:.2f}, real-time equivalent "
-               f"τ {d['spec_tau']:.2f}).")
-c3.metric("In the 2021–22 shock", f"τ {sh_tau:.2f}",
-          help="Rank agreement with realized growth in shock windows; the edge largely "
-               "disappears, and the site flags such periods.")
+          help=f"Share of top-10 picks landing in the top quarter of markets in pre-COVID "
+               f"windows, on finalized data. Rank agreement, on a -1 to +1 scale "
+               f"(weighted Kendall's tau): {d['pc_tau']:.2f} finalized, "
+               f"{d['spec_tau']:.2f} real-time.")
+c3.metric("In the 2021–22 shock", f"{sh_tau:.2f}",
+          help="Agreement between the screen's ranking and realized growth in the 2021–22 "
+               "shock windows, on the same -1 to +1 scale. The edge largely disappears, "
+               "and the site flags such periods.")
 
 if pp_win is not None and len(pp_win):
     figp = px.bar(pp_win, x="pred_year", y="top10_pp_vs_median")
@@ -149,6 +185,29 @@ theme.caption("Demand leads at 40%: the framework bets that who is moving in, hi
               "earning matters most over a three-year horizon, with a heavy penalty for "
               "oversupply (25%) as the contrarian edge. Weights are set by judgment and "
               "tested against alternatives; see Track record for how it has performed.")
+
+if d.get("has_vintage") and not spec_mode:
+    with st.expander("Data sources and vintages, measure by measure"):
+        vrows = []
+        for k in data.INDICATORS:
+            src_txt, through = data.VINTAGE_SOURCES[k]
+            vrows.append({"Measure": data.PRETTY[k],
+                          "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
+                          "Source": src_txt,
+                          "Data through": through})
+        st.dataframe(
+            pd.DataFrame(vrows).style
+              .set_properties(subset=["Measure"], **{"font-weight": "500"})
+              .set_properties(subset=["Weight", "Data through"],
+                              **{"font-variant-numeric": "tabular-nums",
+                                 "text-align": "right"}),
+            hide_index=True, use_container_width=True)
+        theme.caption(f"The data ledger for the current {data.VINTAGE_YEAR}-vintage screen: "
+                      "what feeds each measure and how fresh it is. "
+                      "* Cleveland and Dayton carry 2023 employment values; their 2024 "
+                      "employment file had a reporting gap when the screen was scored (a "
+                      "disclosed substitution). No accuracy number on this site is "
+                      "published without its data vintage.")
 
 if spec_mode and d["has_spec"]:
     st.markdown("## The provisional screen")

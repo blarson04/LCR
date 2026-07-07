@@ -30,6 +30,12 @@ ed = data.edition(d)
 rank = ed["rank"].sort_values("rank").reset_index(drop=True)
 rank[["strength", "drag"]] = rank.apply(
     lambda r: pd.Series(data.strength_drag(r)), axis=1)
+rank[["strength_1", "strength_2"]] = rank.apply(
+    lambda r: pd.Series(data.top_strengths(r)), axis=1)
+# Change vs the frozen prior edition (only meaningful for the vintage screen).
+show_change = bool(ed.get("vintage")) and len(d["prior_rank"]) > 0
+if show_change:
+    rank = rank.merge(d["prior_rank"], on="cbsa_code", how="left")
 
 # ---- Header -----------------------------------------------------------------
 st.markdown("# Market rankings")
@@ -108,25 +114,36 @@ with col_top:
     rows_html = ""
     for _, r in rank.head(10).iterrows():
         color = theme.POS if r["score"] >= 0 else theme.NEG
+        strengths = " · ".join(s for s in (r["strength_1"], r["strength_2"]) if s) \
+            or "Broadly average"
         rows_html += (
             f"<div style='padding:.42rem 0;border-bottom:1px solid {theme.LINE}'>"
             f"<span style='color:{theme.MUTED};display:inline-block;width:1.6rem'>{int(r['rank'])}</span>"
             f"<span style='font-weight:500'>{r['cbsa_title'].split(',')[0][:26]}</span>"
             f"<span style='float:right;color:{color};font-variant-numeric:tabular-nums'>"
             f"{r['score']:+.2f}</span>"
-            f"<div class='cap' style='margin-left:1.6rem'>{r['strength']}</div></div>")
+            f"<div class='cap' style='margin-left:1.6rem'>{strengths}</div></div>")
     st.markdown(rows_html, unsafe_allow_html=True)
+    theme.caption("Each market shows the one or two themes that lift its score most.")
 
 # ---- Full table (progressive disclosure) -------------------------------------
 with st.expander(f"See all {len(rank)} markets"):
-    tbl = pd.DataFrame({
+    cols = {
         "Rank": [f"{int(r['rank'])} ({int(r['rank_lo'])}–{int(r['rank_hi'])})"
                  for _, r in rank.iterrows()],
         "Metro": rank["cbsa_title"],
         "Score": rank["score"],
         "Top strength": rank["strength"],
         "Top drag": rank["drag"],
-    })
+    }
+    if show_change:
+        def _chg(r):
+            if pd.isna(r["prior_rank"]):
+                return "new"
+            delta = int(r["prior_rank"]) - int(r["rank"])
+            return f"{delta:+d}" if delta else "0"
+        cols["Vs 2023"] = rank.apply(_chg, axis=1)
+    tbl = pd.DataFrame(cols)
     styler = (tbl.style
               .format({"Score": "{:+.2f}"})
               .map(lambda v: f"color:{theme.POS}" if v >= 0 else f"color:{theme.NEG}",
@@ -134,12 +151,62 @@ with st.expander(f"See all {len(rank)} markets"):
               .set_properties(subset=["Score"], **{"font-variant-numeric": "tabular-nums",
                                                    "text-align": "right"})
               .set_properties(subset=["Metro"], **{"font-weight": "500"}))
+    if show_change:
+        styler = styler.set_properties(subset=["Vs 2023"],
+                                       **{"font-variant-numeric": "tabular-nums",
+                                          "text-align": "right"})
     st.dataframe(styler, hide_index=True, use_container_width=True, height=520,
-                 column_config={"Rank": st.column_config.TextColumn(
-                     help="Range reflects statistical uncertainty in the score.")})
+                 column_config={
+                     "Rank": st.column_config.TextColumn(
+                         help="Range reflects statistical uncertainty in the score."),
+                     "Vs 2023": st.column_config.TextColumn(
+                         help="Rank change since the frozen 2023 edition; "
+                              "positive means the market moved up.")})
+    change_note = ("The 'vs 2023' column compares against the frozen prior edition (its "
+                   "ranks were locked when published, so the comparison cannot be "
+                   "rewritten). A move inside a market's rank range is noise, not a trend. "
+                   if show_change else "")
     theme.caption("Rank ranges show the span across several reasonable model weightings; "
-                  "treat this as a screen, not a precise ordering. Strength and drag are the "
-                  "themes that helped or hurt each market's score the most.")
+                  "treat this as a screen, not a precise ordering. " + change_note +
+                  "Strength and drag are the themes that helped or hurt each market's "
+                  "score the most.")
+
+# ---- Diverging bars: every market against the average -------------------------
+with st.expander("Every market against the average"):
+    theme.caption("Composite score relative to the average market that year (zero line). "
+                  "The default view shows the top and bottom 25.")
+    show_all = st.toggle(f"Show all {len(rank)} markets", key="diverging_all")
+    if show_all:
+        sub = rank
+        labels = [f"{int(r['rank'])}  {r['cbsa_title'].split(',')[0][:24]}"
+                  for _, r in sub.iterrows()]
+        vals = sub["score"].tolist()
+    else:
+        head, tail = rank.head(25), rank.tail(25)
+        gap_label = f"(…{len(rank) - 50} markets in between…)"
+        labels = ([f"{int(r['rank'])}  {r['cbsa_title'].split(',')[0][:24]}"
+                   for _, r in head.iterrows()] + [gap_label]
+                  + [f"{int(r['rank'])}  {r['cbsa_title'].split(',')[0][:24]}"
+                     for _, r in tail.iterrows()])
+        vals = head["score"].tolist() + [None] + tail["score"].tolist()
+    colors = [(theme.POS if (v or 0) >= 0 else theme.NEG) for v in vals]
+    figd = go.Figure(go.Bar(
+        x=vals, y=labels, orientation="h", marker_color=colors, marker_line_width=0,
+        hovertemplate="%{y}<br>score %{x:+.2f}<extra></extra>"))
+    figd.update_yaxes(autorange="reversed", showgrid=False,
+                      tickfont=dict(size=11, color=theme.MUTED))
+    height = 24 * len(labels) + 60
+    figd = theme.style_fig(figd, height)
+    figd.update_xaxes(showgrid=True, gridcolor=theme.LINE, zeroline=True,
+                      zerolinecolor=theme.MUTED, zerolinewidth=1,
+                      title="Composite score (0 = the average market)")
+    figd.update_yaxes(showgrid=False)
+    st.plotly_chart(figd, use_container_width=True)
+    lead, trail = rank.iloc[0], rank.iloc[-1]
+    theme.caption(f"{lead['cbsa_title'].split(',')[0]} leads at {lead['score']:+.2f}; "
+                  f"{trail['cbsa_title'].split(',')[0]} trails at {trail['score']:+.2f}. "
+                  f"Scores are in standardized units, so the spread between markets "
+                  f"matters more than any single value.")
 
 with st.expander("Advanced view: how each score breaks down"):
     theme.caption("Contribution of each theme to the composite score, in standardized units "

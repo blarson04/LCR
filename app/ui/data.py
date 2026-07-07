@@ -89,6 +89,21 @@ BUCKET_LABEL = {"Demand": "demand (migration & jobs)", "Supply": "limited new su
 CTX = {"rental_vacancy": ("Rental vacancy", "lower = healthier"),
        "ai_exposure": ("AI-exposure (white-collar share)", "higher = more AI-exposed")}
 
+# Per-measure source + vintage ledger for the current (2024-vintage) screen
+# (build-spec §4.5; the vintage-honesty rule made visible). The starred QCEW
+# note is the disclosed Cleveland/Dayton 2024 transition gap.
+VINTAGE_SOURCES = {
+    "net_migration": ("Census population estimates, net domestic migration (a validated "
+                      "substitute for the slower IRS data)", "2024"),
+    "job_growth": ("BLS employment census (QCEW)", "2024 *"),
+    "income_growth": ("BEA county personal income, rolled up to metros", "2024"),
+    "permits_to_stock": ("Census building permits over ACS housing stock", "2024"),
+    "rent_to_income": ("Zillow rent index vs BEA income", "2024"),
+    "cost_to_own_vs_rent": ("Zillow home values vs rents, with mortgage rates (FRED)", "2024"),
+    "trailing_rent_growth": ("Zillow rent index (ZORI)", "2024"),
+    "employment_diversity": ("BLS employment census (QCEW), industry mix", "2024 *"),
+}
+
 STATE_CENTROIDS = {
     "AL": (32.8, -86.8), "AZ": (34.2, -111.7), "AR": (34.8, -92.4), "CA": (37.2, -119.5),
     "CO": (39.0, -105.5), "CT": (41.6, -72.7), "DE": (39.0, -75.5), "DC": (38.9, -77.0),
@@ -152,6 +167,17 @@ def strength_drag(row) -> tuple[str, str]:
     return strength, drag
 
 
+def top_strengths(row) -> tuple[str, str]:
+    """The two largest positive bucket contributions, as plain words
+    (build-spec §4.2: primary / secondary strength). '' where nothing clears
+    the same materiality floor strength_drag uses."""
+    c = {b: row.get(f"bucket_{b}", 0.0) for b in BUCKETS}
+    first, second = sorted(c, key=c.get, reverse=True)[:2]
+    primary = BUCKET_GOOD[first] if c[first] > 0.02 else ""
+    secondary = BUCKET_GOOD[second] if c[second] > 0.02 else ""
+    return primary, secondary
+
+
 def national_rent_growth(panel_df: pd.DataFrame, year: int) -> float:
     now = panel_df[panel_df.year == year][["cbsa_code", "zori"]]
     prev = panel_df[panel_df.year == year - 1][["cbsa_code", "zori"]].rename(columns={"zori": "p"})
@@ -176,6 +202,16 @@ def load() -> dict:
     backtest = pd.read_csv(config.PROCESSED_DIR / "backtest_summary.csv")
     reg_path = config.PREDICTIONS_DIR / "registry_index.csv"
     registry = pd.read_csv(reg_path) if reg_path.exists() else pd.DataFrame()
+
+    # Prior edition's frozen ranks (change-vs-edition column) + the committed
+    # monthly rent-trend extract (Market spotlight chart).
+    prior_path = config.PROCESSED_DIR / "ranking_2023.csv"
+    prior_rank = (pd.read_csv(prior_path, dtype={"cbsa_code": str})
+                  [["cbsa_code", "rank"]].rename(columns={"rank": "prior_rank"})
+                  if prior_path.exists() else pd.DataFrame())
+    trend_path = config.PROCESSED_DIR / "spotlight_rent_trend.csv"
+    rent_trend = (pd.read_csv(trend_path, dtype={"cbsa_code": str})
+                  if trend_path.exists() else pd.DataFrame())
 
     nc_dir = config.PROCESSED_DIR / "nowcast"
     def _csv(name):
@@ -241,7 +277,8 @@ def load() -> dict:
             overlap_last = float(ag.sort_values("year")["top10_overlap"].iloc[-1])
 
     return dict(scored=scored, panel=panel, coords=coords, backtest=backtest,
-                registry=registry, nowcast=nowcast, nc_prov=nc_prov,
+                registry=registry, prior_rank=prior_rank, rent_trend=rent_trend,
+                nowcast=nowcast, nc_prov=nc_prov,
                 has_spec=has_spec, acc_rank=acc_rank, acc_raw=acc_raw, acc_pct=acc_pct,
                 spec_rank=spec_rank, spec_raw=spec_raw, spec_pct=spec_pct,
                 has_vintage=has_vintage, vint_rank=vint_rank, vint_raw=vint_raw,

@@ -111,10 +111,10 @@ if es_path.exists():
         f"Rows are completed 3-year windows labeled by start year; 2022 (covering 2022–25) is "
         f"the most recent that has finished; the current screen's own window (2024–27) is "
         f"graded when 2027 data closes. Pooled: this screen's top-10 beat the median market by "
-        f"{cm.mean():+.1f} pp of 3-year rent growth (momentum {mm.mean():+.1f} pp). The "
+        f"{cm.mean():+.1f} points of 3-year rent growth (momentum {mm.mean():+.1f}). The "
         f"difference shows in the 2021–22 shock: momentum's picks flipped to {mm.loc[2021]:+.1f} "
-        f"and {mm.loc[2022]:+.1f} pp while this screen's held at {cm.loc[2021]:+.1f} and "
-        f"{cm.loc[2022]:+.1f} pp. Even after stripping out what momentum already knows, the "
+        f"and {mm.loc[2022]:+.1f} points while this screen's held at {cm.loc[2021]:+.1f} and "
+        f"{cm.loc[2022]:+.1f}. Even after stripping out what momentum already knows, the "
         f"screen still adds predictive signal, though the two miss on many of the same markets, "
         f"so the protection is partial.")
 
@@ -135,9 +135,9 @@ if tu_path.exists():
   **[{tu['state_tau_lo']:.2f}, {tu['state_tau_hi']:.2f}]**, and the edge over equal weighting
   {"**survives**" if bool(tu['eq_edge_survives_state_cluster']) else "**does not survive**"}
   that stricter test.
-- Narrow pooled intervals reported elsewhere are **cross-sectional only**: they say which
-  metros, conditional on the six windows history happened to provide, and are silent about
-  what the next regime does.""")
+- Narrow pooled intervals reported elsewhere capture **ranking uncertainty only**: they say
+  which metros, conditional on the six windows history happened to provide, and are silent
+  about what the next regime does.""")
 
 # ---- The frozen record -----------------------------------------------------------
 st.markdown("## The frozen record")
