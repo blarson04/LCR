@@ -78,7 +78,7 @@ st.write("")
 
 # ---- Headline: the map --------------------------------------------------------
 mp = rank.merge(d["coords"], on="cbsa_code", how="left")
-mp["strength_txt"] = mp["strength"].where(mp["strength"] != "–", "Broadly average")
+mp["strength_txt"] = mp["strength"]
 fig = px.scatter_geo(
     mp, lat="lat", lon="lon", color="score", scope="usa",
     hover_name="cbsa_title", size=[8] * len(mp), size_max=12,
@@ -150,9 +150,12 @@ with st.expander(f"See all {len(rank)} markets"):
                               "the average market that year; higher is stronger "
                               "fundamentals for future rent growth."),
                      "Top strength": st.column_config.TextColumn(
-                         help="The theme that lifts this market's score the most."),
+                         help="The theme that lifts this market's score the most. "
+                              "'Broadly average' means no theme helps it meaningfully."),
                      "Top drag": st.column_config.TextColumn(
-                         help="The theme that pulls this market's score down the most."),
+                         help="The theme that pulls this market's score down the most. "
+                              "'No material drag' means nothing pulls it down "
+                              "meaningfully; strong markets often have none."),
                      "Measures": st.column_config.TextColumn(
                          help="How many of the eight measures had data for this market. "
                               "A missing measure takes a neutral (exactly average) "
@@ -166,13 +169,16 @@ with st.expander(f"See all {len(rank)} markets"):
                    "ranks were locked when published, so the comparison cannot be "
                    "rewritten). A move inside a market's rank range is noise, not a trend. "
                    if show_change else "")
+    short_note = (f" {n_short} markets are missing one or two measures at the data "
+                  f"source; each missing measure takes a neutral (average) value rather "
+                  f"than a guess, which can flatter or understate that market, so lean "
+                  f"on their rank ranges rather than their exact ranks."
+                  if n_short else "")
     theme.caption(f"Rank ranges show the span across several reasonable model weightings; "
                   f"treat this as a screen, not a precise ordering. {change_note}"
                   f"Strength and drag are the themes that helped or hurt each market's "
-                  f"score the most. {n_short} markets are missing one or two measures at "
-                  f"the data source; each missing measure takes a neutral (average) value "
-                  f"rather than a guess, which can flatter or understate that market, so "
-                  f"lean on their rank ranges rather than their exact ranks.")
+                  f"score the most; 'no material drag' is common among top-ranked "
+                  f"markets and means exactly that, not missing data.{short_note}")
 
 # ---- Diverging bars: every market against the average -------------------------
 with st.expander("Every market against the average"):

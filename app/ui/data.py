@@ -161,12 +161,18 @@ def why_sentence(row) -> str:
     return txt
 
 
+# Explicit no-signal labels: a bare dash reads as MISSING DATA to a lay
+# reader (author feedback 2026-07-08); say what it means instead.
+NO_STRENGTH = "Broadly average"
+NO_DRAG = "No material drag"
+
+
 def strength_drag(row) -> tuple[str, str]:
     """Largest positive / negative bucket contribution, as plain words."""
     c = {b: row.get(f"bucket_{b}", 0.0) for b in BUCKETS}
     bmax, bmin = max(c, key=c.get), min(c, key=c.get)
-    strength = BUCKET_GOOD[bmax] if c[bmax] > 0.02 else "–"
-    drag = BUCKET_BAD[bmin] if c[bmin] < -0.02 else "–"
+    strength = BUCKET_GOOD[bmax] if c[bmax] > 0.02 else NO_STRENGTH
+    drag = BUCKET_BAD[bmin] if c[bmin] < -0.02 else NO_DRAG
     return strength, drag
 
 

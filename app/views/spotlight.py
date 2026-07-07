@@ -79,7 +79,7 @@ for b in top_buckets:
     if parts:
         detail_lines.append(f"- **{label}** ({contribs[b]:+.2f} to the score): "
                             + "; ".join(parts) + ".")
-if drag != "–":
+if drag != data.NO_DRAG:
     neg_b = min(contribs, key=contribs.get)
     detail_lines.append(f"- **The drag: {drag.lower()}** ({contribs[neg_b]:+.2f}); "
                         "no market in the top ten is strong everywhere.")
