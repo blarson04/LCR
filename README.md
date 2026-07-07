@@ -1,81 +1,65 @@
-# Multifamily Market Screener
+# The Rent-Growth Screener
 
-A reproducible framework that ranks ~110 large US metros by their potential for
-**3-year forward rent growth**, using only free public data, served as an
-interactive Streamlit site. It is a **screening framework**, not a prediction
-engine: it surfaces markets whose fundamentals historically precede
-outperformance, and reports honestly how it would have done.
+A transparent, backtested **screening framework** that ranks the ~110 largest US metros by
+fundamentals that historically precede **3-year forward rent growth** — built entirely on free
+public data and served as a Streamlit site. It is a research screen, not investment advice.
 
-- **Why** each choice was made → [`decision-log.md`](decision-log.md)
-- **How** it's built → [`v1-build-spec.md`](v1-build-spec.md)
+**Headline results** (finalized-data vintage unless noted; details in `paper/`):
+- Top-10 edge: **+6.0 pp** of 3-yr rent growth vs the median market, pooled over six windows
+- Pre-COVID: weighted Kendall's τ **0.59**, precision@10 **85%**; real-time-achievable pooled
+  τ **0.38** (85% of the finalized ceiling 0.44)
+- In the 2021–22 shock the edge largely disappears (τ ≈ 0.16) — reported, and flagged by a
+  validated ex-ante rule
+- Two provisional "nowcast" attempts **failed their pre-committed validation gate** (latest:
+  84.7% signal retention vs ≥85% required) and are published as negative results
 
-## Setup
+**The documents** — `decision-log.md` (every decision + why) · `v1-build-spec.md`, `v2-plan.md`,
+`v3-plan.md` (build spec + two external critique rounds) · `paper/paper-brief.md` (all citable
+numbers) · `paper/v2-findings.md`, `paper/nowcast-validation.md` (rigor pass + gate outcomes).
 
-```bash
-# 1. Create and activate a virtual environment
-py -m venv .venv
-.venv\Scripts\activate            # Windows PowerShell
-# source .venv/bin/activate       # macOS / Linux
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Add your API keys
-copy .env.example .env            # then edit .env and paste your keys
-```
-
-All keys are free. The first source wired up is **FRED** — get a key (instant)
-at <https://fred.stlouisfed.org/docs/api/api_key.html>.
-
-## Check it works
+## Reproduce
 
 ```bash
-.venv\Scripts\python.exe config.py            # validates weights + paths
-.venv\Scripts\python.exe src\ingest\fred.py   # fetches + caches a FRED series
+py -m venv .venv && .venv\Scripts\activate      # Windows; use source .venv/bin/activate elsewhere
+pip install -r requirements.txt                  # app only — runs the site from committed outputs
+streamlit run app/streamlit_app.py
 ```
+
+Rebuilding the data pipeline from raw sources additionally needs
+`pip install -r requirements-pipeline.txt`, free API keys in `.env` (template:
+`.env.example`), then:
+
+```bash
+python src/build_panel.py      # ingest + assemble the metro x year panel
+python src/score.py            # indicators -> normalize -> composite ranking
+python src/backtest.py         # walk-forward validation
+python src/registry.py         # freeze a timestamped, immutable prediction run
+```
+
+Analysis modules (`src/baselines.py`, `ablation.py`, `uncertainty.py`, `weights.py`,
+`temporal_uncertainty.py`, `momentum_effect.py`, `regime_flag.py`, `src/nowcast/*`) regenerate
+every table in the paper brief. A CI smoke test (`.github/workflows/ci.yml`) checks that the
+config validates, the model scores, and every site page renders on each push.
 
 ## Repository layout
 
 | Path | What it holds |
 |---|---|
-| `config.py` | Universe rules, indicator weights, regime windows, paths — the knobs |
-| `src/ingest/` | One module per data source (FRED done; others in progress) |
-| `src/build_panel.py` | Merge all sources → metro × year panel |
-| `src/indicators.py` | Compute the 10 indicators, apply directions |
-| `src/normalize.py` | Cross-sectional z-score **within each period** |
-| `src/score.py` | Weighted composite + ranking |
-| `src/backtest.py` | Walk-forward, regimes, weighted tau + precision@k |
-| `src/registry.py` | Freeze/timestamp each prediction run |
-| `app/streamlit_app.py` | The website |
-| `data/raw/` | Cached source downloads (gitignored) |
-| `data/processed/` | Cleaned metro × year panel |
-| `predictions/` | Timestamped, frozen prediction runs |
+| `config.py` | Universe rules, indicator weights, regimes, gate constants — the knobs |
+| `src/ingest/` | One module per data source; raw downloads cached (gitignored) |
+| `src/` | Panel build, indicators, normalization, scoring, backtest, analyses |
+| `src/nowcast/` | The provisional-screen experiment (gated; currently unpublished) |
+| `app/` | Streamlit site — `ui/` tokens+data, `views/` one file per page |
+| `data/processed/` | Committed model outputs the site reads (no keys needed at runtime) |
+| `predictions/` | Frozen, timestamped registry runs (never edited) |
+| `paper/` | Auto-generated research briefs |
 
-## Build status
+## Data sources & licensing
 
-- [x] **M1** — One source (FRED) end to end: fetch → cache → clean
-- [x] **M2** — All sources + metro × year panel (110 metros × 2015–2025); universe frozen
-- [x] **M3** — Indicators + normalize (within-year z) + weighted score → first ranking
-- [x] **M4** — Backtest: walk-forward, regimes, weighted-τ + precision@10 (strong pre-COVID, breaks down in shock — as expected)
-- [x] **M5** — Streamlit app: map, ranking, metro drill-down, backtest & method
-- [x] **M6** — Prediction registry (frozen first run); public deploy optional
-
-### Run the app
-
-```bash
-.venv\Scripts\python.exe -m streamlit run app\streamlit_app.py
-```
-Opens in your browser. Reads the committed `data/processed/` outputs — no API keys needed.
-
-### Deploy (Streamlit Community Cloud)
-
-The deployed app reads the committed `data/processed/` files, so it needs **no API
-keys** at runtime. Deploy from the `main` branch with the app file
-`app/streamlit_app.py`; it installs from `requirements.txt`.
-
-**Update workflow:** the repo *is* the website. Improve locally → `git push` →
-Streamlit Cloud auto-rebuilds the live URL in ~1–2 min.
-
-- **Website change:** edit `app/`, test with `streamlit run`, commit, push.
-- **Model/data change:** rerun the pipeline, then commit the regenerated
-  `data/processed/*` (and a new `predictions/<timestamp>/` run), and push.
+All inputs are free public data: **Census** (ACS, PEP, building permits, gazetteer),
+**IRS SOI** migration, **BLS** (QCEW, CES), **BEA** regional accounts, **FRED**, and
+**Zillow Research** (ZORI/ZHVI). US federal statistical data is public domain. Zillow Research
+data is made freely available by Zillow with attribution — data in this repository that derives
+from it is aggregated (metro-year averages), attributed here and on the site, and © Zillow where
+applicable; see zillow.com/research/data for their terms before any redistribution of your own.
+This project is unaffiliated with all of the above sources.
