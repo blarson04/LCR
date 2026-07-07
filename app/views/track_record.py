@@ -168,8 +168,9 @@ if es_path.exists():
     cm, mm = piv["Composite (model)"], piv["Momentum (trailing rent)"]
     theme.caption(
         f"Rows are completed 3-year windows labeled by start year; 2022 (covering 2022–25) is "
-        f"the most recent that has finished; the current screen's own window (2024–27) is "
-        f"graded when 2027 data closes. Pooled: this screen's top-10 beat the median market by "
+        f"the most recent that has finished; the published screens' own windows (2024–27 "
+        f"vintage, 2025–28 current) are graded when their end-year data closes. Pooled: "
+        f"this screen's top-10 beat the median market by "
         f"{cm.mean():+.1f} points of 3-year rent growth (momentum {mm.mean():+.1f}). The "
         f"difference shows in the 2021–22 shock: momentum's picks flipped to {mm.loc[2021]:+.1f} "
         f"and {mm.loc[2022]:+.1f} points while this screen's held at {cm.loc[2021]:+.1f} and "
@@ -212,10 +213,11 @@ if len(d["registry"]):
     rt = rt[["Run (UTC)", "Version", "Year", "Markets", "Top-ranked market"]]
     st.dataframe(rt, hide_index=True, use_container_width=True)
 theme.caption("These are frozen live predictions, distinct from the retrospective backtest "
-              "above. The 2024-vintage entry is the site's current screen; it publishes "
+              "above. The 2025 entry is the site's current screen (a 2025→2028 forecast) "
+              "and the 2024 entry its fully finalized companion (2024→2027); each publishes "
               "because its configuration passed a pre-registered validation gate.")
 
-st.markdown("## Three gates, two failures, one pass")
+st.markdown("## Four gates, two failures, two passes")
 st.markdown(
     "Every fresher-than-finalized configuration had to pass the same pre-registered gate "
     "(retain ≥85% of the model's signal and match the top-10 on ≥7 of 10 names) in a single "
@@ -225,11 +227,14 @@ st.markdown(
     "2. **2025 screen, fresher jobs data** kept 84.66%. **Failed by a third of a point**; "
     "we did not round it up; the edition was pulled.\n"
     "3. **2024-vintage screen, one estimated input** (the validated migration substitute) "
-    "kept **95.5%**, matched the top-10 on 8.3/10. **Passed**, and is what you see on this "
-    "site today, extended one further year (to 2028) after a separate horizon study.")
+    "kept **95.5%**, matched the top-10 on 8.3/10. **Passed** (a 2024→2027 forecast, "
+    "extended to 2028 after a separate horizon study).\n"
+    "4. **2025 screen, income chained by state growth** (the fix for the diagnosed cause "
+    "of failure #2) kept **96.6%**, matched the top-10 on 7.4/10. **Passed**, and is the "
+    "site's current 2025→2028 forecast.")
 theme.caption("A validation bar that never fails anything proves nothing. Ours failed two of "
-              "three attempts, including one at a margin of 0.34 points, which is exactly "
-              "why the one that passed means something.")
+              "four attempts, including one at a margin of 0.34 points, which is exactly "
+              "why the two that passed mean something.")
 
 st.markdown("## Honest limits")
 st.markdown(

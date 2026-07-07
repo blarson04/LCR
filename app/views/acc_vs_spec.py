@@ -26,10 +26,10 @@ theme.inject_css()
 d = data.load()
 
 st.markdown("# 2024 vintage vs 2025 screen")
-theme.caption("The fully validated 2024-vintage ranking beside the current 2025 screen "
-              "(same model, preliminary 2025 inputs). Differences mix real one-year "
-              "market change with the proxied data's added uncertainty; read big moves "
-              "as directional, not precise.")
+theme.caption("The fully finalized 2024 vintage (a 2024→2027 forecast) beside the current "
+              "2025 screen (a 2025→2028 forecast on preliminary inputs; same model). "
+              "Differences mix real one-year market change with the proxied data's added "
+              "uncertainty; read big moves as directional, not precise.")
 st.markdown(theme.badge(True, "Validated 2025 screen · proxied inputs"),
             unsafe_allow_html=True)
 st.markdown(

@@ -34,8 +34,8 @@ N_IND = len(INDICATORS)
 BUCKETS = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
 
 EDITION_KEY = "edition"
-FINAL_LABEL = "2024 vintage (fully validated)"
-SPEC_LABEL = "2025 current (validated proxies)"
+FINAL_LABEL = "2024→2027 vintage (fully finalized)"
+SPEC_LABEL = "2025→2028 current (validated proxies)"
 
 # ---- Plain-language dictionaries -------------------------------------------
 PRETTY = {
@@ -304,8 +304,10 @@ def load() -> dict:
 
 
 def is_spec(d: dict | None = None) -> bool:
-    """Current edition from the global sidebar toggle."""
-    choice = st.session_state.get(EDITION_KEY, FINAL_LABEL)
+    """Current edition from the global sidebar toggle. The validated 2025→2028
+    current screen is the DEFAULT (author decision 2026-07-08: lead with the
+    forecast window that is actually ahead, not the older vintage)."""
+    choice = st.session_state.get(EDITION_KEY, SPEC_LABEL)
     spec = str(choice) == SPEC_LABEL
     if d is not None and not d["has_spec"]:
         return False
@@ -318,12 +320,14 @@ def edition(d: dict) -> dict:
     if is_spec(d):
         return dict(rank=d["spec_rank"], raw=d["spec_raw"], pct=d["spec_pct"],
                     year=SPEC_YEAR, provisional=True, vintage=False,
-                    badge_label="Validated 2025 screen · proxied inputs",
+                    badge_label=(f"Validated {SPEC_YEAR}→{SPEC_YEAR+3} forecast · "
+                                 f"proxied inputs"),
                     horizon=f"{SPEC_YEAR}→{SPEC_YEAR+3}")
     if d.get("has_vintage"):
         return dict(rank=d["vint_rank"], raw=d["vint_raw"], pct=d["vint_pct"],
                     year=VINTAGE_YEAR, provisional=False, vintage=True,
-                    badge_label=f"Validated · {VINTAGE_YEAR} vintage",
+                    badge_label=(f"Validated {VINTAGE_YEAR}→{VINTAGE_YEAR+3} forecast · "
+                                 f"finalized {VINTAGE_YEAR} data"),
                     horizon=f"{VINTAGE_YEAR}→{VINTAGE_YEAR+3}")
     return dict(rank=d["acc_rank"], raw=d["acc_raw"], pct=d["acc_pct"],
                 year=SCORE_YEAR, provisional=False, vintage=False,

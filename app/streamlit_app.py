@@ -38,10 +38,10 @@ with st.sidebar:
         unsafe_allow_html=True)
     if d["has_spec"]:
         st.markdown("<div class='cap'>Data edition</div>", unsafe_allow_html=True)
-        st.radio("Data edition", [data.FINAL_LABEL, data.SPEC_LABEL],
+        st.radio("Data edition", [data.SPEC_LABEL, data.FINAL_LABEL],
                  key=data.EDITION_KEY, label_visibility="collapsed")
         if data.is_spec(d):
-            st.markdown(theme.badge(True, "Validated 2025 screen · proxied inputs"),
+            st.markdown(theme.badge(True, "Validated 2025→2028 forecast · proxied inputs"),
                         unsafe_allow_html=True)
             st.markdown(
                 "<div class='cap' style='margin-top:.4rem'>The same frozen model on "

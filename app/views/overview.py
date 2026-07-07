@@ -127,8 +127,9 @@ if pp_win is not None and len(pp_win):
     st.plotly_chart(theme.style_fig(figp, 240), use_container_width=True)
     theme.caption("Four calm windows came in between +6.6 and +12.2 points; the 2021–22 "
                   "shock windows were roughly flat, where a pure rent-momentum strategy "
-                  "flipped firmly negative. The current screen's own window (2024–27) is "
-                  "graded when 2027 data closes. Numbers use finalized data; the validated "
+                  "flipped firmly negative. Each published screen is "
+                  "graded when its end-year data closes (2028 for the current 2025→2028 "
+                  "screen; 2027 for the 2024 vintage). Numbers use finalized data; the validated "
                   "real-time configuration keeps about 97% of this signal. Full "
                   "validation: see Track record.")
 
