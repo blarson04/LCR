@@ -1,9 +1,9 @@
 """
-theme.py — design tokens + global styling (single source of truth).
+theme.py: design tokens + global styling (single source of truth).
 
 Implements the screener-site-design skill: a calm, report-like site. One
 accent color, serif headings, restrained tables and charts. Page code must
-never hardcode a hex value — import tokens from here.
+never hardcode a hex value; import tokens from here.
 
 Light is the default (per the skill); a dark palette is available as a user
 preference via the sidebar toggle (session key MODE_KEY). Tokens are applied
@@ -100,7 +100,7 @@ def inject_css(reading: bool = False) -> None:
       /* Sidebar styling */
       [data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px solid {LINE}; }}
       [data-testid="stSidebar"] * {{ font-size: 14px; }}
-      /* Desktop: sidebar is ALWAYS visible — force it open whatever the
+      /* Desktop: sidebar is ALWAYS visible; force it open whatever the
          collapsed state or Streamlit version, and remove the collapse
          controls. Phones keep the default overlay behavior. */
       @media (min-width: 992px) {{
@@ -146,7 +146,7 @@ def caption(text: str) -> None:
 def badge(provisional: bool, label: str | None = None) -> str:
     """HTML badge; provisional data must always carry its badge (skill §4)."""
     if provisional:
-        return "<span class='badge-provisional'>Provisional — based on preliminary data</span>"
+        return "<span class='badge-provisional'>Provisional: based on preliminary data</span>"
     return f"<span class='badge-final'>{label or 'Finalized 2023'}</span>"
 
 

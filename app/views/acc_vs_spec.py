@@ -1,5 +1,5 @@
 """
-Validated vs provisional — answers one question: how does the provisional 2025
+Validated vs provisional: answers one question: how does the provisional 2025
 view differ from the validated (finalized 2023) ranking?
 """
 
@@ -25,7 +25,7 @@ d = data.load()
 st.markdown("# Validated vs provisional")
 theme.caption("The validated (finalized 2023) ranking beside the provisional 2025 screen. "
               "Differences mix real market change with the provisional data's added "
-              "uncertainty — read big moves as directional, not precise.")
+              "uncertainty. Read big moves as directional, not precise.")
 st.markdown(theme.badge(provisional=True), unsafe_allow_html=True)
 st.markdown(
     "<div class='cap' style='margin-top:.5rem'><b>How much of a move is noise?</b> The "
@@ -33,8 +33,8 @@ st.markdown(
     "<b>failed its pre-committed validation gate</b>, keeping 75% of the model's signal, and "
     f"its top-10 matched the validated top-10 on only <b>{d['overlap_mean']:.0f} of 10</b> "
     f"names on average (<b>{d['overlap_last']:.0f}/10</b> in the most recent comparable year). "
-    "That experiment is published as a negative result, and the fix — fresher employment "
-    "data — is pre-registered for a single re-test.</div>", unsafe_allow_html=True)
+    "That experiment is published as a negative result, and the fix (fresher employment "
+    "data) is pre-registered for a single re-test.</div>", unsafe_allow_html=True)
 st.write("")
 
 val = d["acc_rank"][["cbsa_code", "cbsa_title", "rank"]].rename(columns={"rank": "acc"})
@@ -55,8 +55,8 @@ def _top10(col, title, key):
             unsafe_allow_html=True)
 
 
-_top10(c1, "Validated — finalized 2023", "acc")
-_top10(c2, "Provisional — experimental 2025", "spec")
+_top10(c1, "Validated (finalized 2023)", "acc")
+_top10(c2, "Provisional (experimental 2025)", "spec")
 
 st.markdown("## Every market")
 theme.caption("Move = change in rank from the validated to the provisional screen "

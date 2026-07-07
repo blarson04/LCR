@@ -1,5 +1,5 @@
 """
-data.py — shared, cached data access for every site page.
+data.py: shared, cached data access for every site page.
 
 Loads the model outputs once (cached), prepares both editions (accurate /
 finalized 2023 and speculative / provisional 2025), and holds the plain-
@@ -34,8 +34,8 @@ N_IND = len(INDICATORS)
 BUCKETS = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
 
 EDITION_KEY = "edition"
-FINAL_LABEL = "Validated — finalized 2023"
-SPEC_LABEL = "Provisional — experimental 2025"
+FINAL_LABEL = "Validated (finalized 2023)"
+SPEC_LABEL = "Provisional (experimental 2025)"
 
 # ---- Plain-language dictionaries -------------------------------------------
 PRETTY = {
@@ -66,7 +66,7 @@ OUTLOOK = {
                    "Job growth is lagging the pack"),
     "income_growth": ("Local incomes are rising quickly",
                       "Income growth is sluggish"),
-    "permits_to_stock": ("Very little new building — tight supply supports rents",
+    "permits_to_stock": ("Very little new building, so tight supply supports rents",
                          "Heavy homebuilding raises oversupply risk"),
     "rent_to_income": ("Rents are affordable vs local incomes, leaving room to grow",
                        "Rents already stretch local incomes"),
@@ -139,7 +139,7 @@ def why_sentence(row) -> str:
     if contribs[neg] < 0:
         txt += f", held back by weak <b>{BUCKET_LABEL[neg]}</b> ({contribs[neg]:+.2f})."
     else:
-        txt += " — with no bucket dragging it down."
+        txt += ", with no bucket dragging it down."
     return txt
 
 
@@ -147,8 +147,8 @@ def strength_drag(row) -> tuple[str, str]:
     """Largest positive / negative bucket contribution, as plain words."""
     c = {b: row.get(f"bucket_{b}", 0.0) for b in BUCKETS}
     bmax, bmin = max(c, key=c.get), min(c, key=c.get)
-    strength = BUCKET_GOOD[bmax] if c[bmax] > 0.02 else "—"
-    drag = BUCKET_BAD[bmin] if c[bmin] < -0.02 else "—"
+    strength = BUCKET_GOOD[bmax] if c[bmax] > 0.02 else "–"
+    drag = BUCKET_BAD[bmin] if c[bmin] < -0.02 else "–"
     return strength, drag
 
 

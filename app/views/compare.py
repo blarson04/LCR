@@ -1,5 +1,5 @@
 """
-Compare markets — answers one question: how do these markets stack up?
+Compare markets: answers one question: how do these markets stack up?
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ ed = data.edition(d)
 rank = ed["rank"]
 
 st.markdown("# Compare markets")
-theme.caption("Two or three markets side by side — where each stands on every measure, "
+theme.caption("Two or three markets side by side: where each stands on every measure, "
               "and which themes drive the difference.")
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 st.write("")

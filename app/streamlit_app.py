@@ -1,5 +1,5 @@
 """
-streamlit_app.py — entry point / router.
+streamlit_app.py: entry point / router.
 
 Multipage site per the screener-site-design skill: the sidebar carries only
 navigation and the global data-edition toggle (finalized vs provisional).

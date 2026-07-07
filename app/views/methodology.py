@@ -1,5 +1,5 @@
 """
-About & methodology — answers one question: what is this project, and how is
+About & methodology: answers one question: what is this project, and how is
 the score built?
 
 The provisional (nowcast) method appears only when the provisional edition is
@@ -30,7 +30,7 @@ d = data.load()
 spec_mode = data.is_spec(d)
 
 st.markdown("# About this project")
-theme.caption("What the screener is, who built it, and how the score works — in plain terms.")
+theme.caption("What the screener is, who built it, and how the score works, in plain terms.")
 st.write("")
 
 # ---- The one-minute version (claim → evidence → limitations) -----------------
@@ -38,10 +38,10 @@ st.markdown("## The one-minute version")
 st.markdown(
     "A backtested screen of the 110 largest US rental markets, built on free public data. "
     "The current edition is a **validated 2024-vintage screen forecasting 2024–27** (with a "
-    "supported extension to 2028) — its configuration passed a pre-registered validation "
+    "supported extension to 2028). Its configuration passed a pre-registered validation "
     "gate after two earlier configurations failed theirs and were published as negative "
     "results. In calm markets its top-10 picks have meaningfully out-grown the median "
-    "market; in the 2021–22 shock its edge largely disappeared — and it says so.")
+    "market; in the 2021–22 shock its edge largely disappeared, and it says so.")
 
 bt = d["backtest"]
 _pc = bt[(bt.horizon == 3) & (bt.regime == "pre_covid")]
@@ -66,7 +66,7 @@ c2.metric("Calm-market accuracy", f"{pc_prec:.0%}",
                f"markets (finalized data; τ {d['pc_tau']:.2f}, real-time equivalent "
                f"τ {d['spec_tau']:.2f}).")
 c3.metric("In the 2021–22 shock", f"τ {sh_tau:.2f}",
-          help="Rank agreement with realized growth in shock windows — the edge largely "
+          help="Rank agreement with realized growth in shock windows; the edge largely "
                "disappears, and the site flags such periods.")
 
 if pp_win is not None and len(pp_win):
@@ -77,8 +77,8 @@ if pp_win is not None and len(pp_win):
     figp.update_xaxes(title="3-year window, by start year", dtick=1)
     figp.update_yaxes(title="Top-10 edge (pp, 3-yr)")
     st.plotly_chart(theme.style_fig(figp, 230), use_container_width=True)
-    theme.caption("Each bar is a completed 3-year backtest window, labeled by its start year — "
-                  "the 2022 bar covers 2022–25 and is the most recent window that has finished. "
+    theme.caption("Each bar is a completed 3-year backtest window, labeled by its start year. "
+                  "The 2022 bar covers 2022–25 and is the most recent window that has finished. "
                   "Four calm windows came in between +6.6 and +12.2 points; the 2021–22 shock "
                   "windows were roughly flat, where a pure rent-momentum strategy flipped firmly "
                   "negative. The current screen's own window (2024–27) is graded when 2027 "
@@ -95,11 +95,11 @@ Some rental markets grow rents for years; others stall. This project asks a simp
 **can public data tell them apart in advance?**
 
 The screener ranks the **{len(d['acc_rank'])} largest US metro areas** on the fundamentals that
-have historically come *before* strong rent growth — who is moving in, whether jobs and incomes
+have historically come *before* strong rent growth: who is moving in, whether jobs and incomes
 are growing, how much new housing is being built, and whether rents still have room to rise.
 Everything is built from **free public data** (Census, IRS, BLS, BEA, Zillow, FRED), every method
 is documented, and every published ranking is frozen so its calls can be checked against what
-actually happens. It is a research screen — a disciplined starting point for where to look
+actually happens. It is a research screen, a disciplined starting point for where to look
 closer, not a promise about any market.
 """)
 
@@ -118,7 +118,7 @@ mathematics**, with a strong interest in **data analytics and real estate**.
 
 I built this screener to answer a question I kept running into: how much of a rental market's
 future is already visible in free public data? I held the answer to a standard I'd be willing
-to defend — every method documented, every claim validated before it's published, failed
+to defend: every method documented, every claim validated before it's published, failed
 experiments published alongside the successes, and a frozen track record that anyone can check
 against what actually happens. Everything here, from the data pipeline to the backtests to
 this site, is my own work.
@@ -132,7 +132,7 @@ measure compares a market **against all the others in the same year**, so a nati
 cancels out and only relative standing counts. Measures where more is worse (heavy homebuilding,
 rents that already stretch incomes) are flipped, so higher always means better. Each measure is
 multiplied by a fixed weight and summed into one composite score, and markets are ranked by it.
-The same formula runs for every market — no market is ever hand-adjusted. (The weights
+The same formula runs for every market; no market is ever hand-adjusted. (The weights
 themselves are set by judgment and stress-tested; see Track record.)
 """)
 
@@ -145,7 +145,7 @@ for b in data.BUCKETS:
 st.dataframe(
     pd.DataFrame(rows).style.set_properties(subset=["Theme"], **{"font-weight": "500"}),
     hide_index=True, use_container_width=True)
-theme.caption("Demand leads at 40% — the framework bets that who is moving in, hiring, and "
+theme.caption("Demand leads at 40%: the framework bets that who is moving in, hiring, and "
               "earning matters most over a three-year horizon, with a heavy penalty for "
               "oversupply (25%) as the contrarian edge. Weights are set by judgment and "
               "tested against alternatives; see Track record for how it has performed.")
@@ -156,7 +156,7 @@ if spec_mode and d["has_spec"]:
     st.markdown("""
 The slowest inputs (migration, income) publish about two years late, which is why the
 validated screen is anchored to 2023. The provisional screen runs the **same model, same
-weights, same scoring** — only the data feeding it changes. Fast inputs (rents, home values,
+weights, same scoring**; only the data feeding it changes. Fast inputs (rents, home values,
 permits) use live data; slow inputs use preliminary substitutes or the latest available
 value carried forward. It shortens the data lag; it does not extend the three-year horizon
 or change the model.""")
@@ -184,7 +184,7 @@ elif d["has_spec"]:
 else:
     theme.caption("How the current screen earned publication: two fresher-data configurations "
                   "failed their pre-registered validation gate (74.8% and 84.66% signal "
-                  "retention vs the 85% required — the second missed by a third of a point "
+                  "retention vs the 85% required; the second missed by a third of a point "
                   "and was pulled anyway). The third, built on newly finalized 2024 data with "
                   "a single validated substitute for slow migration data, passed at 95.5% and "
                   "is what this site shows. All three outcomes are published; a screen that "

@@ -1,5 +1,5 @@
 """
-Metro detail — answers one question: why does this market rank where it does?
+Metro detail: answers one question: why does this market rank where it does?
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ ed = data.edition(d)
 rank = ed["rank"]
 
 st.markdown("# Metro detail")
-theme.caption("Why a market ranks where it does — its score, the themes driving it, "
+theme.caption("Why a market ranks where it does: its score, the themes driving it, "
               "and each measure in plain terms.")
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 if ed.get("vintage"):
@@ -89,7 +89,7 @@ for k in data.INDICATORS:
     val = ed["raw"][k].get(code, float("nan"))
     rows.append({"Measure": data.PRETTY[k],
                  "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
-                 "Value": "—" if pd.isna(val) else data.FMT[k](val),
+                 "Value": "–" if pd.isna(val) else data.FMT[k](val),
                  "Percentile": ed["pct"][k].get(code, float("nan"))})
 st.dataframe(
     pd.DataFrame(rows).style.set_properties(subset=["Measure"], **{"font-weight": "500"}),
@@ -99,13 +99,13 @@ st.dataframe(
 
 if not ed["provisional"]:
     with st.expander("Context measures (tracked, not scored)"):
-        theme.caption("Tested as candidate measures but not added to the score — neither "
+        theme.caption("Tested as candidate measures but not added to the score; neither "
                       "reliably improved accuracy. Shown for description only.")
         crows = []
         for colname, (label, note) in data.CTX.items():
             v = d["ctx_year"][colname].get(code, float("nan"))
             crows.append({"Measure": label,
-                          "Value": "—" if pd.isna(v) else f"{v*100:.1f}%",
+                          "Value": "–" if pd.isna(v) else f"{v*100:.1f}%",
                           "Percentile": d["ctx_pct"][colname].get(code, float("nan")),
                           "Note": note})
         st.dataframe(pd.DataFrame(crows).style.format({"Percentile": "{:.0f}"}),
@@ -128,7 +128,7 @@ if len(hist) > 1:
                 f"average).</div>", unsafe_allow_html=True)
 
 # Trajectory: finalized-vintage years only, plus the validated 2024-vintage
-# point — never the unvalidated later rows of the finalized frame (which have
+# point; never the unvalidated later rows of the finalized frame (which have
 # missing migration and would silently mix vintages; v3-plan critique).
 traj = (d["scored"][(d["scored"]["cbsa_code"] == code)
                     & (d["scored"]["year"] <= data.SCORE_YEAR)]

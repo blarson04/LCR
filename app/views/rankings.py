@@ -1,5 +1,5 @@
 """
-Rankings — answers one question: which markets look strongest?
+Rankings: answers one question: which markets look strongest?
 
 Headline view = map + top-10 list (the point in 10 seconds). The full table
 and the numeric breakdown live behind expanders (progressive disclosure).
@@ -36,13 +36,13 @@ st.markdown("# Market rankings")
 if ed.get("vintage"):
     theme.caption(
         f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
-        f"rent growth — a {ed['horizon']} screen scored on {ed['year']} data, the newest "
+        f"rent growth: a {ed['horizon']} screen scored on {ed['year']} data, the newest "
         f"vintage validated for publication (its configuration passed a pre-registered gate "
         f"at 95.5% signal retention; see Track record).")
 else:
     theme.caption(
         f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
-        f"rent growth — a {ed['horizon']} screen scored on "
+        f"rent growth: a {ed['horizon']} screen scored on "
         + ("preliminary data for the current year." if ed["provisional"]
            else f"{ed['year']} fundamentals, the latest finalized vintage (the slowest federal "
                 f"inputs publish about two years late, so much of the {ed['horizon']} forecast "
@@ -50,15 +50,15 @@ else:
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 if ed.get("vintage"):
     theme.caption(f"Extended horizon: this same ranking is also supported one year further "
-                  f"out ({ed['year']}→{ed['year']+4}) — in backtests the 4-year view was, if "
+                  f"out ({ed['year']}→{ed['year']+4}). In backtests the 4-year view was, if "
                   f"anything, stronger (top-10 edge +8.4 points of rent growth vs +6.0 at "
                   f"3 years). Beyond that we do not publish: the data cannot validate it.")
 
 if not ed["provisional"]:
-    # Ex-ante rule only (v3-P6) — no hindsight regime labels feed the flag.
+    # Ex-ante rule only (v3-P6): no hindsight regime labels feed the flag.
     if d["nat_growth"] > config.REGIME_FLAG_THRESHOLD:
         theme.caption(f"Elevated-uncertainty flag: national rent growth in the {ed['year']} "
-                      f"scoring year was {d['nat_growth']:+.1%} — above the "
+                      f"scoring year was {d['nat_growth']:+.1%}, above the "
                       f"{config.REGIME_FLAG_THRESHOLD:.1%} rule. In the two historical years "
                       f"this flag fired (2021–22), the screen's accuracy broke down. This "
                       f"describes the vintage year, not today.")
@@ -67,8 +67,8 @@ if not ed["provisional"]:
                       f"rent growth {d['nat_growth']:+.1%}, under the "
                       f"{config.REGIME_FLAG_THRESHOLD:.1%} flag rule), inside the framework's "
                       f"validated range. This describes the vintage year, not today. "
-                      f"Flag rule, published and tested on history: it fires only in 2021–22 — "
-                      f"exactly the windows where accuracy broke — with no false alarms; it did "
+                      f"Flag rule, published and tested on history: it fires only in 2021–22 ("
+                      f"exactly the windows where accuracy broke) with no false alarms; it did "
                       f"not catch 2020, a shock that never moved rents.")
 st.write("")
 
@@ -77,7 +77,7 @@ col_map, col_top = st.columns([7, 3], gap="large")
 
 with col_map:
     mp = rank.merge(d["coords"], on="cbsa_code", how="left")
-    mp["strength_txt"] = mp["strength"].where(mp["strength"] != "—", "Broadly average")
+    mp["strength_txt"] = mp["strength"].where(mp["strength"] != "–", "Broadly average")
     fig = px.scatter_geo(
         mp, lat="lat", lon="lon", color="score", scope="usa",
         hover_name="cbsa_title", size=[8] * len(mp), size_max=12,
@@ -137,11 +137,11 @@ with st.expander(f"See all {len(rank)} markets"):
     st.dataframe(styler, hide_index=True, use_container_width=True, height=520,
                  column_config={"Rank": st.column_config.TextColumn(
                      help="Range reflects statistical uncertainty in the score.")})
-    theme.caption("Rank ranges show the span across several reasonable model weightings — "
+    theme.caption("Rank ranges show the span across several reasonable model weightings; "
                   "treat this as a screen, not a precise ordering. Strength and drag are the "
                   "themes that helped or hurt each market's score the most.")
 
-with st.expander("Advanced view — how each score breaks down"):
+with st.expander("Advanced view: how each score breaks down"):
     theme.caption("Contribution of each theme to the composite score, in standardized units "
                   "(0 = the average market that year; positive helps, negative hurts).")
     adv = rank[["rank", "cbsa_title", "score", "bucket_Demand", "bucket_Supply",
