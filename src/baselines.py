@@ -6,7 +6,7 @@ walk-forward harness (backtest.evaluate_predictions) on a set of naive ranking
 rules and reports the full model's accuracy as **uplift** over each:
 
   - Random ranking            (averaged over many seeds) — the zero-skill floor
-  - Equal weight              (all 10 indicators, no hand-set weights)
+  - Equal weight              (all 8 v2 indicators, no hand-set weights)
   - Momentum only             (rank by trailing rent growth as of T)
   - Persistence               (rank by trailing growth over the SAME horizon)
   - Each single indicator      (which one lone signal does best?)
@@ -105,7 +105,7 @@ def run() -> tuple[pd.DataFrame, pd.DataFrame]:
         "Best single indicator": singles[best_key],
         "Momentum only (trailing rent)": singles["trailing_rent_growth"],
         "Persistence (trailing h-yr)": _metrics(backtest.summarize(pers)),
-        "Equal weight (10 ind.)": _metrics(backtest.summarize(evalp(_equal_weight(norm)))),
+        "Equal weight (8 ind.)": _metrics(backtest.summarize(evalp(_equal_weight(norm)))),
         "Full model (composite)": _metrics(backtest.summarize(evalp(scored[["cbsa_code", "year", "score"]]))),
     }
     comp = pd.DataFrame(rows).T.reset_index().rename(columns={"index": "model"})

@@ -25,6 +25,36 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-07 — v3 build-spec Phase 4 OUTCOME: composite reliably beats the industry-style index — and our "re-packaged momentum" prediction was WRONG
+
+One run, per the spec below; first results are final. **The free-Arbor replica scores pooled 3-yr τ 0.113 / precision@10 0.28 against the composite's 0.444 / 0.65 (same run, same years, same metros). Gap +0.331, 95% CI [+0.202, +0.483] — a reliable edge, the largest over any baseline we have tested.** In the baseline table the industry-style index lands *below persistence* (0.216) and above only random: worse than every naive alternative including plain rent momentum (0.391).
+
+**Our Phase 0 prediction FAILED, and we publish that:** the replica's correlation with `trailing_rent_growth` is only +0.213 pooled (+0.230 mean per-year rank corr) — professional-style conditions indices are **not** re-packaged momentum. The honest diagnosis is less flattering: the extra conditions components (unemployment levels, demographics, vacancy, absorption) *dilute* the predictive signal rather than repackage it. Note what this does and does not indict — equal weighting per se is not the failure (equal weight over OUR eight validated indicators scores 0.368); the failure is the component set chosen for investor-conditions storytelling rather than tested against a prediction target. Housekeeping done with this phase (not gated): the naive-baseline rows in `baseline_comparison.csv` were regenerated on the current panel so the published table is a single data vintage, and the equal-weight row's stale label ("10 ind.") was corrected to the v2 reality ("8 ind.").
+
+**Fairness caveats, stated with the claim wherever it is published:** the replica covers 6 of Arbor's 10 categories (capital markets, taxes, ZORDI, insurance omitted per spec) on our 110-metro universe (theirs: top 50); their matrix targets "opportunistic multifamily investment" broadly and never claims to predict 3-yr rent growth — this result scores industry *practice* (equal-weight conditions indices) at OUR task, not Arbor's product at theirs. Vintage: CREMI download 2026-07-07 (1995–2026Q1), ACS through 2024, current panel.
+
+Artifacts: `src/industry_baseline.py` (runner), `data/processed/industry_baseline.csv` (detail incl. gap CI + momentum corr), row "Industry-style index (equal weight)" added to `baseline_comparison.csv` (surfaces on the Track record page), findings section in `paper/v3-findings.md`. Paper-brief integration lands with Phase 7 ("versus industry practice" subsection).
+
+### 2026-07-07 — v3 build-spec Phase 4 EXECUTION SPEC: industry-baseline replica (logged BEFORE any accuracy runs)
+
+Fixes the free-Arbor replica's exact construction per the Phase 0 freeze ("the replica will not be tuned in either direction after first results"). The Arbor-Chandan Opportunity Matrix (Spring 2026, methodology p.20/22): 10 equal-weighted categories, variables equal-weighted within each, largest-50-metro universe. Our replica runs their scheme on our 110-metro universe with free components only.
+
+**Category mapping, fixed a priori (6 of 10 included, 12 variables):**
+1. *Capital Markets* — **OMITTED** (proprietary lending data; the frozen Phase 0 deviation). The Phase 2 question of a CREMI cap-rate stand-in is **declined**: Phase 0 froze the omission, and adding a block now — with post-hoc freedom over its direction and composition — is the tuning the rule prohibits. Cap rates stay context.
+2. *Performance Fundamentals* — CREMI MF `NOI.Index`, `Asset.Value`, `Absorption.Units` (the Phase 3 annual frames; higher = better).
+3. *Tax Conditions* — **OMITTED**: not in the frozen §3 component list (free in principle, but state-resolution and never acquired; adding it now would be a post-Phase-0 spec change).
+4. *Labor Market* ×4 — `job_growth` (QCEW, higher better); `income_growth` as the wage-growth stand-in (BEA, disclosed proxy; higher better); unemployment level = CREMI `MSAUR` annual value (lower better; disclosed: MSAUR is CREMI's within-metro standardized series, not the raw rate); 1-yr Δ `MSAUR` (lower better — Arbor's a-priori direction, NOT the flipped orientation the C6b gate found predictive).
+5. *Population Growth* — YoY growth of ACS population (consecutive-year guard; no 2020/2021 values; higher better).
+6. *Demographics* ×2 — ACS renter median household income (`B25119_003E`) and renter under-35 householder share (`B25007`), both higher better (Arbor: spending power + young age profile). Acquired 2026-07-07: 107–110/110 per year, `census.build_renter_demographics_panel()`.
+7. *Rental Vacancy* — panel `rental_vacancy` level (lower better).
+8. *Renter Demand (ZORDI)* — **EXCLUDED**, exactly as Phase 0 anticipated (history starts 2020-06; cannot cover the walk-forward scoring years).
+9. *Affordability* — `rent_to_income` (the WWJ-equivalent per build-spec §2; lower better).
+10. *Climate Risk / Insurance* — **OMITTED** (Phase 2: not freely acquirable; C5 rejection carries over).
+
+**Construction:** each variable within-year z-scored across the universe with its orientation applied a priori as listed; **no auto-orientation anywhere in the replica** (orientation-fitting would tune it); variable-level neutral fill 0 where missing (Cleveland/Dayton CREMI, ACS gaps, 2021 pop growth); category score = mean of its variables; composite = mean of the six category scores (equal weights among included categories — rank-equivalent to leaving all ten at 10%).
+
+**Evaluation protocol:** standard walk-forward (`backtest.evaluate_predictions`) on the same usable prediction years and metros as the model; pooled 3-yr weighted τ + precision@10 (1-yr as foil); metro-cluster bootstrap (B=800, seed 42) CI on the gap = composite τ − replica τ; correlation of the replica score with normalized `trailing_rent_growth` (pooled + mean per-year rank corr). The Phase 0 prediction stands as logged: that correlation will be high ("industry conditions indices are re-packaged momentum"). Deliverables: `industry_baseline.csv`, a plain-language row in the baseline table / Track record ("Industry-style index (equal weight)"), findings-doc section. First results are final; both outcomes publish.
+
 ### 2026-07-07 — v3 build-spec Phase 3 OUTCOME: all five candidates FAIL the gate → 0 adoptions, model stays frozen v2.0.0
 
 The one-shot runs (execution spec immediately below) are complete; output `data/processed/tier3_gates.csv`; full write-up `paper/v3-findings.md`. **No candidate passed all three prongs — the model remains the frozen 8-indicator v2.0.0, no version bump, no regeneration.** This is within the pre-registered expectation ("0–2 adoptions; most will fail, as P5–P7 did").

@@ -156,6 +156,39 @@ def build_vacancy_panel(years=ACS1_YEARS, *, refresh: bool = False) -> pd.DataFr
     return panel.sort_values(["cbsa_code", "year"]).reset_index(drop=True)
 
 
+_RENTER_INCOME = "B25119_003E"   # median household income, renter-occupied
+_RENTER_TOTAL = "B25007_012E"    # renter-occupied householders, total
+_RENTER_15_24 = "B25007_013E"    # renter householders 15-24
+_RENTER_25_34 = "B25007_014E"    # renter householders 25-34
+
+
+def fetch_renter_demographics(year: int, *, refresh: bool = False) -> pd.DataFrame:
+    """One year of renter demographics (v3 Phase-4 industry-baseline inputs):
+    [cbsa_code, name, renter_income, renter_under35_share, year]."""
+    df = fetch_acs1(year, [_RENTER_INCOME, _RENTER_TOTAL, _RENTER_15_24,
+                           _RENTER_25_34], refresh=refresh)
+    df = df[df["name"].str.endswith("Metro Area")].copy()
+    df = df.rename(columns={_RENTER_INCOME: "renter_income"})
+    df.loc[df["renter_income"] < 0, "renter_income"] = pd.NA  # ACS sentinel codes
+    denom = df[_RENTER_TOTAL].where(df[_RENTER_TOTAL] > 0)
+    df["renter_under35_share"] = (df[_RENTER_15_24] + df[_RENTER_25_34]) / denom
+    return df[["cbsa_code", "name", "renter_income", "renter_under35_share",
+               "year"]].reset_index(drop=True)
+
+
+def build_renter_demographics_panel(years=ACS1_YEARS, *, refresh: bool = False) -> pd.DataFrame:
+    """Stack renter demographics across ACS1 years (industry-baseline only —
+    NOT model inputs; the frozen v2 model is untouched)."""
+    frames = []
+    for yr in years:
+        try:
+            frames.append(fetch_renter_demographics(yr, refresh=refresh))
+        except RuntimeError as e:
+            print(f"  [skip] {yr}: {e.__class__.__name__} — {str(e).splitlines()[0]}")
+    panel = pd.concat(frames, ignore_index=True)
+    return panel.sort_values(["cbsa_code", "year"]).reset_index(drop=True)
+
+
 def build_population_panel(years=ACS1_YEARS, *, refresh: bool = False) -> pd.DataFrame:
     """
     Stack population across all available ACS1 years into a long panel:

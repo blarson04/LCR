@@ -81,7 +81,9 @@ if bl_path.exists():
     theme.caption("All rows use finalized data, so the comparison is apples-to-apples. On rank "
                   "agreement the composite's edge over pure rent momentum is within noise, but "
                   "see below for where the two differ. (The composite's real-time equivalent "
-                  "is 0.38.)")
+                  "is 0.38.) The industry-style row rebuilds the equal-weight market-conditions "
+                  "scorecard format common in industry outlook reports, using the six of its "
+                  "ten categories that free data can populate.")
 
 # ---- In plain units --------------------------------------------------------
 es_path = config.PROCESSED_DIR / "effect_size_windows.csv"

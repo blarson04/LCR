@@ -6,6 +6,63 @@ record). Each phase's results land here as they complete. Governance record:
 
 ---
 
+## Phase 4 — Versus industry practice: the free-Arbor replica (2026-07-07)
+
+The project's implicit claim — that a validated, deliberately weighted, parsimonious screen
+beats industry-style market selection at the actual prediction task — was converted into an
+explicit test. We replicated the form of the Arbor-Chandan Multifamily Opportunity Matrix
+(Spring 2026): ten equal-weighted categories, variables equal-weighted within each, built
+here from free components on our 110-metro universe. Six of the ten categories are freely
+replicable (performance fundamentals via CREMI NOI/asset-price/absorption; labor ×4;
+population growth; ACS renter demographics; rental vacancy; affordability); four are
+omitted and disclosed (capital markets — proprietary; taxes — outside the frozen component
+list; ZORDI — history too short for the walk-forward; insurance — not freely acquirable).
+Orientations were fixed a priori to Arbor's stated directions with no auto-orientation, the
+construction was frozen in a dated log entry before the run, and first results were final.
+
+Walk-forward, same prediction years and metros as the model, one run:
+
+| Ranking rule | pooled 3-yr τ | precision@10 |
+| --- | --- | --- |
+| Validated composite (8 indicators, hand-set weights) | **0.444** | **0.65** |
+| Rent momentum alone | 0.391 | 0.65 |
+| Equal weight over our 8 indicators | 0.368 | 0.52 |
+| Persistence (trailing 3-yr growth) | 0.216 | 0.38 |
+| **Industry-style index (equal weight, 6 categories)** | **0.113** | **0.28** |
+| Random | −0.01 | 0.25 |
+
+(All rows re-generated on the current panel in the same session, so the whole table is one
+data vintage.)
+
+**Gap: +0.331 pooled 3-yr τ (95% metro-cluster bootstrap CI [+0.202, +0.483]) — the
+composite's largest reliable edge over any baseline tested.** The industry-style index
+ranks below every naive alternative, including persistence.
+
+**Our pre-registered prediction was wrong, which is itself a finding.** Phase 0 logged the
+expectation that the industry index would correlate highly with trailing rent growth
+("professional conditions indices are re-packaged momentum"). It does not: pooled
+correlation +0.213, mean per-year rank correlation +0.230. The diagnosis the data actually
+supports is harsher — the conditions components (unemployment levels, demographics,
+vacancy, absorption) *dilute* predictive signal rather than repackage it. And the failure
+is not equal weighting per se: equal weight over our eight validated indicators scores
+0.368. The failure is a component set assembled for investor-conditions narrative rather
+than tested against a prediction target. Every component of our composite passed a
+predictive gate; that, not the weighting scheme, is where the edge comes from.
+
+**Fairness caveats (attach to any use of this result):** the replica is a 6-of-10-category
+free approximation on a different universe (110 metros vs their top 50); Arbor's matrix
+targets "opportunistic multifamily investment" broadly and does not claim to predict 3-yr
+rent growth. This result scores the industry *practice* of equal-weight conditions indices
+at our task; it is not an audit of Arbor's product at theirs.
+
+*Data vintage: CREMI download of 2026-07-07 (1995–2026Q1, 108/110 metros); ACS through
+2024 (renter demographics 107–110/110 per year, no 2020 ACS1); current panel. Runner:
+`src/industry_baseline.py`; detail: `data/processed/industry_baseline.csv`; the row
+"Industry-style index (equal weight)" now appears in `baseline_comparison.csv` and on the
+site's Track record page.*
+
+---
+
 ## Phase 3 — Tier-3 candidate gates: five candidates, zero adoptions (2026-07-07)
 
 The Arbor–Chandan benchmark review surfaced six candidate signals (frozen in Phase 0,

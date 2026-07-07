@@ -1,0 +1,2 @@
+model,tau_3y,prec_3y,tau_3y_preCOVID,tau_1y,full_tau_3y,gap_tau_3y,gap_ci_lo,gap_ci_hi,corr_trailing_pooled,rank_corr_trailing_mean,categories_included,categories_total
+Industry-style index (equal weight),0.113,0.283,0.208,0.168,0.444,0.331,0.202,0.483,0.213,0.23,6,10
