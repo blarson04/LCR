@@ -108,6 +108,7 @@ theme.caption(f"Darker green = stronger fundamentals. {top3[0]} leads the {ed['y
 
 # ---- Full table (progressive disclosure) -------------------------------------
 with st.expander(f"See all {len(rank)} markets"):
+    n_total = data.N_IND
     cols = {
         "Rank": [f"{int(r['rank'])} ({int(r['rank_lo'])}–{int(r['rank_hi'])})"
                  for _, r in rank.iterrows()],
@@ -115,6 +116,7 @@ with st.expander(f"See all {len(rank)} markets"):
         "Score": rank["score"],
         "Top strength": rank["strength"],
         "Top drag": rank["drag"],
+        "Measures": [f"{int(n)} of {n_total}" for n in rank["n_indicators"]],
     }
     if show_change:
         def _chg(r):
@@ -128,8 +130,9 @@ with st.expander(f"See all {len(rank)} markets"):
               .format({"Score": "{:+.2f}"})
               .map(lambda v: f"color:{theme.POS}" if v >= 0 else f"color:{theme.NEG}",
                    subset=["Score"])
-              .set_properties(subset=["Score"], **{"font-variant-numeric": "tabular-nums",
-                                                   "text-align": "right"})
+              .set_properties(subset=["Score", "Measures"],
+                              **{"font-variant-numeric": "tabular-nums",
+                                 "text-align": "right"})
               .set_properties(subset=["Metro"], **{"font-weight": "500"}))
     if show_change:
         styler = styler.set_properties(subset=["Vs 2023"],
@@ -138,18 +141,38 @@ with st.expander(f"See all {len(rank)} markets"):
     st.dataframe(styler, hide_index=True, use_container_width=True, height=520,
                  column_config={
                      "Rank": st.column_config.TextColumn(
-                         help="Range reflects statistical uncertainty in the score."),
+                         help="This market's rank out of all markets. The range in "
+                              "parentheses shows how far the rank moves under several "
+                              "reasonable alternative model weightings; treat markets "
+                              "with overlapping ranges as roughly tied."),
+                     "Score": st.column_config.TextColumn(
+                         help="The composite score: all eight measures combined. 0 is "
+                              "the average market that year; higher is stronger "
+                              "fundamentals for future rent growth."),
+                     "Top strength": st.column_config.TextColumn(
+                         help="The theme that lifts this market's score the most."),
+                     "Top drag": st.column_config.TextColumn(
+                         help="The theme that pulls this market's score down the most."),
+                     "Measures": st.column_config.TextColumn(
+                         help="How many of the eight measures had data for this market. "
+                              "A missing measure takes a neutral (exactly average) "
+                              "value, which can flatter or understate the market, so "
+                              "read a short-count market's exact rank loosely."),
                      "Vs 2023": st.column_config.TextColumn(
-                         help="Rank change since the frozen 2023 edition; "
-                              "positive means the market moved up.")})
+                         help="Rank change since the frozen 2023 edition; positive "
+                              "means the market moved up.")})
+    n_short = int((rank["n_indicators"] < n_total).sum())
     change_note = ("The 'vs 2023' column compares against the frozen prior edition (its "
                    "ranks were locked when published, so the comparison cannot be "
                    "rewritten). A move inside a market's rank range is noise, not a trend. "
                    if show_change else "")
-    theme.caption("Rank ranges show the span across several reasonable model weightings; "
-                  "treat this as a screen, not a precise ordering. " + change_note +
-                  "Strength and drag are the themes that helped or hurt each market's "
-                  "score the most.")
+    theme.caption(f"Rank ranges show the span across several reasonable model weightings; "
+                  f"treat this as a screen, not a precise ordering. {change_note}"
+                  f"Strength and drag are the themes that helped or hurt each market's "
+                  f"score the most. {n_short} markets are missing one or two measures at "
+                  f"the data source; each missing measure takes a neutral (average) value "
+                  f"rather than a guess, which can flatter or understate that market, so "
+                  f"lean on their rank ranges rather than their exact ranks.")
 
 # ---- Diverging bars: every market against the average -------------------------
 with st.expander("Every market against the average"):
@@ -198,11 +221,22 @@ with st.expander("Advanced view: how each score breaks down"):
                  "bucket_Affordability": "Affordability", "bucket_Momentum": "Momentum",
                  "bucket_Resilience": "Resilience"})
     num_cols = ["Score", "Demand", "Supply", "Affordability", "Momentum", "Resilience"]
+    _theme_help = {b: (f"How much the {b} theme adds to or subtracts from this market's "
+                       f"composite score. 0 means the theme neither helps nor hurts; "
+                       f"positive helps, negative hurts.")
+                   for b in ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]}
     st.dataframe(
         adv.style.format({c: "{:+.2f}" for c in num_cols})
            .set_properties(subset=num_cols, **{"font-variant-numeric": "tabular-nums",
                                                "text-align": "right"})
            .set_properties(subset=["Metro"], **{"font-weight": "500"}),
-        hide_index=True, use_container_width=True, height=420)
+        hide_index=True, use_container_width=True, height=420,
+        column_config={
+            "Rank": st.column_config.NumberColumn(
+                help="This market's rank out of all markets (1 = best)."),
+            "Score": st.column_config.TextColumn(
+                help="The composite score: the five theme contributions summed. 0 is "
+                     "the average market that year."),
+            **{b: st.column_config.TextColumn(help=h) for b, h in _theme_help.items()}})
 
 theme.page_footer()

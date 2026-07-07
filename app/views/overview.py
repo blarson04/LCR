@@ -89,10 +89,14 @@ st.markdown(f"""
 # ---- The top 10 ----------------------------------------------------------------
 st.markdown("## The top 10")
 rows_html = ""
+any_short = False
 for _, r in rank.head(10).iterrows():
     color = theme.POS if r["score"] >= 0 else theme.NEG
     strengths = " · ".join(s for s in (r["strength_1"], r["strength_2"]) if s) \
         or "Broadly average"
+    if int(r["n_indicators"]) < data.N_IND:
+        strengths += (f" · scored on {int(r['n_indicators'])} of {data.N_IND} measures")
+        any_short = True
     rows_html += (
         f"<div style='padding:.42rem 0;border-bottom:1px solid {theme.LINE}'>"
         f"<span style='color:{theme.MUTED};display:inline-block;width:1.8rem'>{int(r['rank'])}</span>"
@@ -101,9 +105,12 @@ for _, r in rank.head(10).iterrows():
         f"{r['score']:+.2f}</span>"
         f"<div class='cap' style='margin-left:1.8rem'>{strengths}</div></div>")
 st.markdown(rows_html, unsafe_allow_html=True)
+short_note = (" Where a market is missing a measure at the data source, the gap takes a "
+              "neutral (average) value, which can flatter or understate it; read that "
+              "market's exact rank loosely." if any_short else "")
 theme.caption("Each market shows the one or two themes that lift its score most. Scores "
               "are relative to the average market (0); ranks carry uncertainty ranges, "
-              "shown in the full rankings.")
+              "shown in the full rankings." + short_note)
 
 # ---- The evidence, in one chart --------------------------------------------------
 if pp_win is not None and len(pp_win):

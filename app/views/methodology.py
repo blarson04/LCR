@@ -28,8 +28,8 @@ d = data.load()
 spec_mode = data.is_spec(d)
 
 st.markdown("# Methodology & about")
-theme.caption("How the score is built, where every number comes from, and who built it. "
-              "The findings themselves are on the Overview page.")
+theme.caption("Start here: what this project is, who built it, and how the score works. "
+              "The findings follow on the Overview page.")
 st.write("")
 
 # ---- Purpose, simply ---------------------------------------------------------
@@ -79,19 +79,29 @@ The same formula runs for every market; no market is ever hand-adjusted. (The we
 themselves are set by judgment and stress-tested; see Track record.)
 """)
 
+_totals = {b: sum(data.INDICATORS[k]["weight"] for k in data.INDICATORS
+                  if data.INDICATORS[k]["bucket"] == b) for b in data.BUCKETS}
+_words = ["Heaviest", "Heavy", "Moderate", "Light", "Lightest"]
+_emphasis = {b: _words[i] for i, b in
+             enumerate(sorted(data.BUCKETS, key=lambda b: -_totals[b]))}
 rows = []
 for b in data.BUCKETS:
     ks = [k for k in data.INDICATORS if data.INDICATORS[k]["bucket"] == b]
-    w = sum(data.INDICATORS[k]["weight"] for k in ks)
-    rows.append({"Theme": b, "Weight": f"{w*100:.0f}%",
+    rows.append({"Theme": b, "Emphasis": _emphasis[b],
                  "What it captures": " · ".join(data.PRETTY[k] for k in ks)})
 st.dataframe(
     pd.DataFrame(rows).style.set_properties(subset=["Theme"], **{"font-weight": "500"}),
-    hide_index=True, use_container_width=True)
-theme.caption("Demand leads at 40%: the framework bets that who is moving in, hiring, and "
-              "earning matters most over a three-year horizon, with a heavy penalty for "
-              "oversupply (25%) as the contrarian edge. Weights are set by judgment and "
-              "tested against alternatives; see Track record for how it has performed.")
+    hide_index=True, use_container_width=True,
+    column_config={"Emphasis": st.column_config.TextColumn(
+        help="How much of the final score this theme carries, from heaviest to "
+             "lightest. The exact percentages are the project's proprietary core "
+             "and are not published.")})
+theme.caption("Demand carries the most weight: the framework bets that who is moving in, "
+              "hiring, and earning matters most over a three-year horizon, with a heavy "
+              "penalty for oversupply as the contrarian edge. The exact weights are fixed, "
+              "sum to 100%, and are deliberately not published; they are set by judgment, "
+              "never fitted to the backtest, and stress-tested against alternatives (see "
+              "Track record).")
 
 if d.get("has_vintage") and not spec_mode:
     with st.expander("Data sources and vintages, measure by measure"):
@@ -99,16 +109,19 @@ if d.get("has_vintage") and not spec_mode:
         for k in data.INDICATORS:
             src_txt, through = data.VINTAGE_SOURCES[k]
             vrows.append({"Measure": data.PRETTY[k],
-                          "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
                           "Source": src_txt,
                           "Data through": through})
         st.dataframe(
             pd.DataFrame(vrows).style
               .set_properties(subset=["Measure"], **{"font-weight": "500"})
-              .set_properties(subset=["Weight", "Data through"],
+              .set_properties(subset=["Data through"],
                               **{"font-variant-numeric": "tabular-nums",
                                  "text-align": "right"}),
-            hide_index=True, use_container_width=True)
+            hide_index=True, use_container_width=True,
+            column_config={"Data through": st.column_config.TextColumn(
+                help="The most recent year of data feeding this measure in the "
+                     "current screen. Nothing on this site is shown without its "
+                     "data vintage.")})
         theme.caption(f"The data ledger for the current {data.VINTAGE_YEAR}-vintage screen: "
                       "what feeds each measure and how fresh it is. "
                       "* Cleveland and Dayton carry 2023 employment values; their 2024 "
@@ -127,11 +140,11 @@ permits) use live data; slow inputs use preliminary substitutes or the latest av
 value carried forward. It shortens the data lag; it does not extend the three-year horizon
 or change the model.""")
     if len(d["nc_prov"]):
-        by = d["nc_prov"].groupby("provenance")["weight"].sum()
-        theme.caption(f"Where the provisional score's data comes from: live "
-                      f"{by.get('fast', 0):.0%} · preliminary substitutes "
-                      f"{by.get('proxy', 0):.0%} · carried forward "
-                      f"{by.get('carried_forward', 0):.0%}.")
+        by = d["nc_prov"].groupby("provenance").size()
+        theme.caption(f"Where the provisional score's data comes from: live data for "
+                      f"{by.get('fast', 0)} of {data.N_IND} measures · preliminary "
+                      f"substitutes for {by.get('proxy', 0)} · the latest available "
+                      f"value carried forward for {by.get('carried_forward', 0)}.")
     prows = []
     for k in data.INDICATORS:
         pm = pmap.PROXY_MAP.get(k, {})
@@ -155,5 +168,7 @@ else:
                   "a single validated substitute for slow migration data, passed at 95.5% and "
                   "is what this site shows. All three outcomes are published; a screen that "
                   "publishes its failures is the point. See Track record.")
+
+st.markdown("Next: [Overview](overview), the key findings and the top 10.")
 
 theme.page_footer()

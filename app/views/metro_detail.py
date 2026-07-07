@@ -41,10 +41,16 @@ code = row["cbsa_code"]
 
 c1, c2, c3 = st.columns(3)
 c1.metric("Rank", f"{int(row['rank'])} ({int(row['rank_lo'])}–{int(row['rank_hi'])})",
-          help="Range reflects statistical uncertainty in the score.")
+          help="This market's rank (1 = best). The range in parentheses shows how far "
+               "the rank moves under several reasonable alternative model weightings; "
+               "the single rank is a point inside that range, not a precise fact.")
 c2.metric("Score", f"{row['score']:+.2f}",
-          help="Composite of the eight measures; 0 is the average market this year.")
-c3.metric("Of markets", f"{len(rank)}")
+          help="All eight measures combined into one number. 0 is the average market "
+               "this year; positive means stronger fundamentals than average, negative "
+               "weaker. The distance from 0 matters more than the exact decimals.")
+c3.metric("Of markets", f"{len(rank)}",
+          help="How many markets are ranked in this edition: every US metro area with "
+               "at least 500,000 people and continuous rent data.")
 
 st.markdown(f"<div class='cap' style='margin:.6rem 0 0'>{data.why_sentence(row)}</div>",
             unsafe_allow_html=True)
@@ -84,18 +90,32 @@ _list(oc2, "Watch-outs", cons, theme.NEG, "No major red flags this year.")
 st.markdown("## The eight measures")
 theme.caption("Percentile = where this market stands among all markets (100 = best), with "
               "direction already applied so higher is always better.")
-rows = []
+rows, missing = [], []
 for k in data.INDICATORS:
     val = ed["raw"][k].get(code, float("nan"))
+    if pd.isna(val):
+        missing.append(data.PRETTY[k].lower())
     rows.append({"Measure": data.PRETTY[k],
-                 "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
                  "Value": "–" if pd.isna(val) else data.FMT[k](val),
                  "Percentile": ed["pct"][k].get(code, float("nan"))})
 st.dataframe(
     pd.DataFrame(rows).style.set_properties(subset=["Measure"], **{"font-weight": "500"}),
     hide_index=True, use_container_width=True,
-    column_config={"Percentile": st.column_config.ProgressColumn(
-        min_value=0, max_value=100, format="%.0f")})
+    column_config={
+        "Value": st.column_config.TextColumn(
+            help="The measure in real-world units for this market, before any scoring."),
+        "Percentile": st.column_config.ProgressColumn(
+            min_value=0, max_value=100, format="%.0f",
+            help="Where this market stands among all markets on that measure: 100 means "
+                 "the best in the country, 50 the middle. Direction is already applied, "
+                 "so higher is always better for future rent growth.")})
+if missing:
+    theme.caption(f"Data note: {', '.join(missing)} is unavailable for this market at "
+                  "the data source. A missing measure takes a neutral (exactly average) "
+                  "value in the score rather than a guess. That fill is neutral, not "
+                  "conservative: had the real value been below average, this market "
+                  "would rank lower than shown, so lean on the rank range rather than "
+                  "the single rank.")
 
 if not ed["provisional"]:
     with st.expander("Context measures (tracked, not scored)"):
@@ -109,7 +129,15 @@ if not ed["provisional"]:
                           "Percentile": d["ctx_pct"][colname].get(code, float("nan")),
                           "Note": note})
         st.dataframe(pd.DataFrame(crows).style.format({"Percentile": "{:.0f}"}),
-                     hide_index=True, use_container_width=True)
+                     hide_index=True, use_container_width=True,
+                     column_config={
+                         "Value": st.column_config.TextColumn(
+                             help="The measure in real-world units; shown for context "
+                                  "only, it does not affect the score."),
+                         "Percentile": st.column_config.NumberColumn(
+                             help="Where this market stands among all markets "
+                                  "(100 = highest raw value; see the note for which "
+                                  "direction is healthier).")})
 
 # ---- History charts -------------------------------------------------------------
 st.markdown("## History")

@@ -44,8 +44,11 @@ else:
         codes[mt] = r["cbsa_code"]
         cols[i].metric(mt.split(",")[0],
                        f"{int(r['rank'])} ({int(r['rank_lo'])}–{int(r['rank_hi'])})",
-                       help=f"Score {r['score']:+.2f}. Range reflects statistical "
-                            f"uncertainty in the score.")
+                       help=f"This market's rank (1 = best); its composite score is "
+                            f"{r['score']:+.2f}, where 0 is the average market. The "
+                            f"range in parentheses shows how far the rank moves under "
+                            f"reasonable alternative model weightings; markets with "
+                            f"overlapping ranges are roughly tied.")
 
     st.markdown("## Measure by measure")
     theme.caption("Percentile across all markets (100 = best on that measure; higher is "
@@ -59,8 +62,11 @@ else:
     st.dataframe(
         comp.style.set_properties(subset=["Measure"], **{"font-weight": "500"}),
         hide_index=True, use_container_width=True,
-        column_config={nm: st.column_config.ProgressColumn(min_value=0, max_value=100,
-                                                           format="%.0f") for nm in names})
+        column_config={nm: st.column_config.ProgressColumn(
+            min_value=0, max_value=100, format="%.0f",
+            help="Where this market stands among all markets on each measure: 100 means "
+                 "best in the country, 50 the middle. Direction is already applied, so "
+                 "higher is always better.") for nm in names})
 
     st.markdown("## What drives each score")
     bard = [{"Market": mt.split(",")[0], "Theme": b,

@@ -79,7 +79,25 @@ if m3_path.exists():
                          "Horizon (yrs)": "{:.0f}"})
           .set_properties(subset=["Tau (real-time)", "Tau (finalized ceiling)"],
                           **{"font-variant-numeric": "tabular-nums", "text-align": "right"}),
-        hide_index=True, use_container_width=True)
+        hide_index=True, use_container_width=True,
+        column_config={
+            "Horizon (yrs)": st.column_config.NumberColumn(
+                help="How many years ahead the prediction looks. 3 years is the real "
+                     "target; 1 year is shown as a contrast."),
+            "Tau (real-time)": st.column_config.TextColumn(
+                help="How well the ranking agreed with the rent growth that followed, "
+                     "on a -1 to +1 scale where 0 means no relationship, using only "
+                     "data a user could actually have had at the time."),
+            "Tau (finalized ceiling)": st.column_config.TextColumn(
+                help="The same agreement score using the complete revised data that "
+                     "arrives about two years later; a best-case ceiling no live user "
+                     "ever had."),
+            "P@10 (real-time)": st.column_config.TextColumn(
+                help="Of the 10 markets the screen ranked highest, the share that "
+                     "landed in the top quarter of markets by actual rent growth, "
+                     "using real-time data."),
+            "P@10 (finalized)": st.column_config.TextColumn(
+                help="The same top-10 hit rate using finalized data.")})
 theme.caption("Validation reflects normal market conditions; the framework underperforms in "
               "shocks. Real-time numbers come from the pseudo-nowcast test (current data "
               "vintages stand in for true unrevised prints, a disclosed simplification).")
@@ -94,7 +112,15 @@ if bl_path.exists():
         bl.style.format({"3-yr tau": "{:.2f}", "Precision@10": "{:.0%}"})
           .set_properties(subset=["3-yr tau", "Precision@10"],
                           **{"font-variant-numeric": "tabular-nums", "text-align": "right"}),
-        hide_index=True, use_container_width=True)
+        hide_index=True, use_container_width=True,
+        column_config={
+            "3-yr tau": st.column_config.TextColumn(
+                help="How well each strategy's ranking agreed with the 3-year rent "
+                     "growth that followed, on a -1 to +1 scale where 0 means no "
+                     "relationship and random guessing scores about 0."),
+            "Precision@10": st.column_config.TextColumn(
+                help="Of the 10 markets each strategy ranked highest, the share that "
+                     "landed in the top quarter of markets by actual rent growth.")})
     theme.caption("All rows use finalized data, so the comparison is apples-to-apples. On rank "
                   "agreement the composite's edge over pure rent momentum is within noise, but "
                   "see below for where the two differ. (The composite's real-time equivalent "
@@ -122,7 +148,17 @@ if es_path.exists():
             .map(lambda v: f"color:{theme.POS}" if isinstance(v, float) and v > 0
                  else (f"color:{theme.NEG}" if isinstance(v, float) and v < 0 else ""),
                  subset=[c for c in show.columns if c != "Window start"]),
-        hide_index=True, use_container_width=True)
+        hide_index=True, use_container_width=True,
+        column_config={
+            "Window start": st.column_config.NumberColumn(
+                help="The first year of the 3-year window: the 2019 row grades "
+                     "predictions made on 2019 data against 2019-2022 rent growth."),
+            **{c: st.column_config.TextColumn(
+                help=f"How many percentage points more 3-year rent growth the top-10 "
+                     f"markets picked by '{c}' delivered than the median market. "
+                     f"+6.0 means their rents grew 6 points more than the middle "
+                     f"market's over those three years.")
+               for c in show.columns if c != "Window start"}})
     cm, mm = piv["Composite (model)"], piv["Momentum (trailing rent)"]
     theme.caption(
         f"Rows are completed 3-year windows labeled by start year; 2022 (covering 2022–25) is "

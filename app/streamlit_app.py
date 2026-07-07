@@ -58,7 +58,8 @@ with st.sidebar:
 
 # ---- Pages: a report's table of contents (reading order, tools, fine print) ---
 report = [
-    st.Page("views/overview.py", title="Overview", default=True),
+    st.Page("views/methodology.py", title="Methodology & about", default=True),
+    st.Page("views/overview.py", title="Overview"),
     st.Page("views/themes.py", title="What drives the rankings"),
     st.Page("views/rankings.py", title="Full rankings"),
     st.Page("views/spotlight.py", title="Market spotlight"),
@@ -70,7 +71,6 @@ explore = [
 fine_print = [st.Page("views/track_record.py", title="Track record")]
 if d["has_spec"]:
     fine_print.append(st.Page("views/acc_vs_spec.py", title="Validated vs provisional"))
-fine_print.append(st.Page("views/methodology.py", title="Methodology & about"))
 
 st.navigation({"The report": report, "Explore a market": explore,
                "The fine print": fine_print}).run()
