@@ -25,6 +25,16 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-07 — Horizon-extension publication decision (disclosed priors; not a blind gate)
+
+**Question (author):** how far ahead can we publish before reliability fails? **Study:** `src/horizon_decay.py` (output `data/processed/horizon_decay.csv`) evaluates the composite, the 2024-vintage configuration, and momentum at horizons 1–6.
+
+**Findings:** the composite strengthens with horizon while momentum decays — pooled τ at h=3/4/5 is 0.444/0.479/0.507 with the top-10 pp edge rising +6.0→+8.4→+10.7, and the edge over momentum widening every year out (the original "fundamentals express over time" hypothesis, finally confirmed). The 2024-vintage config at h=4: τ 0.449 (93.7% of finalized-h4), +7.2 pp, worst window −1.1 pp, including a shock-start (2021) window.
+
+**Why this is NOT called a gate:** the study itself produced the numbers; any "gate" written now would be theater. Instead this is a publication decision with criteria and priors fully disclosed: (a) h4 pooled τ ≥ h3's ✓; (b) beats momentum at h4 ✓ (0.449 vs 0.380); (c) vintage-config retention vs finalized-h4 ≥85% ✓ (93.7%); (d) no window worse than −2 pp ✓ (−1.1).
+
+**Decision:** the 2024-vintage screen MAY additionally show a **2024→2028 extended-horizon view**, always labeled as such, with the decay-study numbers linked; the 3-year screen remains the primary claim. **h≥5 is NOT publishable**: every available window starts pre-COVID (2016–19), so shock-start behavior cannot be assessed — the strong h5/h6 numbers are partly sample selection, and we say so.
+
 ### 2026-07-07 — v3.1 gate OUTCOME: **PASS** → the 2024-vintage screen is validated for publication
 
 The one-shot run (spec immediately below) passed both prongs with margin: retention **95.52%** (0.424 vs 0.444 pooled 3-yr τ; gap 95% CI [−0.003, +0.035] — statistically near-indistinguishable from the finalized model) and mean top-10 overlap **8.29/10** (per-year 6–10). Consequence executed: the **2024-vintage screen (a 2024→2027 call, vintage-labeled)** becomes the validated current screen — built, frozen to the registry, and published on the site as the primary cross-section, with the 2023 fully-finalized screen retained for the track record. The provisional-nowcast pull of 2026-07-06 is unaffected (`NOWCAST_PUBLISHED` stays false; that was a different, current-year-proxy configuration).
