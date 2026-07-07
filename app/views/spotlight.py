@@ -103,14 +103,18 @@ if len(tr) and (tr.cbsa_code == code).any():
     fig.add_trace(go.Scatter(x=j["month"], y=j["m"], mode="lines",
                              line=dict(color=theme.ACCENT, width=2.2),
                              hovertemplate="%{x|%b %Y}: %{y:.1%}<extra>" + city + "</extra>"))
-    for y_end, txt, col in [(float(j["u"].iloc[-1]), "National median", theme.MUTED),
-                            (float(j["m"].iloc[-1]), city, theme.ACCENT)]:
+    m_end, u_end = float(j["m"].iloc[-1]), float(j["u"].iloc[-1])
+    for y_end, txt, col, shift in [(u_end, "National median", theme.MUTED,
+                                    -14 if u_end <= m_end else 14),
+                                   (m_end, city, theme.ACCENT,
+                                    14 if m_end >= u_end else -14)]:
         fig.add_annotation(x=j["month"].iloc[-1], y=y_end, text=txt, showarrow=False,
-                           xanchor="left", xshift=6,
+                           xanchor="right", yshift=shift,
                            font=dict(size=12, color=col, family=theme.FONT_BODY))
     fig.update_yaxes(tickformat=".0%", title="Rent growth, year over year")
     fig = theme.style_fig(fig, 320)
-    fig.update_layout(margin=dict(l=0, r=110, t=8, b=0))
+    # Pin the axis to the data so the labels don't stretch the autorange.
+    fig.update_xaxes(range=[j["month"].min(), j["month"].max() + pd.Timedelta(days=30)])
     st.plotly_chart(fig, use_container_width=True)
 
     above = (j["m"] > j["u"]).tolist()

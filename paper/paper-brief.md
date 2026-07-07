@@ -24,6 +24,7 @@ track record. It is positioned as a *screening framework, not a prediction engin
 - Pooled 3-yr τ **0.444** vs. pooled 1-yr τ **0.500** (≈ equal → see finding #3).
 - Worst single window: 3-yr starting **2022** (predicting the post-peak decline), τ **-0.022**.
 - **Vintage rule (v3-P2):** every τ in this brief is a **finalized-data ceiling** unless marked real-time. The **real-time achievable** pooled 3-yr τ — using only proxies/carry-forwards a user could have held at scoring time — is **0.376** (85% of the ceiling); pre-COVID real-time **0.560**.
+- **Versus industry practice (v3 Phase 4):** a free replica of the leading industry conditions index scores pooled 3-yr τ **0.113** vs the composite's **0.444** (gap +0.331, 95% CI [+0.202, +0.483]) — and it is NOT re-packaged momentum (corr +0.21); see §5f.
 
 
 ---
@@ -271,6 +272,85 @@ every testable 5-yr window starts pre-COVID (sample selection), and we say so.
 
 ---
 
+## 5e. New signals tested — and all rejected (v3 Phase 3)
+
+The Arbor–Chandan benchmark review surfaced six candidate signals, frozen in a pre-registered
+list before any accuracy work. Two died in the coverage audit (ZORDI history too short for the
+annual model; insurance burden not freely acquirable). The surviving five each got **one
+attempt** at the standard three-part gate (standalone τ > 0.10 AND max |corr| vs the scored
+indicators < 0.70 AND value-add at a fixed 10% weight with a metro-cluster bootstrap CI
+excluding 0):
+
+| Candidate | Standalone 3y τ | Max |corr| (with) | Value-add Δτ @10% | 95% CI | Adopted |
+| --- | --- | --- | --- | --- | --- |
+| C1 CREMI MF absorption | +0.085 | 0.12 (cost_to_own_vs_rent) | -0.027 | [-0.068, +0.015] | no |
+| C2 CREMI MF NOI | +0.083 | 0.42 (trailing_rent_growth) | -0.021 | [-0.058, +0.011] | no |
+| C3 CREMI MF asset price | +0.186 | 0.26 (trailing_rent_growth) | -0.011 | [-0.040, +0.016] | no |
+| C6a delta rental_vacancy | +0.072 | 0.08 (rent_to_income) | -0.051 | [-0.097, -0.000] | no |
+| C6b delta unemployment (MSAUR) | +0.218 | 0.18 (job_growth) | +0.012 | [-0.011, +0.038] | no |
+
+**Zero adoptions — the model stays the frozen 8-indicator v2.** Notable negatives: CREMI NOI
+(the pre-registered "one to watch") failed on standalone signal, and its +0.42 correlation with
+trailing rent growth is exactly the NOI ≈ rents − expenses redundancy flagged in advance; the
+asset-price sub-index has real signal (τ 0.186) but adds nothing the composite lacks; and the
+Δ-unemployment candidate was auto-orient *flipped* — rising unemployment predicting stronger
+3-yr rent growth (a counter-cyclical recovery artifact of the 2015–24 sample) — yet still
+cleared no value-add bar. Across two gate cycles, **eight candidates have now failed to
+reliably improve the composite**: the parsimony is earned, not asserted.
+
+
+---
+
+## 5f. Versus industry practice (v3 Phase 4)
+
+**The observation that motivates this section (for the paper intro):** the leading industry
+market-selection index (the Arbor–Chandan Multifamily Opportunity Matrix) runs **~90% on the
+same free public sources this project uses** — of its ten equal-weighted categories, only the
+capital-markets block (~10%) is proprietary. Professional market selection is, in data terms,
+mostly free; what this project adds is validation discipline, not data access.
+
+That converts the implicit claim into an explicit test: does a validated, deliberately
+weighted screen beat industry-style practice at the prediction task? We replicated the
+matrix's form — ten equal-weighted categories, variables equal-weighted within — from free
+components on our 6-of-10 replicable
+categories, froze the construction in a dated log entry before the run (orientations fixed
+a priori, no auto-orientation, no tuning after first results), and ran the standard
+walk-forward:
+
+| Ranking rule | Pooled 3-yr τ | Precision@10 |
+| --- | --- | --- |
+| Full model (composite) | +0.444 | 0.65 |
+| Best single indicator | +0.391 | 0.65 |
+| Momentum only (trailing rent) | +0.391 | 0.65 |
+| Equal weight (8 ind.) | +0.368 | 0.52 |
+| Persistence (trailing h-yr) | +0.216 | 0.38 |
+| Industry-style index (equal weight) | +0.113 | 0.28 |
+| Random (avg of seeds) | -0.010 | 0.25 |
+
+**Gap: composite − industry replica = +0.331 pooled 3-yr τ (95%
+metro-cluster CI [+0.202, +0.483])** — the largest reliable
+edge over any baseline tested; the industry-style index lands *below persistence* and above
+only random.
+
+**Our pre-registered prediction failed, and that is itself a finding.** Phase 0 logged the
+expectation that the industry index would be "re-packaged momentum" (high correlation with
+trailing rent growth). It is not: pooled correlation **+0.21**
+(mean per-year rank correlation +0.23). The diagnosis the data
+supports is harsher: the conditions components (unemployment levels, demographics, vacancy,
+absorption) *dilute* predictive signal rather than repackage it. Nor is equal weighting the
+failure — equal weight over our own eight validated indicators scores respectably (see table).
+The failure is a component set assembled for investor-conditions narrative rather than tested
+against a prediction target.
+
+**Fairness caveats (attach to any use of this result):** the replica covers 6 of 10 categories
+(capital markets proprietary; taxes, ZORDI, insurance excluded per the frozen spec) on our
+110-metro universe (theirs: top 50); the industry matrix targets "opportunistic multifamily
+investment" broadly and never claims to predict 3-yr rent growth. This scores the *practice*
+of equal-weight conditions indices at our task, not any vendor's product at theirs.
+
+
+---
+
 ## 6. Pre-registration & reproducibility
 
 Every production run is frozen, timestamped, and never edited (registry), making the live track
@@ -285,7 +365,10 @@ record auditable — a core credibility differentiator.
 
 ## 7. Limitations (carry into the paper)
 
-- No capital-markets data (cap rates, transaction volume) — paid; **rent growth is the proxy for profitability**.
+- No capital-markets inputs in the score (transactions, lending); **rent growth is the proxy
+  for profitability**. Free metro cap-rate and occupancy series do exist (Atlanta Fed CREMI,
+  found in the v3 coverage audit — softening the original "cap rates are paid-only" claim);
+  they are context only, never gated candidates under the frozen v3 list.
 - **ZORI is asking rent, not executed rent** (can overstate momentum in fast markets).
 - Short usable history (~2015+) → few independent windows → directional, not significance-grade.
 - **Weights are hand-set hypotheses, validated but not optimized** (v2 uses the de-duplicated 8-indicator set).
@@ -295,11 +378,16 @@ record auditable — a core credibility differentiator.
 
 ## 8. Suggested paper structure
 
-1. **Introduction** — the gap (no transparent, auditable, free-data multifamily screener).
+1. **Introduction** — the gap (no transparent, auditable, free-data multifamily screener),
+   plus the ~90%-free observation: the leading industry index runs almost entirely on the
+   same free sources (§5f), so the differentiator is validation discipline, not data access.
 2. **Framework** — screening vs. prediction; the five themes and why (→ `decision-log.md`).
 3. **Data** — sources, universe definition, the rent-coverage gate, dropped metros (§2).
 4. **Methodology** — indicators, within-year normalization, weighting, scoring (§3).
 5. **Validation** — walk-forward design, regimes, winsorizing, metrics; results (§5).
 6. **Findings & discussion** — the regime story, 3y≈1y, what the top/bottom say (§4–5).
-7. **Pre-registration & reproducibility** — the registry as a differentiator (§6).
-8. **Limitations & future work** — §7 + fitted weights, AI-exposure indicator, vacancy.
+7. **Versus industry practice** — the free-Arbor replica result and the failed
+   "re-packaged momentum" prediction, published as logged (§5f); the gated-candidates
+   negative results (§5e).
+8. **Pre-registration & reproducibility** — the registry as a differentiator (§6).
+9. **Limitations & future work** — §7 + fitted weights, AI-exposure indicator, vacancy.
