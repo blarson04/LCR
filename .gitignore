@@ -29,3 +29,6 @@ Thumbs.db
 # Local critique/upload packages (derived, not source)
 critique/
 decision-log.docx
+
+# Session handoff notes (local operational doc)
+HANDOFF.md
