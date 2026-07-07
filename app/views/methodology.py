@@ -116,10 +116,12 @@ with tcol:
 I'm **Ben Larson**, a student at **Indiana University** majoring in **economics and applied
 mathematics**, with a strong interest in **data analytics and real estate**.
 
-I built this screener to put that interest to work: to learn what public data can honestly say
-about rental markets, and to practice doing research the right way — documented methods,
-validation before claims, and a frozen track record that anyone can audit. Everything on this
-site, from the data pipeline to the backtests, was built as part of that project.
+I built this screener to answer a question I kept running into: how much of a rental market's
+future is already visible in free public data? I held the answer to a standard I'd be willing
+to defend — every method documented, every claim validated before it's published, failed
+experiments published alongside the successes, and a frozen track record that anyone can check
+against what actually happens. Everything here, from the data pipeline to the backtests to
+this site, is my own work.
 """)
 
 # ---- How the score works --------------------------------------------------------
