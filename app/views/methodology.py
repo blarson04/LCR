@@ -133,19 +133,22 @@ if d.get("has_vintage") and not spec_mode:
                       "vintage.")
 
 if spec_mode and d["has_spec"]:
-    st.markdown("## The provisional screen")
-    st.markdown(theme.badge(provisional=True), unsafe_allow_html=True)
+    st.markdown("## The current 2025 screen")
+    st.markdown(theme.badge(True, "Validated 2025 screen · proxied inputs"),
+                unsafe_allow_html=True)
     st.markdown("""
-The slowest inputs (migration, income) publish about two years late, which is why the
-validated screen is anchored to 2023. The provisional screen runs the **same model, same
-weights, same scoring**; only the data feeding it changes. Fast inputs (rents, home values,
-permits) use live data; slow inputs use preliminary substitutes or the latest available
-value carried forward. It shortens the data lag; it does not extend the three-year horizon
-or change the model.""")
+The slowest inputs (migration, income) publish one to two years late. The 2025 screen runs
+the **same frozen model, same weights, same scoring**; only the data feeding it changes.
+Fast inputs (rents, home values, permits) use live data; migration uses a validated Census
+substitute; jobs use a validated monthly employment series; income is chained forward by
+each metro's state income growth (states publish about a year ahead of metros). This
+configuration **passed its pre-registered validation gate** on history (96.6% of the
+finalized model's signal kept; top-10 overlap 7.4 of 10). It shortens the data lag; it
+does not extend the three-year horizon or change the model.""")
     if len(d["nc_prov"]):
         by = d["nc_prov"].groupby("provenance").size()
-        theme.caption(f"Where the provisional score's data comes from: live data for "
-                      f"{by.get('fast', 0)} of {data.N_IND} measures · preliminary "
+        theme.caption(f"Where the 2025 score's data comes from: live data for "
+                      f"{by.get('fast', 0)} of {data.N_IND} measures · validated "
                       f"substitutes for {by.get('proxy', 0)} · the latest available "
                       f"value carried forward for {by.get('carried_forward', 0)}.")
     prows = []
@@ -153,24 +156,24 @@ or change the model.""")
         pm = pmap.PROXY_MAP.get(k, {})
         prows.append({"Measure": data.PRETTY[k],
                       "Finalized source": pm.get("finalized", ""),
-                      "Provisional approach": pm.get("proxy", "")})
+                      "2025-screen approach": pm.get("proxy", "")})
     st.dataframe(
         pd.DataFrame(prows).style.set_properties(subset=["Measure"], **{"font-weight": "500"}),
         hide_index=True, use_container_width=True)
-    theme.caption("The migration substitute tracks the finalized source closely; the main "
-                  "added uncertainty comes from carrying employment and income forward. "
-                  "Fresher jobs data is the planned improvement.")
+    theme.caption("Each substitute was validated individually before the configuration "
+                  "was tested as a whole; the ranking is reconciled against finalized "
+                  "data as it lands each year.")
 elif d["has_spec"]:
-    theme.caption("Switch the sidebar to the provisional edition to see how the provisional "
-                  "2025 screen is built.")
-else:
-    theme.caption("How the current screen earned publication: two fresher-data configurations "
-                  "failed their pre-registered validation gate (74.8% and 84.66% signal "
-                  "retention vs the 85% required; the second missed by a third of a point "
-                  "and was pulled anyway). The third, built on newly finalized 2024 data with "
-                  "a single validated substitute for slow migration data, passed at 95.5% and "
-                  "is what this site shows. All three outcomes are published; a screen that "
-                  "publishes its failures is the point. See Track record.")
+    theme.caption("Switch the sidebar to the 2025 edition to see how the current screen "
+                  "is built from preliminary data.")
+
+theme.caption("How the screens earned publication: two fresher-data configurations failed "
+              "their pre-registered validation gate (74.8% and 84.66% signal retention vs "
+              "the 85% required; the second missed by a third of a point and was pulled "
+              "anyway, not rounded up). The third passed at 95.5% on newly finalized 2024 "
+              "data (the vintage edition), and a fourth, adding a validated state-income "
+              "chain, passed at 96.6% (the 2025 screen). All four outcomes are published; "
+              "a screen that publishes its failures is the point. See Track record.")
 
 st.markdown("Next: [Overview](overview), the key findings and the top 10.")
 

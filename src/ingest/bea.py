@@ -121,6 +121,54 @@ def state_pc_income_growth(state_fips: str, year: int, *, refresh: bool = False)
     return vals[year] / vals[year - 1] - 1.0
 
 
+_STATE_ABBR = {
+    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
+    "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
+    "District of Columbia": "DC", "Florida": "FL", "Georgia": "GA", "Hawaii": "HI",
+    "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
+    "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+    "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
+    "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
+    "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+    "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+    "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
+    "Wisconsin": "WI", "Wyoming": "WY",
+}
+
+
+def state_pc_income_growth_panel(*, refresh: bool = False) -> pd.Series:
+    """State per-capita personal income growth (SAINC1 line 3), indexed by
+    (state_abbr, year) — the v0.4 income-chaining input (decision-log
+    2026-07-08 spec). States publish months ahead of counties/metros."""
+    cache = BEA_RAW_DIR / "sainc1_pc_states.json"
+    if cache.exists() and not refresh:
+        raw = json.loads(cache.read_text())
+    else:
+        params = {
+            "UserID": get_key(), "method": "GetData", "datasetname": "Regional",
+            "TableName": "SAINC1", "GeoFips": "STATE", "LineCode": 3,
+            "Year": ",".join(str(y) for y in range(2014, 2026)),
+            "ResultFormat": "json",
+        }
+        resp = requests.get(_BEA_URL, params=params, timeout=180)
+        results = resp.json().get("BEAAPI", {}).get("Results", {})
+        if "Data" not in results:
+            raise RuntimeError(f"BEA SAINC1 states failed: {str(results)[:200]}")
+        raw = results["Data"]
+        cache.write_text(json.dumps(raw))
+    df = pd.DataFrame(raw)
+    df["pc"] = pd.to_numeric(df["DataValue"].astype(str).str.replace(",", ""),
+                             errors="coerce")
+    df["year"] = df["TimePeriod"].astype(int)
+    df["abbr"] = (df["GeoName"].str.replace(" *", "", regex=False).str.strip()
+                  .map(_STATE_ABBR))
+    df = df.dropna(subset=["abbr"]).sort_values(["abbr", "year"])
+    df["g"] = df.groupby("abbr")["pc"].pct_change()
+    return df.dropna(subset=["g"]).set_index(["abbr", "year"])["g"]
+
+
 def build_income_panel(*, refresh: bool = False) -> pd.DataFrame:
     """
     Metro income panel: [cbsa_code, cbsa_title, year, personal_income,

@@ -23,7 +23,7 @@ track record. It is positioned as a *screening framework, not a prediction engin
 - Pre-COVID 3-yr: τ **0.586**, precision@10 **0.85**.  Shock 3-yr: τ **0.132**.
 - Pooled 3-yr τ **0.435** vs. pooled 1-yr τ **0.491** (≈ equal → see finding #3).
 - Worst single window: 3-yr starting **2022** (predicting the post-peak decline), τ **-0.042**.
-- **Vintage rule (v3-P2):** every τ in this brief is a **finalized-data ceiling** unless marked real-time. The **real-time achievable** pooled 3-yr τ — using only proxies/carry-forwards a user could have held at scoring time — is **0.376** (87% of the ceiling); pre-COVID real-time **0.560**.
+- **Vintage rule (v3-P2):** every τ in this brief is a **finalized-data ceiling** unless marked real-time. The **real-time achievable** pooled 3-yr τ — using only proxies a user could have held at scoring time (validated v0.4 configuration) — is **0.420** (97% of the ceiling); pre-COVID real-time **0.596**.
 - **Versus industry practice (v3 Phase 4):** a free replica of the leading industry conditions index scores pooled 3-yr τ **0.108** vs the composite's **0.435** (gap +0.327, 95% CI [+0.195, +0.481]) — and it is NOT re-packaged momentum (corr +0.21); see §5f.
 
 
@@ -71,7 +71,7 @@ Missing indicators are treated as neutral (0) at scoring.
 
 ---
 
-## 4. Results — current ranking (2024 cross-section)
+## 4. Results — current ranking (2025 cross-section)
 
 Columns after Score are the weighted z-score contribution of each bucket.
 
@@ -252,12 +252,14 @@ this ex-ante rule.
 
 ## 5d. The current screen: a validated 2024 vintage, extended to 2028 (v3.1)
 
-**The three-gate arc.** Every fresher-than-finalized configuration faced the same pre-registered
+**The gate arc.** Every fresher-than-finalized configuration faced the same pre-registered
 gate (≥85% retention of pooled 3-yr τ AND ≥7/10 mean top-10 overlap), one attempt each, all
 outcomes published: 2025 nowcast **74.8% — FAIL**; +CES jobs **84.66% — FAIL** (pulled, not
 rounded up); **2024-vintage** (all finalized inputs, single PEP-migration substitution)
-**95.52% retention, 8.29/10 overlap — PASS**. The passing configuration is the site's primary
-screen: a **2024→2027 call**, refreshed each fall as new vintages land.
+**95.52% retention, 8.29/10 overlap — PASS**; **v0.4 state-chained income** (2026-07-08)
+**96.56% retention, 7.43/10 overlap — PASS**, publishing a validated **2025→2028 current
+screen** beside the 2024-vintage primary. The vintage screen is a **2024→2027 call**,
+refreshed each fall as new vintages land.
 
 **Horizon extension (disclosed-priors decision, not a blind gate — the study is the evidence).**
 `src/horizon_decay.py`: the composite *strengthens* with horizon while momentum decays —
@@ -356,8 +358,8 @@ of equal-weight conditions indices at our task, not any vendor's product at thei
 Every production run is frozen, timestamped, and never edited (registry), making the live track
 record auditable — a core credibility differentiator.
 
-- **Model version:** 2.0.0 · **git commit:** 205b915
-- **Frozen run:** 20260707T225018Z (top metro: Fresno, CA)
+- **Model version:** 2.0.0 · **git commit:** fc5bc26
+- **Frozen run:** 20260707T232133Z (top metro: Albany-Schenectady-Troy, NY)
 - **Evaluation metric (locked before first run):** top-weighted Kendall's tau; rank basis = realized; headline = precision@10.
 - Raw downloads cached; pipeline reproducible end-to-end from free sources.
 

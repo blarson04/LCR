@@ -122,3 +122,20 @@ Result: pooled 3-yr τ **0.424** vs finalized **0.444** → retention
 **95.52%** (gate ≥ 85%); mean top-10 overlap **8.29/10**
 (gate ≥ 7). Gap 95% CI [-0.003, +0.035].
 **PASS — the 2024-vintage screen publishes as a VALIDATED current screen (2024→2027), vintage-labeled and registry-frozen.**
+
+
+---
+
+## Gate attempt #4 — the v0.4 state-chained-income 2025 screen (2026-07-08)
+
+Spec logged before the run (decision log 2026-07-08): v0.2 with exactly one change —
+the scoring-year income level chained by the primary state's BEA per-capita income
+growth (proxy QA: rank agreement 0.51–0.66 every year, vs 0.11 for the flat carry).
+Run on the data-repaired panel (finalized pooled 3-yr τ baseline 0.435).
+
+**3-yr pooled τ:** finalized **0.435** vs pseudo **0.420** → retention
+**96.56%** (gate ≥ 85%). Gap +0.015, 95% CI
+[-0.030, +0.060]. **Mean top-10 overlap 7.43/10**
+(gate ≥ 7). Per-year overlap: 2016: 9/10, 2017: 8/10, 2018: 8/10, 2019: 8/10, 2021: 8/10, 2022: 5/10, 2023: 6/10.
+
+**Verdict: PASS.**

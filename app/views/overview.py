@@ -128,8 +128,9 @@ if pp_win is not None and len(pp_win):
     theme.caption("Four calm windows came in between +6.6 and +12.2 points; the 2021–22 "
                   "shock windows were roughly flat, where a pure rent-momentum strategy "
                   "flipped firmly negative. The current screen's own window (2024–27) is "
-                  "graded when 2027 data closes. Numbers use finalized data; the real-time "
-                  "equivalent is about 15% lower. Full validation: see Track record.")
+                  "graded when 2027 data closes. Numbers use finalized data; the validated "
+                  "real-time configuration keeps about 97% of this signal. Full "
+                  "validation: see Track record.")
 
 # ---- Reading order ---------------------------------------------------------------
 st.markdown("## Read the report")

@@ -144,9 +144,10 @@ def caption(text: str) -> None:
 
 
 def badge(provisional: bool, label: str | None = None) -> str:
-    """HTML badge; provisional data must always carry its badge (skill §4)."""
+    """HTML badge; proxied/preliminary data must always carry its badge (skill §4)."""
     if provisional:
-        return "<span class='badge-provisional'>Provisional: based on preliminary data</span>"
+        return (f"<span class='badge-provisional'>"
+                f"{label or 'Provisional: based on preliminary data'}</span>")
     return f"<span class='badge-final'>{label or 'Finalized 2023'}</span>"
 
 

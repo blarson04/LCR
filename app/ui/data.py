@@ -34,8 +34,8 @@ N_IND = len(INDICATORS)
 BUCKETS = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
 
 EDITION_KEY = "edition"
-FINAL_LABEL = "Validated (finalized 2023)"
-SPEC_LABEL = "Provisional (experimental 2025)"
+FINAL_LABEL = "2024 vintage (fully validated)"
+SPEC_LABEL = "2025 current (validated proxies)"
 
 # ---- Plain-language dictionaries -------------------------------------------
 PRETTY = {
@@ -281,7 +281,9 @@ def load() -> dict:
     # Provisional-vs-finalized ranking divergence (shown on every provisional
     # disclosure per the amended gate taxonomy, decision-log 2026-07-06).
     overlap_mean, overlap_last = float("nan"), float("nan")
-    agree = config.PROCESSED_DIR / "nowcast" / "m3_agreement.csv"
+    agree = config.PROCESSED_DIR / "nowcast" / "gate2025_agreement.csv"
+    if not agree.exists():
+        agree = config.PROCESSED_DIR / "nowcast" / "m3_agreement.csv"
     if agree.exists():
         ag = pd.read_csv(agree)
         if len(ag):
@@ -304,7 +306,7 @@ def load() -> dict:
 def is_spec(d: dict | None = None) -> bool:
     """Current edition from the global sidebar toggle."""
     choice = st.session_state.get(EDITION_KEY, FINAL_LABEL)
-    spec = str(choice).startswith("Provisional")
+    spec = str(choice) == SPEC_LABEL
     if d is not None and not d["has_spec"]:
         return False
     return spec
@@ -316,7 +318,8 @@ def edition(d: dict) -> dict:
     if is_spec(d):
         return dict(rank=d["spec_rank"], raw=d["spec_raw"], pct=d["spec_pct"],
                     year=SPEC_YEAR, provisional=True, vintage=False,
-                    badge_label=None, horizon=f"{SPEC_YEAR}→{SPEC_YEAR+3}")
+                    badge_label="Validated 2025 screen · proxied inputs",
+                    horizon=f"{SPEC_YEAR}→{SPEC_YEAR+3}")
     if d.get("has_vintage"):
         return dict(rank=d["vint_rank"], raw=d["vint_raw"], pct=d["vint_pct"],
                     year=VINTAGE_YEAR, provisional=False, vintage=True,

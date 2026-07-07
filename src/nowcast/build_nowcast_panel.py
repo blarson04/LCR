@@ -40,9 +40,9 @@ PROVENANCE = {
     "trailing_rent_growth": "fast", "cost_to_own_vs_rent": "fast",
     "permits_to_stock": "proxy",       # live permits / carried housing stock
     "net_migration": "proxy",          # PEP net domestic migration / carried population
-    "rent_to_income": "proxy",         # live rent / carried income
+    "rent_to_income": "proxy",         # live rent / state-chained income
     "job_growth": "proxy",             # CES monthly employment via FRED (v3-P1)
-    "income_growth": "carried_forward",  # AHE proxy rejected in P1 QA
+    "income_growth": "proxy",          # state-chained BEA income (v0.4, gate-passed)
     "employment_diversity": "carried_forward",
 }
 
@@ -54,19 +54,32 @@ def _latest(df: pd.DataFrame, col: str, before: int) -> pd.Series:
 
 
 def nowcast_row(year: int, panel: pd.DataFrame, ind: pd.DataFrame, pep: pd.DataFrame,
-                ces: pd.DataFrame | None = None) -> pd.DataFrame:
-    """Build the nowcast/pseudo-nowcast indicator row (one per metro) for `year`
-    using the proxy scheme (proxy_map v0.2). Shared by M2 (current year) and M3
-    (historical years) so the pseudo-nowcast test uses identical logic.
+                ces: pd.DataFrame | None = None,
+                state_growth: pd.Series | None = None) -> pd.DataFrame:
+    """Build the nowcast/pseudo-nowcast indicator row (one per metro) for `year`.
+    Shared by the current-year build and the historical pseudo-test so the gate
+    uses identical logic.
     - PEP for migration (target year if published, else latest PEP)
     - CES for job_growth (target year; carry-forward fallback where missing)
-    - slow inputs carried from before `year`."""
+    - v0.4 (state_growth passed): the income LEVEL is chained from the prior
+      finalized level by the primary state's per-capita income growth; both
+      income_growth and the rent_to_income denominator derive from it
+      (decision-log 2026-07-08 spec). Without state_growth: v0.2 flat carry.
+    - other slow inputs carried from before `year`."""
     p_y = panel[panel["year"] == year].set_index("cbsa_code")
     i_y = ind[ind["year"] == year].set_index("cbsa_code")
     pep_y = pep[pep["year"] == min(year, pep["year"].max())].set_index("cbsa_code")["pep_net_migration"]
     stock = _latest(panel, "housing_units", year)
     pop = _latest(panel, "population", year)
-    income = _latest(panel, "per_capita_income", year)
+    income = _latest(panel, "per_capita_income", year).reindex(i_y.index)
+
+    sg = None
+    if state_growth is not None:
+        st = (i_y["cbsa_title"].str.split(",").str[1].str.strip()
+              .str.split("-").str[0])
+        sg = st.map(lambda s: state_growth.get((s, year), float("nan")))
+        chained = income * (1.0 + sg)
+        income = chained.where(chained.notna(), income)   # carry fallback
 
     nc = pd.DataFrame(index=i_y.index)
     nc["cbsa_title"] = i_y["cbsa_title"]
@@ -74,7 +87,7 @@ def nowcast_row(year: int, panel: pd.DataFrame, ind: pd.DataFrame, pep: pd.DataF
     nc["cost_to_own_vs_rent"] = i_y["cost_to_own_vs_rent"]           # fast
     nc["permits_to_stock"] = p_y["permits_total"] / stock           # live permits / carried stock
     nc["net_migration"] = pep_y / pop                               # PEP proxy / carried pop
-    nc["rent_to_income"] = (p_y["zori"] * 12.0) / income            # live rent / carried income
+    nc["rent_to_income"] = (p_y["zori"] * 12.0) / income            # live rent / chained or carried income
 
     # job_growth: CES proxy for the target year, carry-forward where missing.
     jg_carry = _latest(ind, "job_growth", year)
@@ -84,8 +97,12 @@ def nowcast_row(year: int, panel: pd.DataFrame, ind: pd.DataFrame, pep: pd.DataF
             ces_y.reindex(nc.index).notna(), jg_carry.reindex(nc.index))
     else:
         nc["job_growth"] = jg_carry
-    for k in ("income_growth", "employment_diversity"):
-        nc[k] = _latest(ind, k, year)                               # carried forward
+    ig_carry = _latest(ind, "income_growth", year).reindex(nc.index)
+    if sg is not None:
+        nc["income_growth"] = sg.where(sg.notna(), ig_carry)        # state-chained
+    else:
+        nc["income_growth"] = ig_carry                              # v0.2 flat carry
+    nc["employment_diversity"] = _latest(ind, "employment_diversity", year)
     nc = nc.reset_index()
     nc["year"] = year
     return nc[ind.columns]
@@ -94,12 +111,13 @@ def nowcast_row(year: int, panel: pd.DataFrame, ind: pd.DataFrame, pep: pd.DataF
 def build_nowcast_indicators(year: int = NOWCAST_YEAR) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return (finalized indicators with `year`'s row replaced by the nowcast row,
     provenance summary)."""
-    from src.ingest import bls_ces
+    from src.ingest import bls_ces, bea
     panel = indicators.load_panel()
     ind = indicators.compute_indicators(panel)
     pep = census_pep.build_pep_migration_panel()
     ces = bls_ces.build_ces_job_growth_panel()
-    nc = nowcast_row(year, panel, ind, pep, ces)
+    sg = bea.state_pc_income_growth_panel()          # v0.4 state-chained income
+    nc = nowcast_row(year, panel, ind, pep, ces, state_growth=sg)
     ind_nc = pd.concat([ind[ind["year"] != year], nc], ignore_index=True)
     prov = pd.DataFrame([{"indicator": k, "provenance": PROVENANCE[k],
                           "weight": config.INDICATORS[k]["weight"]} for k in config.INDICATORS])
@@ -121,8 +139,37 @@ def build() -> tuple[pd.DataFrame, pd.DataFrame]:
     return ranking, prov
 
 
+def freeze_2025(ranking: pd.DataFrame) -> None:
+    """Freeze the published 2025 screen to the immutable registry (every
+    published run is frozen — the v0.4 gate PASS makes this a published run)."""
+    import json
+    from datetime import datetime, timezone
+    from src import registry
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    run_dir = config.PREDICTIONS_DIR / ts
+    run_dir.mkdir(parents=True, exist_ok=True)
+    ranking.to_csv(run_dir / "ranking.csv", index=False)
+    manifest = {
+        "timestamp_utc": ts, "model_version": config.MODEL_VERSION,
+        "git_commit": registry._git_commit(), "score_year": NOWCAST_YEAR,
+        "n_metros": int(ranking["cbsa_code"].nunique()),
+        "top_metro": ranking.iloc[0]["cbsa_title"],
+        "note": ("2025 current screen, proxy scheme v0.4 (state-chained income); "
+                 "gate PASSED 2026-07-08 at 96.56% retention / 7.43 overlap"),
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    idx = pd.DataFrame([{ "timestamp_utc": ts, "model_version": config.MODEL_VERSION,
+                          "git_commit": manifest["git_commit"], "score_year": NOWCAST_YEAR,
+                          "n_metros": manifest["n_metros"],
+                          "top_metro": manifest["top_metro"]}])
+    idx.to_csv(config.PREDICTIONS_DIR / "registry_index.csv", mode="a",
+               header=False, index=False)
+    print(f"frozen to registry: {run_dir.name}")
+
+
 def main() -> None:
     ranking, prov = build()
+    freeze_2025(ranking)
     by = prov.groupby("provenance")["weight"].sum()
     print(f"=== PROVISIONAL {NOWCAST_YEAR} nowcast ranking (NOT finalized) ===\n")
     print("Score composition by data provenance (share of total weight):")

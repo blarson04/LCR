@@ -112,12 +112,13 @@ RANDOM_SEED = 42               # set wherever randomness enters, for reproducibi
 # into every frozen prediction run so the track record is unambiguous.
 MODEL_VERSION = "2.0.0"
 
-# Whether the provisional (nowcast) edition may be shown on the site. Set by
-# gate outcomes ONLY (decision-log entries 2026-07-06): the one-shot CES re-run
-# missed the pre-committed gate (τ retention 84.7% < 85%; mean top-10 overlap
-# 6.7 < 7), so per the binding consequence the edition is pulled. Do not flip
-# this without a new pre-registered gate that passes.
-NOWCAST_PUBLISHED = False
+# Whether the current-year (proxied-input) edition may be shown on the site.
+# Set by gate outcomes ONLY. History: 74.8% FAIL (2026-07-02), 84.66% FAIL and
+# pulled (2026-07-06), then the v0.4 state-chained-income configuration PASSED
+# its one-shot pre-registered gate on 2026-07-08 (96.56% retention, 7.43/10
+# overlap) — satisfying the recorded flip condition ("a new pre-registered
+# gate that passes"). Do not change without another gate outcome.
+NOWCAST_PUBLISHED = True
 
 
 def validate_weights() -> None:

@@ -59,7 +59,11 @@ st.markdown(
     "user could have held at the time; *finalized* uses the complete revised data that "
     "arrives about two years later, and is therefore a ceiling no live user ever had.")
 
-m3_path = config.PROCESSED_DIR / "nowcast" / "m3_summary.csv"
+# The validated current configuration's pseudo-test (v0.4, gate PASSED
+# 2026-07-08); falls back to the older attempt's file if absent.
+m3_path = config.PROCESSED_DIR / "nowcast" / "gate2025_summary.csv"
+if not m3_path.exists():
+    m3_path = config.PROCESSED_DIR / "nowcast" / "m3_summary.csv"
 if m3_path.exists():
     m3 = pd.read_csv(m3_path)
     tv = m3.rename(columns={
@@ -124,7 +128,9 @@ if bl_path.exists():
     theme.caption("All rows use finalized data, so the comparison is apples-to-apples. On rank "
                   "agreement the composite's edge over pure rent momentum is within noise, but "
                   "see below for where the two differ. (The composite's real-time equivalent "
-                  "is 0.38.) The industry-style row rebuilds the equal-weight market-conditions "
+                  "is 0.42 under the validated 2025 configuration; two earlier configurations "
+                  "scored 0.33 and 0.38, failed their gates, and are published as negative "
+                  "results.) The industry-style row rebuilds the equal-weight market-conditions "
                   "scorecard format common in industry outlook reports, using the six of its "
                   "ten categories that free data can populate.")
 

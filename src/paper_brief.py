@@ -121,9 +121,14 @@ def build() -> Path:
     n_ind = len(config.INDICATORS)
     mv = config.MODEL_VERSION
 
-    # v3-P2 vintage honesty: real-time (pseudo-nowcast) equivalents.
+    # v3-P2 vintage honesty: real-time (pseudo-nowcast) equivalents. Prefer the
+    # VALIDATED v0.4 configuration's pseudo-test (gate PASSED 2026-07-08).
     vintage_bullet = ""
-    m3p = config.PROCESSED_DIR / "nowcast" / "m3_summary.csv"
+    m3p = config.PROCESSED_DIR / "nowcast" / "gate2025_summary.csv"
+    rt_label = "validated v0.4 configuration"
+    if not m3p.exists():
+        m3p = config.PROCESSED_DIR / "nowcast" / "m3_summary.csv"
+        rt_label = "v0.2 configuration (failed its gate)"
     if m3p.exists():
         m3 = pd.read_csv(m3p)
         def _g(h, r, c):
@@ -133,7 +138,7 @@ def build() -> Path:
         vintage_bullet = (
             f"- **Vintage rule (v3-P2):** every τ in this brief is a **finalized-data ceiling** "
             f"unless marked real-time. The **real-time achievable** pooled 3-yr τ — using only "
-            f"proxies/carry-forwards a user could have held at scoring time — is "
+            f"proxies a user could have held at scoring time ({rt_label}) — is "
             f"**{rt3:.3f}** ({rt3/pool3*100:.0f}% of the ceiling); pre-COVID real-time "
             f"**{rt_pc:.3f}**.\n")
 
@@ -233,12 +238,14 @@ this ex-ante rule.
 
 ## 5d. The current screen: a validated 2024 vintage, extended to 2028 (v3.1)
 
-**The three-gate arc.** Every fresher-than-finalized configuration faced the same pre-registered
+**The gate arc.** Every fresher-than-finalized configuration faced the same pre-registered
 gate (≥85% retention of pooled 3-yr τ AND ≥7/10 mean top-10 overlap), one attempt each, all
 outcomes published: 2025 nowcast **74.8% — FAIL**; +CES jobs **84.66% — FAIL** (pulled, not
 rounded up); **2024-vintage** (all finalized inputs, single PEP-migration substitution)
-**95.52% retention, 8.29/10 overlap — PASS**. The passing configuration is the site's primary
-screen: a **2024→2027 call**, refreshed each fall as new vintages land.
+**95.52% retention, 8.29/10 overlap — PASS**; **v0.4 state-chained income** (2026-07-08)
+**96.56% retention, 7.43/10 overlap — PASS**, publishing a validated **2025→2028 current
+screen** beside the 2024-vintage primary. The vintage screen is a **2024→2027 call**,
+refreshed each fall as new vintages land.
 
 **Horizon extension (disclosed-priors decision, not a blind gate — the study is the evidence).**
 `src/horizon_decay.py`: the composite *strengthens* with horizon while momentum decays —

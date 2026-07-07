@@ -17,7 +17,7 @@ only the 8 scored indicators appear here.
 
 from __future__ import annotations
 
-PROXY_MAP_VERSION = "0.2"   # v3-P1: CES employment adopted; AHE wages REJECTED on QA
+PROXY_MAP_VERSION = "0.4"   # 2026-07-08: state-chained income adopted (gate PASSED)
 
 PROXY_MAP = {
     "net_migration": {
@@ -32,21 +32,25 @@ PROXY_MAP = {
                  "fallback for the few metros without a current series",
         "validated": "P1 QA: 110/110 mapped; growth rank-agreement vs QCEW 0.90-0.96 every year"},
     "income_growth": {
-        "strategy": "carry_forward",
+        "strategy": "proxy", "proxy_source": "bea_state_chain",
         "finalized": "BEA regional income (~1.5y)",
-        "proxy": "carry forward latest finalized growth (CES avg-hourly-earnings proxy "
-                 "REJECTED in P1 QA: rank agreement vs BEA income growth only 0.0-0.26)",
-        "validated": "P1 QA rejection logged 2026-07-06"},
+        "proxy": "prior finalized metro income chained by the primary state's BEA "
+                 "per-capita income growth (states publish about a year ahead of "
+                 "metros; the earlier hourly-earnings proxy stays rejected)",
+        "validated": "v0.4 QA: rank agreement vs finalized metro income growth "
+                     "0.51-0.66 every year (mean 0.60) vs 0.11 for the flat carry; "
+                     "gate PASSED 2026-07-08 at 96.56% retention"},
     "permits_to_stock": {
         "strategy": "proxy", "proxy_source": "bps_monthly",
         "finalized": "Census BPS annual + ACS stock (~1y)",
         "proxy": "BPS monthly YTD permits annualized; housing stock carried forward",
         "validated": "stock carry-forward YoY rank corr 1.00 (M1)"},
     "rent_to_income": {
-        "strategy": "proxy", "proxy_source": "zori+projected_income",
+        "strategy": "proxy", "proxy_source": "zori+state_chained_income",
         "finalized": "ZORI + BEA income (~1.5y via income)",
-        "proxy": "current ZORI over wage-growth-projected income",
-        "validated": "pending"},
+        "proxy": "current ZORI over the state-chained income level (same chain as "
+                 "income_growth)",
+        "validated": "covered by the v0.4 gate (2026-07-08)"},
     "cost_to_own_vs_rent": {
         "strategy": "fast",
         "finalized": "ZHVI + ZORI + FRED mortgage (~weeks)", "proxy": "same — already fast"},

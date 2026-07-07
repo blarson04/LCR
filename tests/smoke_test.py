@@ -22,8 +22,9 @@ def main() -> None:
     # 1. Config invariants.
     config.validate_weights()
     assert len(config.INDICATORS) == 8, "expected the v2 de-duplicated 8-indicator model"
-    assert config.NOWCAST_PUBLISHED is False, \
-        "NOWCAST_PUBLISHED may only flip via a passed pre-registered gate"
+    assert config.NOWCAST_PUBLISHED is True, \
+        ("NOWCAST_PUBLISHED must match the latest gate outcome (v0.4 PASS, "
+         "decision-log 2026-07-08); it may only change via a new gate")
     print("config: OK")
 
     # 2. The scoring pipeline reproduces a full ranking from committed data.
@@ -37,7 +38,7 @@ def main() -> None:
     # 3. Every site page renders without exception, in both themes.
     from streamlit.testing.v1 import AppTest
     views = ["overview", "themes", "rankings", "spotlight", "metro_detail", "compare",
-             "track_record", "methodology"]
+             "track_record", "methodology", "acc_vs_spec"]
     for view in views:
         for mode in ("Light", "Dark"):
             at = AppTest.from_file(str(ROOT / "app" / "views" / f"{view}.py"),

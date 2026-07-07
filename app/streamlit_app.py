@@ -41,14 +41,18 @@ with st.sidebar:
         st.radio("Data edition", [data.FINAL_LABEL, data.SPEC_LABEL],
                  key=data.EDITION_KEY, label_visibility="collapsed")
         if data.is_spec(d):
-            st.markdown(theme.badge(provisional=True), unsafe_allow_html=True)
+            st.markdown(theme.badge(True, "Validated 2025 screen · proxied inputs"),
+                        unsafe_allow_html=True)
             st.markdown(
-                "<div class='cap' style='margin-top:.4rem'>Uses preliminary and proxy data. "
-                "In backtests this configuration <b>failed its pre-committed validation gate</b> "
-                "(kept 75% of the model's signal) and matched the validated top-10 on only "
-                f"{d['overlap_mean']:.0f} of 10 names on average "
-                f"({d['overlap_last']:.0f}/10 in the most recent year). A fix is "
-                "pre-registered.</div>", unsafe_allow_html=True)
+                "<div class='cap' style='margin-top:.4rem'>The same frozen model on "
+                "preliminary 2025 inputs (validated substitutes for migration, jobs, and "
+                "income). This configuration <b>passed its pre-registered validation "
+                "gate</b> on history: it kept 96.6% of the finalized model's signal and "
+                f"matched the finalized top-10 on {d['overlap_mean']:.1f} of 10 names on "
+                f"average ({d['overlap_last']:.0f}/10 in the hardest, shock-era year). "
+                "Two earlier configurations failed and were published as negative "
+                "results. Per-measure provenance: Methodology.</div>",
+                unsafe_allow_html=True)
     st.markdown("<div class='cap' style='margin-top:.8rem'>Appearance</div>",
                 unsafe_allow_html=True)
     st.radio("Appearance", ["Light", "Dark"], key=theme.MODE_KEY,
@@ -70,7 +74,7 @@ explore = [
 ]
 fine_print = [st.Page("views/track_record.py", title="Track record")]
 if d["has_spec"]:
-    fine_print.append(st.Page("views/acc_vs_spec.py", title="Validated vs provisional"))
+    fine_print.append(st.Page("views/acc_vs_spec.py", title="2024 vintage vs 2025 screen"))
 
 st.navigation({"The report": report, "Explore a market": explore,
                "The fine print": fine_print}).run()
