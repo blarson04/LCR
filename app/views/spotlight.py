@@ -138,9 +138,15 @@ if len(tr) and (tr.cbsa_code == code).any():
 # ---- Honesty block --------------------------------------------------------------
 n_ind = int(top.get("n_indicators", data.N_IND))
 if n_ind < data.N_IND:
-    theme.caption(f"Data note: {city} was scored on {n_ind} of {data.N_IND} measures in "
-                  "this vintage; a missing measure takes a neutral value rather than a "
-                  "guess, which if anything holds its score down.")
+    missing = [data.PRETTY[k].lower() for k in data.INDICATORS
+               if code not in raw.index or pd.isna(raw.loc[code].get(k))]
+    which = ", ".join(missing) if missing else "one measure"
+    theme.caption(f"Data note: {city} was scored on {n_ind} of {data.N_IND} measures; "
+                  f"{which} is unavailable for this market and takes a neutral (exactly "
+                  f"average) value rather than a guess. That fill is neutral, not "
+                  f"conservative: had the real value been below average, the market would "
+                  f"rank lower than shown, so lean on the rank range rather than the "
+                  f"single rank.")
 if int(top["rank_hi"]) > 1:
     theme.caption(f"A #1 rank is a screening result, not a verdict: under reasonable "
                   f"alternative weightings this market ranks as low as "
