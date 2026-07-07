@@ -106,12 +106,15 @@ if es_path.exists():
         hide_index=True, use_container_width=True)
     cm, mm = piv["Composite (model)"], piv["Momentum (trailing rent)"]
     theme.caption(
-        f"Pooled: this screen's top-10 beat the median market by {cm.mean():+.1f} pp of 3-year "
-        f"rent growth (momentum {mm.mean():+.1f} pp). The difference shows in the 2021–22 shock: "
-        f"momentum's picks flipped to {mm.loc[2021]:+.1f} and {mm.loc[2022]:+.1f} pp while this "
-        f"screen's held at {cm.loc[2021]:+.1f} and {cm.loc[2022]:+.1f} pp. Even after stripping "
-        f"out what momentum already knows, the screen still adds predictive signal — though the "
-        f"two miss on many of the same markets, so the protection is partial.")
+        f"Rows are completed 3-year windows labeled by start year — 2022 (covering 2022–25) is "
+        f"the most recent that has finished; the current screen's own window (2024–27) is "
+        f"graded when 2027 data closes. Pooled: this screen's top-10 beat the median market by "
+        f"{cm.mean():+.1f} pp of 3-year rent growth (momentum {mm.mean():+.1f} pp). The "
+        f"difference shows in the 2021–22 shock: momentum's picks flipped to {mm.loc[2021]:+.1f} "
+        f"and {mm.loc[2022]:+.1f} pp while this screen's held at {cm.loc[2021]:+.1f} and "
+        f"{cm.loc[2022]:+.1f} pp. Even after stripping out what momentum already knows, the "
+        f"screen still adds predictive signal — though the two miss on many of the same markets, "
+        f"so the protection is partial.")
 
 # ---- Honest uncertainty ---------------------------------------------------------
 st.markdown("## How sure are we?")

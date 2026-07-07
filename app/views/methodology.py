@@ -74,13 +74,15 @@ if pp_win is not None and len(pp_win):
     figp.update_traces(marker_color=[theme.POS if v >= 0 else theme.NEG
                                      for v in pp_win["top10_pp_vs_median"]],
                        marker_line_width=0)
-    figp.update_xaxes(title=None, dtick=1)
+    figp.update_xaxes(title="3-year window, by start year", dtick=1)
     figp.update_yaxes(title="Top-10 edge (pp, 3-yr)")
     st.plotly_chart(theme.style_fig(figp, 230), use_container_width=True)
-    theme.caption("Per backtest window: the top-10's extra 3-year rent growth vs the median "
-                  "market. Four calm windows between +6.6 and +12.2 points; roughly flat in "
-                  "the 2021–22 shock — where a pure rent-momentum strategy flipped firmly "
-                  "negative.")
+    theme.caption("Each bar is a completed 3-year backtest window, labeled by its start year — "
+                  "the 2022 bar covers 2022–25 and is the most recent window that has finished. "
+                  "Four calm windows came in between +6.6 and +12.2 points; the 2021–22 shock "
+                  "windows were roughly flat, where a pure rent-momentum strategy flipped firmly "
+                  "negative. The current screen's own window (2024–27) is graded when 2027 "
+                  "data closes.")
 st.markdown("[See the rankings](rankings) · [Full track record & every caveat](track_record)")
 theme.caption("A research screen, not a forecast: numbers above use finalized data (the "
               "real-time equivalent is about 15% lower), windows overlap, and shock periods "
@@ -111,8 +113,8 @@ else:
     tcol = st.container()
 with tcol:
     st.markdown("""
-I'm a student at **Indiana University** majoring in **economics and applied mathematics**, with
-a strong interest in **data analytics and real estate**.
+I'm **Ben Larson**, a student at **Indiana University** majoring in **economics and applied
+mathematics**, with a strong interest in **data analytics and real estate**.
 
 I built this screener to put that interest to work: to learn what public data can honestly say
 about rental markets, and to practice doing research the right way — documented methods,
