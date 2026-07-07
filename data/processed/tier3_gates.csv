@@ -1,0 +1,6 @@
+candidate,standalone_tau_3y,max_abs_corr,top_corr_indicator,value_add_delta_tau,ci_lo,ci_hi,auto_orient_flipped,adopted
+C1 CREMI MF absorption,0.085,0.115,cost_to_own_vs_rent,-0.027,-0.068,0.015,False,False
+C2 CREMI MF NOI,0.083,0.419,trailing_rent_growth,-0.021,-0.058,0.011,False,False
+C3 CREMI MF asset price,0.186,0.263,trailing_rent_growth,-0.011,-0.04,0.016,False,False
+C6a delta rental_vacancy,0.072,0.078,rent_to_income,-0.051,-0.097,-0.0,False,False
+C6b delta unemployment (MSAUR),0.218,0.177,job_growth,0.012,-0.011,0.038,True,False

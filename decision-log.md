@@ -25,6 +25,33 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-07 — v3 build-spec Phase 3 OUTCOME: all five candidates FAIL the gate → 0 adoptions, model stays frozen v2.0.0
+
+The one-shot runs (execution spec immediately below) are complete; output `data/processed/tier3_gates.csv`; full write-up `paper/v3-findings.md`. **No candidate passed all three prongs — the model remains the frozen 8-indicator v2.0.0, no version bump, no regeneration.** This is within the pre-registered expectation ("0–2 adoptions; most will fail, as P5–P7 did").
+
+| Candidate | standalone 3y τ (>0.10) | max \|corr\| (<0.70) | value-add Δτ @10% | 95% CI (excl. 0) | verdict |
+| --- | --- | --- | --- | --- | --- |
+| C1 CREMI MF absorption | 0.085 ✗ | 0.115 ✓ | −0.027 | [−0.068, +0.015] ✗ | reject → context |
+| C2 CREMI MF NOI | 0.083 ✗ | 0.419 ✓ | −0.021 | [−0.058, +0.011] ✗ | reject → context |
+| C3 CREMI MF asset price | 0.186 ✓ | 0.263 ✓ | −0.011 | [−0.040, +0.016] ✗ | reject → context |
+| C6a Δ rental vacancy | 0.072 ✗ | 0.078 ✓ | −0.051 | [−0.097, −0.000] ✗ | reject |
+| C6b Δ unemployment (MSAUR) | 0.218 ✓ (flipped) | 0.177 ✓ | +0.012 | [−0.011, +0.038] ✗ | reject → context |
+
+Notes, all disclosed: (1) **C2 (NOI), the pre-registered "one to watch," failed on standalone signal** (τ 0.083); its top correlation (+0.42 with `trailing_rent_growth`) is exactly the NOI ≈ rents − expenses redundancy the spec flagged as the concern. (2) **C3 has real standalone signal (τ 0.186) but adds nothing** the composite doesn't already have — consistent with the P5 finding that appreciation tracks trailing rents. (3) **C6b was auto-orient FLIPPED**: *rising* unemployment in the scoring year predicted stronger 3-yr forward rent growth (τ 0.218) — a counter-cyclical mean-reversion artifact of the 2015–2024 sample (shock-year recoveries), the strongest standalone candidate of the five, yet still no reliable value-add. (4) C6a's value-add CI sits essentially entirely below zero — adding Δ-vacancy would *hurt*. Consequence: CREMI series remain available as context (via `src/ingest/cremi.py`); any site surfacing is a Phase 6 presentation decision. The recurring result now spans eight gated candidates over two cycles: **no new free signal has reliably improved the frozen composite** — the parsimony is earned, and the gate keeps doing its job. Negative result publishes (this entry + findings doc; paper-brief integration lands with Phase 7).
+
+### 2026-07-07 — v3 build-spec Phase 3 EXECUTION SPEC (logged BEFORE the one-shot gate runs)
+
+Fixes the exact candidate constructions before any accuracy is computed, per the no-gate-shopping guardrail. Gate mechanics are the frozen v2 gate verbatim (within-year z across the panel universe; standalone pooled 3-yr τ > 0.10 AND max |corr| vs the 8 scored indicators < 0.70 AND value-add at fixed 10% augmentation weight with metro-cluster bootstrap CI (B=800, seed 42) excluding 0; one attempt per candidate; both outcomes published). Code: `tier2_gate.gate()` extended with an external-`frame` path (CREMI sources are not panel columns); the extension was regression-verified to reproduce the spent P6 gate's path exactly on today's panel before this entry (equipment check, not a gate re-run — the P6 verdict stands).
+
+**Candidate frames (one attempt each, output `tier3_gates.csv`):**
+- **C1** = CREMI Multifamily `Absorption.Units` annual (calendar-mean of quarterly) sub-index value, as published. Prior orientation: higher = better.
+- **C2** = CREMI Multifamily `NOI.Index` annual sub-index value, as published. Higher = better. (CREMI publishes these as standardized sub-index values, so the published level IS the growth signal; no additional differencing.)
+- **C3** = CREMI Multifamily `Asset.Value` annual sub-index value, as published. Higher = better.
+- **C6a** = 1-yr delta of panel `rental_vacancy` (ACS). Deltas only across consecutive years — the 2020 ACS gap means no 2020 or 2021 delta (a naive diff would silently produce a 2-yr delta; guarded). Rising = worse.
+- **C6b** = 1-yr delta of CREMI `MSAUR` annual value, same consecutive-year guard. Rising = worse.
+
+`auto_orient` stays enabled exactly as in the v2 gate (any flip is disclosed in the output). CREMI's two missing metros (Cleveland, Dayton) take the standard neutral fill (candidate z = 0) in the value-add leg. Nothing in this entry was informed by any predictive computation on any candidate.
+
 ### 2026-07-07 — v3 build-spec Phase 2 complete: candidate coverage audit (no accuracy computed)
 
 Acquisition + coverage only, per the Phase 0 separation. Results (full table: `data/candidate_coverage.md`): **C1/C2/C3** (CREMI multifamily absorption, NOI, asset price) — 108/110 coverage, 1995–2026Q1 → proceed to Phase 3 gates. **C6a** (Δ vacancy, from panel, 110/110) and **C6b** (Δ unemployment via CREMI MSAUR, 108/110) → proceed. **C4 ZORDI** — 110/110 but history starts 2020-06 → killed for the annual model exactly as pre-registered (live-layer candidate only). **C5 insurance burden** — rejected on acquisition: no ACS summary table exists (IPUMS microdata requires a registered extract, failing free reproducibility); the expense channel is partially covered by C2. Also observed and logged, NOT candidates (list closed): CREMI carries metro `Market.Cap.Rate` and `Occupancy.Rate` — free metro cap rates soften a stated limitation; candidacy would need a new dated entry. Phase 3 (five gates, one attempt each) and Phase 4 (industry baseline) may now run.

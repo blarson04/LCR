@@ -44,15 +44,33 @@ def _standalone_tau(cand, py, zori):
     return float(st[(st.horizon == 3) & (st.regime == "POOLED")]["mean_tau"].iloc[0])
 
 
-def gate(name: str, panel_col: str, *, inverse: bool, weight: float = 0.10,
+def gate(name: str, panel_col: str | None = None, *, frame: pd.DataFrame | None = None,
+         inverse: bool, weight: float = 0.10,
          B: int = 800, auto_orient: bool = True):
+    """Run the three-part gate on a candidate.
+
+    The candidate is either a raw panel column (`panel_col`, the original v2
+    path) or an external frame (`frame`: cbsa_code, year, cand — the v3 Tier-3
+    path for non-panel sources like CREMI). External values are restricted to
+    the panel's metro-years before the within-year z-score, so normalization is
+    always across our universe.
+    """
+    if (panel_col is None) == (frame is None):
+        raise ValueError("pass exactly one of panel_col or frame")
     panel = indicators.load_panel().sort_values(["cbsa_code", "year"])
     norm = normalize.normalize()
     scored = score_mod.score()
     zori = backtest._zori_lookup()
     py = backtest.usable_pred_years(scored)
 
-    cz = _zwithin(panel[panel_col], panel["year"])
+    if frame is not None:
+        merged_vals = panel[["cbsa_code", "year"]].merge(
+            frame[["cbsa_code", "year", "cand"]], on=["cbsa_code", "year"],
+            how="left")["cand"].to_numpy()
+        raw = pd.Series(merged_vals, index=panel.index)
+    else:
+        raw = panel[panel_col]
+    cz = _zwithin(raw, panel["year"])
     if inverse:
         cz = -cz                                      # flip so higher = better
     cand = panel[["cbsa_code", "year"]].copy()
