@@ -25,6 +25,17 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-07 — v3 build-spec Phase 0: pre-registration of the Tier-3 candidate gates and the industry baseline
+
+`v3-build-spec.md` (committed 03eddef) folds the Arbor–Chandan benchmark review into a phased build. **Reconciliation first, because the spec was drafted before this week's execution:** its Phase 1 is complete and partially superseded — P1.1's CES re-run was executed 2026-07-06 (**FAIL, 84.66%**, edition pulled) and the staleness problem was subsequently solved by the **lagged-vintage gate (PASS, 95.52%)**; the CES gate is spent and **must not be re-run**. P1.2/P1.3 (vintage-honest reporting, temporal uncertainty) and all of Phase 5 (momentum orthogonality, pp effect sizes, ex-ante regime flag) shipped this week. Phase 6's carried Tier-3 items are largely done or superseded by the vintage edition; the §4 presentation adoptions and Phase 7 remain.
+
+**Frozen NOW, before any coverage or accuracy work (this entry is the Phase 0 deliverable):**
+
+1. **Candidate list, verbatim from spec §2, closed:** C1 CREMI multifamily absorption sub-index; C2 CREMI multifamily NOI-growth sub-index; C3 CREMI asset-price sub-index; C4 ZORDI (evaluated in a future nowcast/live layer only, never the annual model); C5 ACS/IPUMS insurance burden (default: context layer; score entry only via gate); C6 one-year deltas of vacancy and unemployment. No additions without a new dated entry.
+2. **Gate, verbatim from v2:** standalone predictive τ → redundancy vs existing indicators → value-add at a fixed 10% augmentation weight with metro-cluster bootstrap CI; adopt only if standalone τ > 0.10 AND max |corr| < 0.70 AND value-add CI excludes 0. One attempt per candidate. Expected outcome: most fail, as P5–P7 did.
+3. **Coverage kill-rule:** any candidate covering fewer than **100 of the 110 metros** after CBSA mapping is rejected on coverage before any accuracy is computed. Phase 2 (acquisition + coverage audit) is strictly separated from Phase 3 (gates) so coverage decisions cannot be contaminated by predictive peeking.
+4. **Industry-baseline replication spec (§3):** an Arbor-style equal-weighted conditions index on our 110-metro universe, free components only, run through the standard walk-forward vs 3-yr forward rent growth and added to the baseline table with a bootstrap CI on the gap vs the composite, plus its correlation with `trailing_rent_growth` (prediction, logged now: high). **Known deviations, disclosed in advance:** the proprietary capital-markets block (~10%) is omitted; ZORDI history is likely too short for annual walk-forward windows and may be excluded; category mapping onto our universe is approximate; equal weights are used because that is the practice under test — never as a scheme to adopt. The replica will not be tuned in either direction after first results.
+
 ### 2026-07-07 — Horizon-extension publication decision (disclosed priors; not a blind gate)
 
 **Question (author):** how far ahead can we publish before reliability fails? **Study:** `src/horizon_decay.py` (output `data/processed/horizon_decay.csv`) evaluates the composite, the 2024-vintage configuration, and momentum at horizons 1–6.
