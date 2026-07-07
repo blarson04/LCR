@@ -111,3 +111,14 @@ overlap ≥ 7/10 → **FAIL — published as a negative result; surfaced only as
 
 ### Decision
 Gate **NOT MET on the pre-committed one-shot CES re-run** (decision log 2026-07-06). Per the binding consequence, the provisional edition is **pulled from the site**, and no further proxy iterations may run without a new pre-registered specification. This is published negative result #2.
+
+
+---
+
+## V — Lagged-vintage gate (v3.1 spec, 2026-07-07; one shot)
+
+Configuration: all-finalized inputs, single substitution (PEP migration / ACS population).
+Result: pooled 3-yr τ **0.424** vs finalized **0.444** → retention
+**95.52%** (gate ≥ 85%); mean top-10 overlap **8.29/10**
+(gate ≥ 7). Gap 95% CI [-0.003, +0.035].
+**PASS — the 2024-vintage screen publishes as a VALIDATED current screen (2024→2027), vintage-labeled and registry-frozen.**

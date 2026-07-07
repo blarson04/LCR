@@ -25,6 +25,12 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-07 — v3.1 gate OUTCOME: **PASS** → the 2024-vintage screen is validated for publication
+
+The one-shot run (spec immediately below) passed both prongs with margin: retention **95.52%** (0.424 vs 0.444 pooled 3-yr τ; gap 95% CI [−0.003, +0.035] — statistically near-indistinguishable from the finalized model) and mean top-10 overlap **8.29/10** (per-year 6–10). Consequence executed: the **2024-vintage screen (a 2024→2027 call, vintage-labeled)** becomes the validated current screen — built, frozen to the registry, and published on the site as the primary cross-section, with the 2023 fully-finalized screen retained for the track record. The provisional-nowcast pull of 2026-07-06 is unaffected (`NOWCAST_PUBLISHED` stays false; that was a different, current-year-proxy configuration).
+
+The three-gate arc is now complete and public: **74.8% (fail) → 84.66% (fail by 0.34, pulled) → 95.52% (pass)** — each attempt pre-registered, each outcome published, the design fixed between attempts by diagnosis rather than threshold-shopping.
+
 ### 2026-07-07 — v3.1 "lagged-vintage screen" specification (logged BEFORE its one-shot gate run)
 
 **Motivation (author):** a 2023→2026 screen is ~80% elapsed — no business can act on it. Rather than re-iterating current-year proxies, we move the *vintage*: ACS 2024 (Sep 2025) and BEA county income 2024 (Nov 2025) are now published, so a **2024-vintage screen (a 2024→2027 call, roughly half remaining)** can be built almost entirely on finalized data. Ingest windows extended accordingly (ACS1 + BEA through 2024; panel rebuilt — 2024 row: population/stock/income 110/110, QCEW jobs/pay/HHI 108/110, rents/permits complete).

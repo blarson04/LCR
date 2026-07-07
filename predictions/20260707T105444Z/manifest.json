@@ -1,0 +1,40 @@
+{
+  "timestamp_utc": "20260707T105444Z",
+  "model_version": "2.0.0",
+  "git_commit": "0164c75",
+  "score_year": 2024,
+  "run_type": "validated_lagged_vintage",
+  "gate": {
+    "spec": "decision-log 2026-07-07 (v3.1)",
+    "retention": 0.9552,
+    "mean_top10_overlap": 8.29,
+    "result": "PASS"
+  },
+  "substitutions": {
+    "net_migration": "Census PEP / ACS population",
+    "qcew_gap_carry": [
+      "job_growth",
+      "income_growth",
+      "employment_diversity",
+      "(Cleveland, Dayton only)"
+    ]
+  },
+  "n_metros": 110,
+  "top_metro": "Dayton-Kettering-Beavercreek, OH",
+  "top_score": 0.478665454961763,
+  "weights": {
+    "net_migration": 0.2,
+    "job_growth": 0.12,
+    "income_growth": 0.08,
+    "permits_to_stock": 0.25,
+    "rent_to_income": 0.12,
+    "cost_to_own_vs_rent": 0.08,
+    "trailing_rent_growth": 0.1,
+    "employment_diversity": 0.05
+  },
+  "files": {
+    "panel_snapshot.parquet": "ecfd29fbef2c10fac7c64bd9a42f61950d7d1dfd79bc974357bd9ad831ed1218",
+    "ranking.csv": "e04ec26f745b2a7c6310ed50794ac4d9f7a3d83c33ef12a2f5069ef3bb9710b2",
+    "scores.parquet": "a6e9137688660aff268e5a84e5f6aa49c287488494168c7d243d62fdf2247f55"
+  }
+}

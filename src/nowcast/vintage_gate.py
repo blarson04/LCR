@@ -106,8 +106,9 @@ def main():
     print(f"  3y pooled tau: finalized {r['fin_tau']:.3f}  vintage {r['v_tau']:.3f}  "
           f"retention {r['retention']*100:.2f}%")
     print(f"  gap 95% CI [{r['gap_ci'][0]:+.3f}, {r['gap_ci'][1]:+.3f}]")
-    print(f"  per-year top-10 overlap: "
-          f"{', '.join(f\"{int(a.year)}:{int(a.top10_overlap)}\" for a in r['agree'].itertuples())}")
+    per_year = ", ".join(f"{int(a.year)}:{int(a.top10_overlap)}"
+                         for a in r["agree"].itertuples())
+    print(f"  per-year top-10 overlap: {per_year}")
     print(f"  mean top-10 overlap {r['mean_overlap']:.2f}/10")
     print(f"\n  GATE (>= {GATE_TAU_RETENTION:.0%} retention AND >= {GATE_MIN_TOP10:.0f}/10): "
           f"{'PASS' if r['passed'] else 'FAIL'}")
