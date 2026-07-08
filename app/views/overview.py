@@ -125,13 +125,14 @@ if pp_win is not None and len(pp_win):
     figp.update_xaxes(title="3-year window, by start year", dtick=1)
     figp.update_yaxes(title="Top-10 edge (points of rent growth)")
     st.plotly_chart(theme.style_fig(figp, 240), use_container_width=True)
-    theme.caption("Four calm windows came in between +6.6 and +12.2 points; the 2021–22 "
-                  "shock windows were roughly flat, where a pure rent-momentum strategy "
-                  "flipped firmly negative. Each published screen is "
-                  "graded when its end-year data closes (2028 for the current 2025→2028 "
-                  "screen; 2027 for the 2024 vintage). Numbers use finalized data; the validated "
-                  "real-time configuration keeps about 97% of this signal. Full "
-                  "validation: see Track record.")
+    calm = pp_win[pp_win["pred_year"] <= 2019]["top10_pp_vs_median"]
+    theme.caption(f"Four calm windows came in between {calm.min():+.1f} and "
+                  f"{calm.max():+.1f} points; the 2021–22 shock windows were roughly "
+                  "flat, where a pure rent-momentum strategy flipped firmly negative. "
+                  "Each published screen is graded when its end-year data closes (2028 "
+                  "for the current 2025→2028 screen; 2027 for the 2024 vintage). Numbers "
+                  "use finalized data; the validated real-time configuration keeps about "
+                  "97% of this signal. Full validation: see Track record.")
 
 # ---- Reading order ---------------------------------------------------------------
 st.markdown("## Read the report")

@@ -55,7 +55,20 @@ _AGG_SECTOR_COUNTY = 74
 # (data-repair spec, decision-log 2026-07-07 D2/D3).
 QCEW_YEAR_AWARE_OVERRIDES = {"19430": ("C1938", "C1943")}   # (<=2023, >=2024)
 QCEW_NEW_CODE_FROM = 2024
-QCEW_COUNTY_ROLLUP = {"17410", "28880"}   # Cleveland OH, Kiryas Joel-Poughkeepsie NY
+# Metros whose 2023-delineation composition differs from their pre-2024 QCEW
+# area files (verified against current-boundary county sums, decision-log
+# 2026-07-08 D6): the area files would splice two boundaries mid-series, so
+# these are built from county files on the current boundary for ALL years.
+QCEW_COUNTY_ROLLUP = {
+    "17410",   # Cleveland OH        (D3: new definition adds Ashtabula)
+    "28880",   # Poughkeepsie NY     (D2: no pre-2024 MSA file)
+    "35380",   # New Orleans LA      (D6: 2024 file -16.9% fake growth)
+    "23420",   # Fresno CA           (D6: +15.6% fake growth; Madera absorbed)
+    "49340",   # Worcester MA        (D6: -9.8% fake; lost CT portion)
+    "36260",   # Ogden UT            (D6: -7.3% fake)
+    "27140",   # Jackson MS          (D6: +7.2% fake)
+    "39900",   # Reno NV             (D6: +6.1% fake)
+}
 
 
 def qcew_area_code(cbsa_code: str, year: int | None = None) -> str:

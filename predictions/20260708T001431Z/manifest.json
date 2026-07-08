@@ -1,0 +1,9 @@
+{
+  "timestamp_utc": "20260708T001431Z",
+  "model_version": "2.0.0",
+  "git_commit": "05135f3",
+  "score_year": 2025,
+  "n_metros": 110,
+  "top_metro": "Albany-Schenectady-Troy, NY",
+  "note": "2025 current screen, proxy scheme v0.4 (state-chained income); gate PASSED 2026-07-08 at 96.56% retention / 7.43 overlap"
+}
