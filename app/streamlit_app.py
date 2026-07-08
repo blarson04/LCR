@@ -45,13 +45,9 @@ with st.sidebar:
                         unsafe_allow_html=True)
             st.markdown(
                 "<div class='cap' style='margin-top:.4rem'>The same frozen model on "
-                "preliminary 2025 inputs (validated substitutes for migration, jobs, and "
-                "income). This configuration <b>passed its pre-registered validation "
-                "gate</b> on history: it kept 96.6% of the finalized model's signal and "
-                f"matched the finalized top-10 on {d['overlap_mean']:.1f} of 10 names on "
-                f"average ({d['overlap_last']:.0f}/10 in the hardest, shock-era year). "
-                "Two earlier configurations failed and were published as negative "
-                "results. Per-measure provenance: Methodology.</div>",
+                "preliminary 2025 inputs. This configuration <b>passed its "
+                "pre-registered validation gate</b>, keeping 96.6% of the finalized "
+                "model's signal. Details: Methodology.</div>",
                 unsafe_allow_html=True)
     st.markdown("<div class='cap' style='margin-top:.8rem'>Appearance</div>",
                 unsafe_allow_html=True)

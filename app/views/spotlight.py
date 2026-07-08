@@ -85,8 +85,8 @@ if drag != data.NO_DRAG:
     detail_lines.append(f"- **The drag: {drag.lower()}** ({contribs[neg_b]:+.2f}); "
                         "no market in the top ten is strong everywhere.")
 st.markdown("\n".join(detail_lines))
-theme.caption("Contributions are in standardized units (0 = the average market that year). "
-              "Percentiles compare against all markets in the same scoring year.")
+theme.caption("Contributions are in standardized units (0 = the average market); "
+              "percentiles compare all markets in the same scoring year.")
 
 # ---- Rents vs the national median ----------------------------------------------
 tr = d["rent_trend"]
@@ -132,9 +132,9 @@ if len(tr) and (tr.cbsa_code == code).any():
     else:
         trend_txt = (f"{city} out-grew the national median in {last12} of the last "
                      f"12 months (through {latest}).")
-    theme.caption(trend_txt + " Monthly Zillow rent index, year-over-year; the national "
-                  "line is the median of the 110 screened markets. Rent history describes "
-                  "the past; the rank comes from the forward-looking fundamentals above.")
+    theme.caption(trend_txt + " Zillow rent index, year over year; the national line is "
+                  "the median of the screened markets. History describes the past — the "
+                  "rank comes from the fundamentals above.")
 
 # ---- Honesty block --------------------------------------------------------------
 n_ind = int(top.get("n_indicators", data.N_IND))
@@ -143,16 +143,12 @@ if n_ind < data.N_IND:
                if code not in raw.index or pd.isna(raw.loc[code].get(k))]
     which = ", ".join(missing) if missing else "one measure"
     theme.caption(f"Data note: {city} was scored on {n_ind} of {data.N_IND} measures; "
-                  f"{which} is unavailable for this market and takes a neutral (exactly "
-                  f"average) value rather than a guess. That fill is neutral, not "
-                  f"conservative: had the real value been below average, the market would "
-                  f"rank lower than shown, so lean on the rank range rather than the "
-                  f"single rank.")
+                  f"{which} is unavailable and takes a neutral (average) fill, which can "
+                  f"flatter or understate it — lean on the rank range.")
 if int(top["rank_hi"]) > 1:
-    theme.caption(f"A #1 rank is a screening result, not a verdict: under reasonable "
-                  f"alternative weightings this market ranks as low as "
-                  f"#{int(top['rank_hi'])}, so read the top of the table as a group of "
-                  f"strong candidates rather than a single winner.")
+    theme.caption(f"A #1 rank is a screening result, not a verdict: under alternative "
+                  f"weightings this market ranks as low as #{int(top['rank_hi'])}. Read "
+                  f"the top of the table as a group of strong candidates.")
 else:
     theme.caption("A #1 rank is a screening result, not a verdict; treat the top of the "
                   "table as a group of strong candidates.")

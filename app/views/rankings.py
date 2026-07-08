@@ -41,40 +41,35 @@ st.markdown("# Full rankings")
 if ed.get("vintage"):
     theme.caption(
         f"Where all {len(rank)} markets stand: a {ed['horizon']} screen scored on "
-        f"{ed['year']} data, the newest vintage validated for publication (its "
-        f"configuration passed a pre-registered gate at 95.5% signal retention; see "
-        f"Track record).")
+        f"{ed['year']} data, the newest vintage validated for publication (see Track "
+        f"record).")
 else:
     theme.caption(
         f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
         f"rent growth: a {ed['horizon']} screen scored on "
         + ("preliminary data for the current year." if ed["provisional"]
-           else f"{ed['year']} fundamentals, the latest finalized vintage (the slowest federal "
-                f"inputs publish about two years late, so much of the {ed['horizon']} forecast "
-                f"window has already elapsed)."))
+           else f"{ed['year']} fundamentals, the latest finalized vintage (slow federal "
+                f"inputs mean much of its forecast window has already elapsed)."))
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 if ed.get("vintage"):
-    theme.caption(f"Extended horizon: this same ranking is also supported one year further "
-                  f"out ({ed['year']}→{ed['year']+4}). In backtests the 4-year view was, if "
-                  f"anything, stronger (top-10 edge +8.4 points of rent growth vs +6.0 at "
-                  f"3 years). Beyond that we do not publish: the data cannot validate it.")
+    theme.caption(f"This ranking is also supported one year further out "
+                  f"({ed['year']}→{ed['year']+4}); the 4-year view backtested slightly "
+                  f"stronger. Beyond that the data cannot validate.")
 
 if not ed["provisional"]:
     # Ex-ante rule only (v3-P6): no hindsight regime labels feed the flag.
     if d["nat_growth"] > config.REGIME_FLAG_THRESHOLD:
-        theme.caption(f"Elevated-uncertainty flag: national rent growth in the {ed['year']} "
-                      f"scoring year was {d['nat_growth']:+.1%}, above the "
-                      f"{config.REGIME_FLAG_THRESHOLD:.1%} rule. In the two historical years "
-                      f"this flag fired (2021–22), the screen's accuracy broke down. This "
+        theme.caption(f"Elevated-uncertainty flag: national rent growth in {ed['year']} was "
+                      f"{d['nat_growth']:+.1%}, above the "
+                      f"{config.REGIME_FLAG_THRESHOLD:.1%} rule; in the two years this flag "
+                      f"fired historically (2021–22), the screen's accuracy broke down. It "
                       f"describes the vintage year, not today.")
     else:
-        theme.caption(f"Conditions in the {ed['year']} scoring year looked typical (national "
+        theme.caption(f"Conditions in the {ed['year']} scoring year looked typical: national "
                       f"rent growth {d['nat_growth']:+.1%}, under the "
-                      f"{config.REGIME_FLAG_THRESHOLD:.1%} flag rule), inside the framework's "
-                      f"validated range. This describes the vintage year, not today. "
-                      f"Flag rule, published and tested on history: it fires only in 2021–22 ("
-                      f"exactly the windows where accuracy broke) with no false alarms; it did "
-                      f"not catch 2020, a shock that never moved rents.")
+                      f"{config.REGIME_FLAG_THRESHOLD:.1%} uncertainty-flag rule (a published "
+                      f"rule that fires only in the two years the screen's accuracy broke). "
+                      f"It describes the vintage year, not today.")
 st.write("")
 
 # ---- Headline: the map --------------------------------------------------------
@@ -102,9 +97,8 @@ fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=10, len=0.6,
                                           tickfont=dict(color=theme.MUTED)))
 st.plotly_chart(theme.style_fig(fig, 470), use_container_width=True)
 top3 = [t.split(",")[0].split("-")[0] for t in rank.head(3)["cbsa_title"]]
-theme.caption(f"Darker green = stronger fundamentals. {top3[0]} leads the {ed['year']} "
-              f"screen; {top3[1]} and {top3[2]} round out the top three. The top 10 with "
-              f"their strengths are on the Overview page; every market's rank, range, and "
+theme.caption(f"Darker green = stronger fundamentals. {top3[0]} leads; {top3[1]} and "
+              f"{top3[2]} round out the top three. Every market's rank, range, and "
               f"drivers are in the table below.")
 
 # ---- Tiers: the headline object (P2) ------------------------------------------
@@ -112,9 +106,8 @@ has_tiers = ("tier" in rank.columns) and (rank["tier"].fillna("") != "").any()
 if has_tiers:
     st.markdown("## The tiers")
     theme.caption(
-        "Single ranks overstate precision: the two fastest-moving inputs (job and income "
-        "growth) are noisy year to year, so each market gets a 90% rank range and a tier. "
-        "Markets in the same tier are better read as peers than as an ordering.")
+        "Single ranks overstate precision, so each market gets a 90% rank range and a "
+        "tier. Markets in the same tier are peers, not an ordering.")
     tier_rows = ""
     for t in data.TIER_ORDER:
         members = rank[rank["tier"] == t]
@@ -134,10 +127,9 @@ if has_tiers:
             f"<div class='cap'>{detail}</div></div>")
     st.markdown(tier_rows, unsafe_allow_html=True)
     lead_n = int((rank["tier"] == "Leading cluster").sum())
-    theme.caption(f"Tier rule, applied the same way every edition: a market joins the "
-                  f"Leading cluster when its range reaches the top 10 and its typical rank "
-                  f"sits in the top quarter; the other tiers band by typical rank. "
-                  f"{lead_n} markets make the current Leading cluster.")
+    theme.caption(f"The tier rule is fixed across editions: a market joins the Leading "
+                  f"cluster when its range reaches the top 10 and its typical rank sits "
+                  f"in the top quarter. {lead_n} markets currently qualify.")
 
 # ---- Full table (progressive disclosure) -------------------------------------
 with st.expander(f"See all {len(rank)} markets"):
@@ -204,20 +196,15 @@ with st.expander(f"See all {len(rank)} markets"):
                          help="Rank change since the frozen 2023 edition; positive "
                               "means the market moved up.")})
     n_short = int((rank["n_indicators"] < n_total).sum())
-    change_note = ("The 'vs 2023' column compares against the frozen prior edition (its "
-                   "ranks were locked when published, so the comparison cannot be "
-                   "rewritten). A move inside a market's rank range is noise, not a trend. "
+    change_note = ("The 'vs 2023' column compares against the frozen prior edition; a "
+                   "move inside a market's rank range is noise, not a trend. "
                    if show_change else "")
-    short_note = (f" {n_short} markets are missing one or two measures at the data "
-                  f"source; each missing measure takes a neutral (average) value rather "
-                  f"than a guess, which can flatter or understate that market, so lean "
-                  f"on their rank ranges rather than their exact ranks."
+    short_note = (f" {n_short} markets are missing a measure at the source and take a "
+                  f"neutral fill; lean on their ranges."
                   if n_short else "")
-    theme.caption(f"Rank ranges are 90% intervals under measured input noise; treat this "
-                  f"as a screen, not a precise ordering. {change_note}"
-                  f"Strength and drag are the themes that helped or hurt each market's "
-                  f"score the most; 'no material drag' is common among top-ranked "
-                  f"markets and means exactly that, not missing data.{short_note}")
+    theme.caption(f"Treat this as a screen, not a precise ordering: ranges are 90% "
+                  f"intervals under measured input noise. {change_note}"
+                  f"Column headers explain each field on hover.{short_note}")
 
 # ---- Diverging bars: every market against the average -------------------------
 with st.expander("Every market against the average"):
@@ -253,8 +240,7 @@ with st.expander("Every market against the average"):
     lead, trail = rank.iloc[0], rank.iloc[-1]
     theme.caption(f"{lead['cbsa_title'].split(',')[0]} leads at {lead['score']:+.2f}; "
                   f"{trail['cbsa_title'].split(',')[0]} trails at {trail['score']:+.2f}. "
-                  f"Scores are in standardized units, so the spread between markets "
-                  f"matters more than any single value.")
+                  f"The spread matters more than any single value.")
 
 with st.expander("Advanced view: how each score breaks down"):
     theme.caption("Contribution of each theme to the composite score, in standardized units "

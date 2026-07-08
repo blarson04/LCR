@@ -98,13 +98,11 @@ st.dataframe(
     column_config={"Weight": st.column_config.TextColumn(
         help="The share of the final score this theme carries. Each measure's own "
              "share is shown beside it. All weights sum to 100%.")})
-theme.caption("Demand carries the most weight (40%): the framework bets that who is moving "
-              "in, hiring, and earning matters most over a three-year horizon, with a heavy "
-              "penalty for oversupply (25%) as the contrarian edge. The exact weights are "
-              "fixed and published in full; they are set by judgment, never fitted to the "
-              "backtest, and stress-tested against alternatives — schemes built on the same "
-              "reasoning land within noise of each other, which is why the weights are not "
-              "the secret here; the testing is (see Track record).")
+theme.caption("Demand carries the most weight (40%), with the oversupply penalty (25%) as "
+              "the contrarian edge. The weights are fixed, published in full, set by "
+              "judgment rather than fitted, and stress-tested — reasonable alternatives "
+              "land within noise of each other, so the testing, not the weights, is the "
+              "point (see Track record).")
 
 if d.get("has_vintage") and not spec_mode:
     with st.expander("Data sources and vintages, measure by measure"):
@@ -127,14 +125,11 @@ if d.get("has_vintage") and not spec_mode:
                      "current screen. Nothing on this site is shown without its "
                      "data vintage.")})
         theme.caption(f"The data ledger for the current {data.VINTAGE_YEAR}-vintage screen: "
-                      "what feeds each measure and how fresh it is. "
-                      "* Connecticut redrew its government geography between 2023 and "
-                      "2024, so the three Connecticut metros' 2024 job and income growth "
-                      "are chained from 2023 using validated boundary-stable substitutes "
-                      "(a Census employment series and Connecticut's statewide income "
-                      "growth); a disclosed substitution for those three markets only. "
-                      "No accuracy number on this site is published without its data "
-                      "vintage.")
+                      "what feeds each measure and how fresh it is. * Connecticut redrew "
+                      "its geography between 2023 and 2024, so the three Connecticut "
+                      "metros' job and income growth are chained using validated "
+                      "boundary-stable substitutes — a disclosed fix for those three "
+                      "markets only.")
 
 if spec_mode and d["has_spec"]:
     st.markdown("## The current 2025 screen")
@@ -171,21 +166,16 @@ elif d["has_spec"]:
     theme.caption("Switch the sidebar to the 2025 edition to see how the current screen "
                   "is built from preliminary data.")
 
-theme.caption("How the screens earned publication: two fresher-data configurations failed "
-              "their pre-registered validation gate (74.8% and 84.66% signal retention vs "
-              "the 85% required; the second missed by a third of a point and was pulled "
-              "anyway, not rounded up). The third passed at 95.5% on newly finalized 2024 "
-              "data (the vintage edition), and a fourth, adding a validated state-income "
-              "chain, passed at 96.6% (the 2025 screen). All four outcomes are published; "
-              "a screen that publishes its failures is the point. See Track record.")
-theme.caption("What 'validated' means here, precisely: TWO separately logged checks. "
-              "(1) The configuration passed its one-shot, pre-registered accuracy gate "
-              "on history, and (2) the data build it scores passed an automated "
-              "quality review — every input is cross-checked against an independent "
-              "second source, extreme values and geography changes are flagged, and "
-              "nothing publishes until every flag is investigated and signed off in "
-              "the public decision log. A validated configuration fed corrupted data "
-              "once; the second check exists so it cannot happen silently again.")
+theme.caption("How the screens earned publication: two configurations failed their "
+              "pre-registered gate and were published as negative results; the third "
+              "passed at 95.5% (the vintage edition) and the fourth at 96.6% (the 2025 "
+              "screen). All four outcomes are published — a screen that publishes its "
+              "failures is the point. Full story: Track record.")
+theme.caption("'Validated' means two separately logged checks: the configuration passed "
+              "a one-shot, pre-registered accuracy gate on history, and the data build "
+              "passed an automated quality review — every input cross-checked against a "
+              "second source, every flag investigated and signed off in the public "
+              "decision log.")
 
 st.markdown("Next: [Overview](overview), the key findings and the top 10.")
 

@@ -30,12 +30,10 @@ theme.caption("Why a market ranks where it does: its score, the themes driving i
               "and each measure in plain terms.")
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 if ed.get("vintage"):
-    theme.caption("One measure in this vintage is an early estimate: migration uses the "
-                  "Census population-estimate substitute (validated against the finalized "
-                  "IRS series, which arrives about two years later). Everything else is "
-                  "finalized data, except the three Connecticut metros, whose 2024 job "
-                  "and income growth are chained across a state geography change (see "
-                  "Methodology & about for the ledger).")
+    theme.caption("One measure is an early estimate: migration uses a validated Census "
+                  "substitute. Everything else is finalized, apart from a disclosed "
+                  "geography fix for the three Connecticut metros (see Methodology & "
+                  "about).")
 st.write("")
 
 # The chosen market lives in the URL (?metro=<cbsa code>) so a view is shareable.
@@ -138,19 +136,14 @@ st.dataframe(
                  "the best in the country, 50 the middle. Direction is already applied, "
                  "so higher is always better for future rent growth.")})
 if missing:
-    theme.caption(f"Data note: {', '.join(missing)} is unavailable for this market at "
-                  "the data source. A missing measure takes a neutral (exactly average) "
-                  "value in the score rather than a guess. That fill is neutral, not "
-                  "conservative: had the real value been below average, this market "
-                  "would rank lower than shown, so lean on the rank range rather than "
-                  "the single rank.")
+    theme.caption(f"Data note: {', '.join(missing)} is unavailable for this market and "
+                  "takes a neutral (average) fill in the score, which can flatter or "
+                  "understate it — lean on the rank range.")
 
 if not ed["provisional"]:
     with st.expander("Context measures (tracked, not scored)"):
-        theme.caption("Tested as candidate measures but not added to the score: neither "
-                      "showed a reliably detectable improvement (the test has limited "
-                      "power to see small gains, so the default is parsimony). Shown "
-                      "for description only.")
+        theme.caption("Tested as candidate measures but not added: neither showed a "
+                      "reliably detectable improvement. Shown for description only.")
         crows = []
         for colname, (label, note) in data.CTX.items():
             v = d["ctx_year"][colname].get(code, float("nan"))

@@ -27,20 +27,17 @@ d = data.load()
 
 theme.eyebrow("Multifamily research · the fine print")
 st.markdown("# 2024 vintage vs 2025 screen")
-theme.caption("The fully finalized 2024 vintage (a 2024→2027 forecast) beside the current "
-              "2025 screen (a 2025→2028 forecast on preliminary inputs; same model). "
-              "Differences mix real one-year market change with the proxied data's added "
-              "uncertainty; read big moves as directional, not precise.")
+theme.caption("The finalized 2024 vintage beside the current 2025 screen (same model, "
+              "preliminary inputs). Moves mix real market change with proxy noise — read "
+              "them as directional, not precise.")
 st.markdown(theme.badge(True, "Validated 2025 screen · proxied inputs"),
             unsafe_allow_html=True)
 st.markdown(
-    "<div class='cap' style='margin-top:.5rem'><b>How much of a move is noise?</b> The "
-    "2025 configuration was tested on history where the truth is known: it <b>passed its "
-    "pre-registered validation gate</b>, keeping 96.6% of the finalized model's signal, "
-    f"and its top-10 matched the finalized top-10 on <b>{d['overlap_mean']:.1f} of 10</b> "
-    "names on average (as few as 5/10 in shock-era years, when preliminary data is least "
-    "reliable). Two earlier configurations failed the same gate and were published as "
-    "negative results; see Track record.</div>", unsafe_allow_html=True)
+    "<div class='cap' style='margin-top:.5rem'><b>How much of a move is noise?</b> "
+    "Tested on history, this configuration kept 96.6% of the finalized model's signal "
+    f"and matched the finalized top-10 on <b>{d['overlap_mean']:.1f} of 10</b> names on "
+    "average. Two earlier configurations failed the same gate; see Track "
+    "record.</div>", unsafe_allow_html=True)
 st.write("")
 
 base = d["vint_rank"] if d.get("has_vintage") else d["acc_rank"]
@@ -71,16 +68,12 @@ score_corr = float(pd.concat([
     base[["cbsa_code", "score"]].rename(columns={"score": "a"}).set_index("cbsa_code"),
     d["spec_rank"][["cbsa_code", "score"]].rename(columns={"score": "b"}).set_index("cbsa_code")],
     axis=1).dropna().corr().iloc[0, 1]) if "score" in base.columns else float("nan")
-theme.caption(f"Move = change in rank from the {base_year} vintage to the 2025 screen "
-              "(positive = rose). Moves inside a market's rank range are noise. The two "
-              f"editions' underlying scores agree closely (correlation {score_corr:.2f}); "
-              "most rank movement is compression, not disagreement: in the middle of the "
-              "table one rank is worth well under a hundredth of a score point, so a "
-              "small real change moves a market many places. What genuinely changes "
-              "between years is whose jobs and incomes grew fastest; the structural "
-              "measures (migration, building, affordability) barely move. Even between "
-              "two fully finalized years the top 10 has historically kept only 1 to 6 of "
-              "its names. That is exactly why every rank ships with a range.")
+theme.caption(f"Move = rank change from the {base_year} vintage (positive = rose); moves "
+              "inside a market's range are noise. The two editions' scores agree closely "
+              f"(correlation {score_corr:.2f}) — most movement is compression in the "
+              "crowded middle of the table, where a tiny score change moves a market many "
+              "places. Even two finalized years historically keep only 1–6 of the same "
+              "top-10 names; that is why every rank ships with a range.")
 tbl = cmp.sort_values("acc")[["cbsa_title", "acc", "spec", "move"]].rename(columns={
     "cbsa_title": "Metro", "acc": f"{base_year} vintage", "spec": "2025 screen",
     "move": "Move"})

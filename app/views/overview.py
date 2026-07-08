@@ -70,8 +70,7 @@ stay_txt = ""
 if len(d["prior_rank"]) and ed.get("vintage"):
     prior_top = set(d["prior_rank"].nsmallest(10, "prior_rank")["cbsa_code"])
     stay = len(prior_top & set(rank.head(10)["cbsa_code"]))
-    stay_txt = (f" {stay} of the prior edition's top ten stay in the top ten, and every "
-                f"rank is published with an uncertainty range.")
+    stay_txt = f" {stay} of the prior edition's top ten stay; every rank ships with a range."
 
 lead_range = ""
 if "rank_lo" in rank.columns and pd.notna(top_row.get("rank_lo")):
@@ -85,11 +84,10 @@ st.markdown(f"""
 - **The screen's top-10 markets out-grew the median market by {pp_pooled:+.1f} points of
   rent growth** over three years, averaged across six completed backtest windows. Picking
   on recent rent growth alone earned {pp_mom:+.1f}; the gap widens the further out you look.
-- **Every measure had to earn its place by test.** An industry-style market scorecard
-  rebuilt from free data barely beats chance at the same prediction task ({ind_tau:.2f} on
-  a -1 to +1 rank-agreement scale, vs {full_tau:.2f} for this screen), and two of this
-  project's own configurations failed their validation gates and were published as
-  negative results.
+- **Every measure had to earn its place by test.** An industry-style scorecard rebuilt
+  from the same free data barely beats chance ({ind_tau:.2f} on a -1 to +1
+  rank-agreement scale, vs {full_tau:.2f} here), and two of this project's own failed
+  configurations were published as negative results.
 """)
 
 # ---- The top 10, inside its leading cluster (tier + interval, P2) -------------
@@ -100,13 +98,12 @@ if has_tiers:
     n_cluster = int((rank["tier"] == "Leading cluster").sum())
     n_in = int((leaders["tier"] == "Leading cluster").sum())
     outside = ("" if n_in == len(leaders) else
-               f" ({len(leaders) - n_in} of the ten rank high on today's snapshot but "
-               f"carry ranges too wide to make the cluster — read those the most loosely.)")
+               f" ({len(leaders) - n_in} rank high today but carry ranges too wide to "
+               f"make the cluster — read those loosely.)")
     theme.caption(
-        f"The exact top 10 — but read the ranges: {n_in} of these ten belong to a broader "
-        f"{n_cluster}-market leading cluster whose members could all plausibly hold a "
-        f"top-10 seat once measurement noise in the fast-moving inputs is accounted "
-        f"for. Ordering within the cluster is inside the noise.{outside}")
+        f"Read the ranges: {n_in} of these ten sit in a {n_cluster}-market leading "
+        f"cluster, any of whose members could plausibly hold a top-10 seat. Ordering "
+        f"inside the cluster is noise.{outside}")
 rows_html = ""
 any_short = False
 for _, r in leaders.iterrows():
@@ -128,12 +125,10 @@ for _, r in leaders.iterrows():
         f"{r['score']:+.2f}</span>"
         f"<div class='cap' style='margin-left:3.4rem'>{strengths}</div></div>")
 st.markdown(rows_html, unsafe_allow_html=True)
-short_note = (" Where a market is missing a measure at the data source, the gap takes a "
-              "neutral (average) value, which can flatter or understate it; read that "
-              "market's exact rank loosely." if any_short else "")
-theme.caption("Each market shows its rank with the 90% range in parentheses, and the one "
-              "or two themes that lift its score most. Scores are relative to the average "
-              "market (0). All five tiers are on the Full rankings page." + short_note)
+short_note = (" Markets scored on fewer measures take neutral fills for the gaps; read "
+              "their exact ranks loosely." if any_short else "")
+theme.caption("Rank (90% range), score vs the average market (0), and the themes that "
+              "lift each score most. All five tiers: Full rankings." + short_note)
 
 # ---- The evidence, in one chart --------------------------------------------------
 if pp_win is not None and len(pp_win):
@@ -149,13 +144,10 @@ if pp_win is not None and len(pp_win):
     figp.update_yaxes(title="Top-10 edge (points of rent growth)")
     st.plotly_chart(theme.style_fig(figp, 240), use_container_width=True)
     calm = pp_win[pp_win["pred_year"] <= 2019]["top10_pp_vs_median"]
-    theme.caption(f"Four calm windows came in between {calm.min():+.1f} and "
-                  f"{calm.max():+.1f} points; the 2021–22 shock windows were roughly "
-                  "flat, where a pure rent-momentum strategy flipped firmly negative. "
-                  "Each published screen is graded when its end-year data closes (2028 "
-                  "for the current 2025→2028 screen; 2027 for the 2024 vintage). Numbers "
-                  "use finalized data; the validated real-time configuration keeps about "
-                  "97% of this signal. Full validation: see Track record.")
+    theme.caption(f"Calm windows came in between {calm.min():+.1f} and {calm.max():+.1f} "
+                  "points; the 2021–22 shock windows were roughly flat, where pure rent "
+                  "momentum flipped firmly negative. Each published screen is graded when "
+                  "its end-year data closes. Full validation: Track record.")
 
 # ---- Reading order ---------------------------------------------------------------
 st.markdown("## Read the report")
