@@ -30,9 +30,15 @@ theme.caption("Two or three markets side by side: where each stands on every mea
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 st.write("")
 
-default2 = list(rank.sort_values("rank")["cbsa_title"].head(2))
+# The chosen markets live in the URL (?markets=<codes>) so a comparison is shareable.
+code_by_title = dict(zip(rank["cbsa_title"], rank["cbsa_code"].astype(str)))
+title_by_code = {v: k for k, v in code_by_title.items()}
+from_url = [title_by_code[c] for c in st.query_params.get("markets", "").split(",")
+            if c in title_by_code]
+default = from_url[:3] or list(rank.sort_values("rank")["cbsa_title"].head(2))
 picks = st.multiselect("Markets", list(rank.sort_values("cbsa_title")["cbsa_title"]),
-                       default=default2, max_selections=3, label_visibility="collapsed")
+                       default=default, max_selections=3, label_visibility="collapsed")
+st.query_params["markets"] = ",".join(code_by_title[m] for m in picks)
 
 if len(picks) < 2:
     st.info("Choose at least two markets to compare.")

@@ -51,7 +51,7 @@ st.markdown("## About me")
 photo = APP / "assets" / "author.jpg"
 if photo.exists():
     pcol, tcol = st.columns([1, 2.4], gap="large")
-    pcol.image(str(photo), use_container_width=True)
+    pcol.image(str(photo), use_container_width=True, caption="Ben Larson")
 else:
     tcol = st.container()
 with tcol:

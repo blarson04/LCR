@@ -37,9 +37,15 @@ if ed.get("vintage"):
                   "Methodology & about for the ledger).")
 st.write("")
 
-metro = st.selectbox("Choose a market", rank.sort_values("cbsa_title")["cbsa_title"])
+# The chosen market lives in the URL (?metro=<cbsa code>) so a view is shareable.
+opts = rank.sort_values("cbsa_title")
+codes_sorted = [str(c) for c in opts["cbsa_code"]]
+qp = st.query_params.get("metro")
+metro = st.selectbox("Choose a market", list(opts["cbsa_title"]),
+                     index=codes_sorted.index(qp) if qp in codes_sorted else 0)
 row = rank[rank["cbsa_title"] == metro].iloc[0]
 code = row["cbsa_code"]
+st.query_params["metro"] = str(code)
 
 tier_txt = str(row.get("tier", "") or "")
 has_tier = tier_txt not in ("", "nan")

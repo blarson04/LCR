@@ -82,9 +82,11 @@ def inject_css(reading: bool = False) -> None:
     column for text-heavy pages."""
     _apply_tokens(current_mode())
     maxw = "860px" if reading else "1100px"
+    scheme = "dark" if current_mode() == "Dark" else "light"
     st.markdown(f"""<style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap');
 
+      html {{ color-scheme: {scheme}; }}
       html, body, [class*="css"], .stApp {{
           font-family: {FONT_BODY}; color: {INK}; font-size: 15px; }}
       .stApp {{ background: {PAPER}; }}
@@ -92,10 +94,25 @@ def inject_css(reading: bool = False) -> None:
       [data-testid="stToolbar"], [data-testid="stDecoration"] {{ display: none; }}
       .block-container {{ max-width: {maxw}; padding-top: 2.5rem; padding-bottom: 3rem; }}
 
-      h1, h2, h3 {{ font-family: {FONT_HEAD}; color: {INK}; font-weight: 600; }}
+      h1, h2, h3 {{ font-family: {FONT_HEAD}; color: {INK}; font-weight: 600;
+          text-wrap: balance; }}
       h1 {{ font-size: 28px; }}
       h2 {{ font-size: 20px; margin-top: 40px; }}
       h3 {{ font-size: 17px; }}
+
+      /* Links: accent is the stated use; sidebar nav keeps Streamlit's styling. */
+      .block-container a {{ color: {ACCENT}; text-decoration: none; }}
+      .block-container a:hover {{ text-decoration: underline; }}
+      a:focus-visible, button:focus-visible {{
+          outline: 2px solid {ACCENT}; outline-offset: 2px; }}
+
+      @media (prefers-reduced-motion: reduce) {{
+        *, *::before, *::after {{
+            animation-duration: .01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: .01ms !important;
+            scroll-behavior: auto !important; }}
+      }}
 
       /* Sidebar styling */
       [data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px solid {LINE}; }}
