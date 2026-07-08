@@ -127,6 +127,34 @@ def assemble_panel(universe: pd.DataFrame) -> pd.DataFrame:
     zhvi = zhvi.assign(cbsa_code=zhvi["region_id"].map(rid_to_cbsa))
     zhvi = zhvi[zhvi["cbsa_code"].notna()][["cbsa_code", "year", "zhvi"]]
 
+    # ---- D8: boundary-consistent population + housing (decision-log
+    # 2026-07-08). The ACS1 metro API mixes delineation vintages across years,
+    # so every metro whose county membership ever changed gets its population
+    # and housing_units rebuilt from county-level Census estimates on the
+    # CURRENT boundary (the same class of fix as the QCEW county rollup; the
+    # affected set is the QCEW rollup set plus Dayton). CT metros chain
+    # 2015-2019 from the planning-region 2020 level by legacy-county growth.
+    # ACS's 2020 gap is preserved (only ACS1 years are replaced).
+    from src.ingest import census_pep
+    CT_LEGACY = {"25540": ["09003", "09007", "09013"],   # Hartford
+                 "14860": ["09001"],                      # Bridgeport
+                 "35300": ["09009"]}                      # New Haven
+    acs_fix = bls.QCEW_COUNTY_ROLLUP | {"19430"} | set(CT_LEGACY)
+    fix = census_pep.boundary_consistent_pop_hu(CT_LEGACY)
+    fix = fix[fix["cbsa_code"].isin(acs_fix)
+              & fix["year"].isin(census.ACS1_YEARS)]
+    pop_panel = pd.concat(
+        [pop_panel[~pop_panel["cbsa_code"].isin(acs_fix)],
+         fix[["cbsa_code", "year", "pep_pop"]].rename(columns={"pep_pop": "population"})],
+        ignore_index=True)
+    hu_panel = pd.concat(
+        [hu_panel[~hu_panel["cbsa_code"].isin(acs_fix)],
+         fix[["cbsa_code", "year", "pep_hu"]].rename(columns={"pep_hu": "housing_units"})],
+        ignore_index=True)
+    n_fix = fix.dropna(subset=["pep_pop"])["cbsa_code"].nunique()
+    print(f"    [D8] population/housing rebuilt on current boundary for "
+          f"{n_fix} metros (county rollup; CT chained)")
+
     # ---- Data-repair splices (decision-log 2026-07-07, D1 and D5) ----------
     # D1: Zillow publishes no metro ZHVI for Dayton or Poughkeepsie; build
     # their series from county ZHVI on the current boundary.

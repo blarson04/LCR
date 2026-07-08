@@ -1,0 +1,331 @@
+edition,cbsa_code,rank_lo,rank_median,rank_hi,tier
+2023,10420,1,3.0,20,Leading cluster
+2023,10580,2,17.5,50,Leading cluster
+2023,10740,9,39.0,71,Strong
+2023,10900,8,36.5,70,Strong
+2023,12060,51,82.0,100,Weak
+2023,12260,51,79.0,100,Weak
+2023,12420,94,106.0,110,Lagging
+2023,12540,61,89.0,104,Weak
+2023,12580,16,48.0,77,Mid
+2023,12940,33,67.0,93,Mid
+2023,13820,2,17.0,49,Leading cluster
+2023,14260,86,103.0,109,Lagging
+2023,14460,25,57.0,84,Mid
+2023,14860,3,20.0,54,Leading cluster
+2023,15380,2,14.0,43,Leading cluster
+2023,15980,79,100.0,108,Lagging
+2023,16700,2,17.0,49,Leading cluster
+2023,16740,42,73.0,95,Weak
+2023,16860,4,25.0,59,Leading cluster
+2023,16980,14,45.5,78,Mid
+2023,17140,2,14.0,47,Leading cluster
+2023,17410,2,16.0,47,Leading cluster
+2023,17820,45,77.0,98,Weak
+2023,17900,14,48.0,78,Mid
+2023,18140,18,50.0,79,Mid
+2023,19100,46,77.0,98,Weak
+2023,19430,2,17.0,47,Leading cluster
+2023,19660,8,35.0,69,Strong
+2023,19740,37,71.0,95,Weak
+2023,19780,7,32.0,68,Strong
+2023,19820,12,44.0,74,Mid
+2023,20500,74,96.0,107,Lagging
+2023,21340,89,104.5,109,Lagging
+2023,22220,4,25.0,60,Leading cluster
+2023,23420,66,91.0,105,Weak
+2023,24340,6,32.0,67,Strong
+2023,24660,8,37.0,70,Strong
+2023,24860,15,46.0,78,Mid
+2023,25420,3,21.0,55,Leading cluster
+2023,25540,4,20.0,58,Leading cluster
+2023,26420,53,80.0,101,Weak
+2023,26620,13,44.0,74,Mid
+2023,26900,7,33.0,66,Strong
+2023,27140,16,49.0,77,Mid
+2023,27260,64,89.0,104,Weak
+2023,28140,7,36.0,70,Strong
+2023,28660,76,98.0,107,Lagging
+2023,28880,31,63.0,90,Mid
+2023,28940,1,7.0,32,Leading cluster
+2023,29460,88,105.0,109,Lagging
+2023,29540,5,24.0,59,Leading cluster
+2023,29820,49,78.0,99,Weak
+2023,30460,4,25.0,56,Leading cluster
+2023,30780,6,30.0,62,Strong
+2023,31080,64,91.0,104,Weak
+2023,31140,8,35.0,69,Strong
+2023,31540,2,14.0,46,Leading cluster
+2023,32580,106,110.0,110,Lagging
+2023,32820,49,79.0,98,Weak
+2023,33100,65,92.0,105,Weak
+2023,33340,1,11.0,43,Leading cluster
+2023,33460,23,57.0,87,Mid
+2023,33700,66,90.0,105,Weak
+2023,34980,40,70.0,96,Mid
+2023,35300,19,55.0,82,Mid
+2023,35380,64,90.5,105,Weak
+2023,35620,70,94.0,106,Weak
+2023,35840,48,78.0,98,Weak
+2023,36260,11,41.0,74,Mid
+2023,36420,10,38.0,71,Strong
+2023,36540,2,11.0,44,Leading cluster
+2023,36740,83,101.0,109,Lagging
+2023,37100,49,77.0,98,Weak
+2023,37340,20,52.0,81,Mid
+2023,37860,25,59.0,86,Mid
+2023,37980,18,53.0,81,Mid
+2023,38060,67,92.0,105,Weak
+2023,38300,12,43.0,74,Mid
+2023,38860,5,27.0,60,Leading cluster
+2023,38900,33,66.5,92,Mid
+2023,38940,6,30.0,62,Strong
+2023,39300,2,18.0,52,Leading cluster
+2023,39340,85,102.0,109,Lagging
+2023,39580,67,91.0,105,Weak
+2023,39900,31,65.0,90,Mid
+2023,40060,17,50.0,80,Mid
+2023,40140,98,107.0,110,Lagging
+2023,40380,6,30.0,64,Strong
+2023,40900,65,91.0,104,Weak
+2023,41180,2,17.0,50,Leading cluster
+2023,41620,71,94.0,107,Weak
+2023,41700,40,70.0,93,Mid
+2023,41740,49,79.0,100,Weak
+2023,41860,18,53.0,82,Mid
+2023,41940,36,68.0,93,Mid
+2023,42540,4,24.0,55,Leading cluster
+2023,42660,12,42.0,73,Mid
+2023,44060,45,76.0,99,Weak
+2023,44700,70,93.0,106,Weak
+2023,45060,14,47.0,80,Mid
+2023,45300,39,71.0,94,Weak
+2023,45780,9,37.0,70,Strong
+2023,46060,13,42.0,74,Mid
+2023,46140,5,27.0,62,Leading cluster
+2023,46520,42,75.0,97,Weak
+2023,47260,19,54.0,83,Mid
+2023,47900,33,67.0,92,Mid
+2023,48620,4,25.0,58,Leading cluster
+2023,49180,22,55.5,85,Mid
+2023,49340,5,27.0,60,Leading cluster
+vintage_2024,10420,1,7.0,29,Leading cluster
+vintage_2024,10580,1,6.0,29,Leading cluster
+vintage_2024,10740,13,44.0,78,Mid
+vintage_2024,10900,20,54.0,85,Mid
+vintage_2024,12060,71,95.0,105,Weak
+vintage_2024,12260,71,93.0,104,Weak
+vintage_2024,12420,99,106.0,109,Lagging
+vintage_2024,12540,53,85.0,100,Weak
+vintage_2024,12580,6,31.0,64,Strong
+vintage_2024,12940,21,57.0,87,Mid
+vintage_2024,13820,3,21.0,54,Leading cluster
+vintage_2024,14260,40,76.0,96,Weak
+vintage_2024,14460,34,67.0,92,Mid
+vintage_2024,14860,2,16.0,51,Leading cluster
+vintage_2024,15380,2,13.0,39,Leading cluster
+vintage_2024,15980,109,110.0,110,Lagging
+vintage_2024,16700,15,46.0,79,Mid
+vintage_2024,16740,49,81.0,99,Weak
+vintage_2024,16860,29,64.5,90,Mid
+vintage_2024,16980,22,56.5,87,Mid
+vintage_2024,17140,5,26.0,62,Leading cluster
+vintage_2024,17410,1,8.0,33,Leading cluster
+vintage_2024,17820,35,71.0,94,Weak
+vintage_2024,17900,26,62.0,89,Mid
+vintage_2024,18140,36,70.0,93,Mid
+vintage_2024,19100,84,100.5,107,Lagging
+vintage_2024,19430,1,11.0,34,Leading cluster
+vintage_2024,19660,9,35.0,71,Strong
+vintage_2024,19740,52,84.0,101,Weak
+vintage_2024,19780,6,30.0,68,Strong
+vintage_2024,19820,8,34.0,67,Strong
+vintage_2024,20500,37,70.0,94,Mid
+vintage_2024,21340,86,101.0,107,Lagging
+vintage_2024,22220,32,68.0,92,Mid
+vintage_2024,23420,49,82.0,100,Weak
+vintage_2024,24340,8,34.0,70,Strong
+vintage_2024,24660,21,55.0,85,Mid
+vintage_2024,24860,27,60.0,89,Mid
+vintage_2024,25420,3,21.0,56,Leading cluster
+vintage_2024,25540,1,8.0,35,Leading cluster
+vintage_2024,26420,77,97.0,106,Lagging
+vintage_2024,26620,6,27.5,61,Leading cluster
+vintage_2024,26900,9,34.0,69,Strong
+vintage_2024,27140,28,63.0,88,Mid
+vintage_2024,27260,39,74.0,95,Weak
+vintage_2024,28140,16,51.0,84,Mid
+vintage_2024,28660,86,101.0,107,Lagging
+vintage_2024,28880,30,64.0,91,Mid
+vintage_2024,28940,12,39.0,73,Strong
+vintage_2024,29460,91,104.0,108,Lagging
+vintage_2024,29540,2,12.0,43,Leading cluster
+vintage_2024,29820,27,61.0,88,Mid
+vintage_2024,30460,8,34.0,66,Strong
+vintage_2024,30780,3,20.0,50,Leading cluster
+vintage_2024,31080,40,74.0,95,Weak
+vintage_2024,31140,3,20.0,54,Leading cluster
+vintage_2024,31540,16,49.5,82,Mid
+vintage_2024,32580,107,109.0,110,Lagging
+vintage_2024,32820,53,84.0,99,Weak
+vintage_2024,33100,93,104.5,108,Lagging
+vintage_2024,33340,2,16.0,49,Leading cluster
+vintage_2024,33460,9,36.0,71,Strong
+vintage_2024,33700,34,68.0,92,Mid
+vintage_2024,34980,48,78.0,98,Weak
+vintage_2024,35300,5,30.0,62,Strong
+vintage_2024,35380,44,78.0,97,Weak
+vintage_2024,35620,61,89.0,102,Weak
+vintage_2024,35840,84,100.0,106,Lagging
+vintage_2024,36260,29,64.0,91,Mid
+vintage_2024,36420,11,41.0,76,Mid
+vintage_2024,36540,29,63.0,91,Mid
+vintage_2024,36740,99,107.0,109,Lagging
+vintage_2024,37100,20,49.5,81,Mid
+vintage_2024,37340,12,40.0,74,Strong
+vintage_2024,37860,30,66.5,92,Mid
+vintage_2024,37980,14,48.0,79,Mid
+vintage_2024,38060,66,92.0,103,Weak
+vintage_2024,38300,4,22.0,56,Leading cluster
+vintage_2024,38860,13,40.0,74,Strong
+vintage_2024,38900,22,56.0,85,Mid
+vintage_2024,38940,23,56.0,85,Mid
+vintage_2024,39300,2,16.0,49,Leading cluster
+vintage_2024,39340,90,102.5,108,Lagging
+vintage_2024,39580,65,90.0,103,Weak
+vintage_2024,39900,13,43.0,76,Mid
+vintage_2024,40060,4,25.0,61,Leading cluster
+vintage_2024,40140,76,96.0,106,Lagging
+vintage_2024,40380,3,17.0,50,Leading cluster
+vintage_2024,40900,27,63.0,89,Mid
+vintage_2024,41180,24,58.0,87,Mid
+vintage_2024,41620,34,70.0,93,Mid
+vintage_2024,41700,49,79.0,98,Weak
+vintage_2024,41740,64,90.0,103,Weak
+vintage_2024,41860,5,29.0,64,Strong
+vintage_2024,41940,4,22.5,58,Leading cluster
+vintage_2024,42540,2,14.5,42,Leading cluster
+vintage_2024,42660,6,30.0,65,Strong
+vintage_2024,44060,35,68.0,94,Mid
+vintage_2024,44700,67,92.0,104,Weak
+vintage_2024,45060,1,13.0,46,Leading cluster
+vintage_2024,45300,63,90.0,102,Weak
+vintage_2024,45780,4,23.0,57,Leading cluster
+vintage_2024,46060,24,58.0,87,Mid
+vintage_2024,46140,2,17.0,51,Leading cluster
+vintage_2024,46520,30,67.0,92,Mid
+vintage_2024,47260,8,36.0,70,Strong
+vintage_2024,47900,17,49.0,82,Mid
+vintage_2024,48620,6,31.0,65,Strong
+vintage_2024,49180,23,58.0,88,Mid
+vintage_2024,49340,14,44.0,77,Mid
+current_2025,10420,1,5.0,24,Leading cluster
+current_2025,10580,1,6.0,27,Leading cluster
+current_2025,10740,15,46.0,79,Mid
+current_2025,10900,5,25.0,59,Leading cluster
+current_2025,12060,48,82.0,98,Weak
+current_2025,12260,37,71.0,96,Weak
+current_2025,12420,82,100.0,106,Lagging
+current_2025,12540,45,79.0,98,Weak
+current_2025,12580,19,51.0,82,Mid
+current_2025,12940,40,77.0,98,Weak
+current_2025,13820,8,32.0,65,Strong
+current_2025,14260,46,80.0,98,Weak
+current_2025,14460,38,72.0,94,Weak
+current_2025,14860,9,34.5,72,Strong
+current_2025,15380,3,17.0,45,Leading cluster
+current_2025,15980,107,110.0,110,Lagging
+current_2025,16700,14,45.0,79,Mid
+current_2025,16740,25,58.0,87,Mid
+current_2025,16860,37,71.0,95,Weak
+current_2025,16980,10,38.0,74,Strong
+current_2025,17140,6,28.0,63,Leading cluster
+current_2025,17410,1,10.0,36,Leading cluster
+current_2025,17820,80,100.0,106,Lagging
+current_2025,17900,29,64.0,91,Mid
+current_2025,18140,41,75.0,96,Weak
+current_2025,19100,67,93.0,104,Weak
+current_2025,19430,2,13.0,38,Leading cluster
+current_2025,19660,7,30.0,65,Strong
+current_2025,19740,65,93.0,104,Weak
+current_2025,19780,33,68.0,95,Mid
+current_2025,19820,11,38.0,70,Strong
+current_2025,20500,81,99.0,106,Lagging
+current_2025,21340,93,103.0,108,Lagging
+current_2025,22220,43,76.0,97,Weak
+current_2025,23420,58,88.0,102,Weak
+current_2025,24340,11,37.0,73,Strong
+current_2025,24660,14,44.0,77,Mid
+current_2025,24860,17,47.0,81,Mid
+current_2025,25420,1,8.5,32,Leading cluster
+current_2025,25540,2,12.0,42,Leading cluster
+current_2025,26420,75,97.0,105,Lagging
+current_2025,26620,4,18.0,48,Leading cluster
+current_2025,26900,12,40.0,73,Strong
+current_2025,27140,27,61.0,88,Mid
+current_2025,27260,32,68.0,93,Mid
+current_2025,28140,18,52.0,86,Mid
+current_2025,28660,74,96.0,105,Lagging
+current_2025,28880,33,66.0,93,Mid
+current_2025,28940,24,56.0,85,Mid
+current_2025,29460,53,85.0,101,Weak
+current_2025,29540,2,10.0,37,Leading cluster
+current_2025,29820,33,67.0,92,Mid
+current_2025,30460,11,40.0,72,Strong
+current_2025,30780,13,41.0,73,Mid
+current_2025,31080,36,71.0,94,Weak
+current_2025,31140,18,47.0,80,Mid
+current_2025,31540,43,77.0,98,Weak
+current_2025,32580,106,109.0,110,Lagging
+current_2025,32820,46,79.0,98,Weak
+current_2025,33100,100,106.0,109,Lagging
+current_2025,33340,2,14.0,44,Leading cluster
+current_2025,33460,6,26.0,62,Leading cluster
+current_2025,33700,55,83.0,99,Weak
+current_2025,34980,37,69.0,95,Mid
+current_2025,35300,21,58.0,86,Mid
+current_2025,35380,59,89.0,102,Weak
+current_2025,35620,51,83.0,99,Weak
+current_2025,35840,98,105.0,109,Lagging
+current_2025,36260,33,67.0,93,Mid
+current_2025,36420,15,44.0,79,Mid
+current_2025,36540,13,39.0,75,Strong
+current_2025,36740,103,108.0,110,Lagging
+current_2025,37100,26,55.0,86,Mid
+current_2025,37340,15,43.5,77,Mid
+current_2025,37860,28,63.0,90,Mid
+current_2025,37980,8,33.5,66,Strong
+current_2025,38060,67,94.0,104,Weak
+current_2025,38300,4,19.0,51,Leading cluster
+current_2025,38860,26,58.0,87,Mid
+current_2025,38900,16,46.0,79,Mid
+current_2025,38940,7,29.0,63,Strong
+current_2025,39300,3,18.0,50,Leading cluster
+current_2025,39340,98,105.0,109,Lagging
+current_2025,39580,45,77.5,98,Weak
+current_2025,39900,1,7.0,28,Leading cluster
+current_2025,40060,7,30.0,66,Strong
+current_2025,40140,78,98.0,105,Lagging
+current_2025,40380,2,14.0,45,Leading cluster
+current_2025,40900,29,64.0,90,Mid
+current_2025,41180,22,56.0,86,Mid
+current_2025,41620,54,84.5,101,Weak
+current_2025,41700,29,61.0,89,Mid
+current_2025,41740,57,87.0,101,Weak
+current_2025,41860,1,10.0,33,Leading cluster
+current_2025,41940,4,20.0,53,Leading cluster
+current_2025,42540,2,14.0,40,Leading cluster
+current_2025,42660,3,21.0,54,Leading cluster
+current_2025,44060,15,45.0,81,Mid
+current_2025,44700,43,74.5,97,Weak
+current_2025,45060,7,32.0,71,Strong
+current_2025,45300,62,90.0,102,Weak
+current_2025,45780,4,22.0,54,Leading cluster
+current_2025,46060,25,58.0,87,Mid
+current_2025,46140,8,31.5,67,Strong
+current_2025,46520,12,42.0,76,Mid
+current_2025,47260,9,37.0,71,Strong
+current_2025,47900,36,72.0,95,Weak
+current_2025,48620,6,28.0,61,Leading cluster
+current_2025,49180,13,43.0,77,Mid
+current_2025,49340,8,32.0,66,Strong

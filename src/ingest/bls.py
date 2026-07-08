@@ -55,11 +55,15 @@ _AGG_SECTOR_COUNTY = 74
 # (data-repair spec, decision-log 2026-07-07 D2/D3).
 QCEW_YEAR_AWARE_OVERRIDES = {"19430": ("C1938", "C1943")}   # (<=2023, >=2024)
 QCEW_NEW_CODE_FROM = 2024
-# Metros whose 2023-delineation composition differs from their pre-2024 QCEW
-# area files (verified against current-boundary county sums, decision-log
-# 2026-07-08 D6): the area files would splice two boundaries mid-series, so
-# these are built from county files on the current boundary for ALL years.
+# Metros whose county membership under ANY panel-era OMB delineation vintage
+# (Feb 2013 / Sep 2018 / Mar 2020) differs from the July 2023 delineation:
+# their QCEW area files splice two or more boundaries mid-series, so they are
+# built from county files on the current boundary for ALL years. D2/D3/D6
+# found the first 8 by hand; the P0 QA regime's ratio sweep + full delineation
+# diff closed the class (decision-log 2026-07-08 D7; sweep artifact
+# data/processed/qa/qcew_boundary_sweep_2026-07-08.csv).
 QCEW_COUNTY_ROLLUP = {
+    # -- the original hand-found repairs (D2/D3/D6) --
     "17410",   # Cleveland OH        (D3: new definition adds Ashtabula)
     "28880",   # Poughkeepsie NY     (D2: no pre-2024 MSA file)
     "35380",   # New Orleans LA      (D6: 2024 file -16.9% fake growth)
@@ -68,6 +72,35 @@ QCEW_COUNTY_ROLLUP = {
     "36260",   # Ogden UT            (D6: -7.3% fake)
     "27140",   # Jackson MS          (D6: +7.2% fake)
     "39900",   # Reno NV             (D6: +6.1% fake)
+    # -- D7: measured 2023 area-file/current-boundary mismatch (ratio sweep) --
+    "24340",   # Grand Rapids MI     (ratio 0.969; its +3.4% 2024 print was fake)
+    "19780",   # Des Moines IA       (0.974)
+    "38300",   # Pittsburgh PA       (0.975)
+    "31140",   # Louisville KY-IN    (0.979)
+    "12940",   # Baton Rouge LA      (0.991)
+    "16740",   # Charlotte NC-SC     (0.995)
+    "19100",   # Dallas-Fort Worth TX (1.006)
+    "47900",   # Washington DC-VA-MD-WV (1.007)
+    "26900",   # Indianapolis IN     (1.007)
+    "40060",   # Richmond VA         (1.008)
+    "48620",   # Wichita KS          (1.009)
+    "44060",   # Spokane WA          (1.013)
+    "40380",   # Rochester NY        (1.014)
+    "16980",   # Chicago IL-IN       (1.016)
+    "22220",   # Fayetteville AR     (1.026)
+    "35620",   # New York NY-NJ      (1.030; its 2024 job DECLINE was fake)
+    # -- D7: membership differs only at the 2018->2019 file seam --
+    "12060",   # Atlanta GA
+    "13820",   # Birmingham AL
+    "17140",   # Cincinnati OH-KY-IN
+    "20500",   # Durham-Chapel Hill NC
+    "26420",   # Houston TX
+    "28940",   # Knoxville TN
+    "32820",   # Memphis TN-MS-AR
+    "33460",   # Minneapolis-St. Paul MN-WI
+    "34980",   # Nashville TN
+    "45780",   # Toledo OH
+    "47260",   # Virginia Beach VA-NC
 }
 
 

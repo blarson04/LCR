@@ -1,0 +1,40 @@
+{
+  "timestamp_utc": "20260708T150332Z",
+  "model_version": "2.0.0",
+  "git_commit": "aa89561",
+  "score_year": 2024,
+  "run_type": "validated_lagged_vintage",
+  "gate": {
+    "spec": "decision-log 2026-07-07 (v3.1)",
+    "retention": 0.9552,
+    "mean_top10_overlap": 8.29,
+    "result": "PASS"
+  },
+  "substitutions": {
+    "net_migration": "Census PEP / ACS population",
+    "qcew_gap_carry": [
+      "job_growth",
+      "income_growth",
+      "employment_diversity",
+      "(Cleveland, Dayton only)"
+    ]
+  },
+  "n_metros": 110,
+  "top_metro": "Albany-Schenectady-Troy, NY",
+  "top_score": 0.5515403057725513,
+  "weights": {
+    "net_migration": 0.2,
+    "job_growth": 0.12,
+    "income_growth": 0.08,
+    "permits_to_stock": 0.25,
+    "rent_to_income": 0.12,
+    "cost_to_own_vs_rent": 0.08,
+    "trailing_rent_growth": 0.1,
+    "employment_diversity": 0.05
+  },
+  "files": {
+    "panel_snapshot.parquet": "64b127bd1efe5a23b00a659a0cc1b61603251723b780908fbd9e61fdf3f27f53",
+    "ranking.csv": "44b3071d26be5aca8d114004c31f4158b38de92e7fb5c90e6bef1ba7bb4e8c54",
+    "scores.parquet": "be72f00fdf32318c389541e05a0b49a0c77c3eebc478a178ccb1bd8e3e52eb13"
+  }
+}

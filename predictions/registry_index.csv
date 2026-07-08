@@ -7,3 +7,5 @@ timestamp_utc,model_version,git_commit,score_year,n_metros,top_metro
 20260707T232133Z,2.0.0,fc5bc26,2025,110,"Albany-Schenectady-Troy, NY"
 20260708T001405Z,2.0.0,05135f3,2024,110,"Albany-Schenectady-Troy, NY"
 20260708T001431Z,2.0.0,05135f3,2025,110,"Albany-Schenectady-Troy, NY"
+20260708T150332Z,2.0.0,aa89561,2024,110,"Albany-Schenectady-Troy, NY"
+20260708T150402Z,2.0.0,aa89561,2025,110,"Albany-Schenectady-Troy, NY"

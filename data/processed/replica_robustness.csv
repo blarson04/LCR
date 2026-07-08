@@ -1,0 +1,4 @@
+exhibit,task,tau_full,tau_replica,gap,ci_lo,ci_hi,n_windows
+top50_subuniverse,3y rent growth,0.301,-0.018,0.319,0.164,0.505,6
+alternate_task,1y rent growth,0.49,0.169,0.321,0.22,0.424,7
+alternate_task,3y rent + asset-value blend,0.252,-0.096,0.347,0.243,0.471,6
