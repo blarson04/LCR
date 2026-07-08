@@ -66,14 +66,20 @@ _top10(c1, f"{base_year} vintage (fully validated)", "acc")
 _top10(c2, "2025 screen (validated proxies)", "spec")
 
 st.markdown("## Every market")
+score_corr = float(pd.concat([
+    base[["cbsa_code", "score"]].rename(columns={"score": "a"}).set_index("cbsa_code"),
+    d["spec_rank"][["cbsa_code", "score"]].rename(columns={"score": "b"}).set_index("cbsa_code")],
+    axis=1).dropna().corr().iloc[0, 1]) if "score" in base.columns else float("nan")
 theme.caption(f"Move = change in rank from the {base_year} vintage to the 2025 screen "
-              "(positive = rose). Moves inside a market's rank range are noise. Large "
-              "turnover between years is normal for this model, not a proxy artifact: "
-              "even between two fully finalized years, the top 10 has historically kept "
-              "only 1 to 6 of its names and the median market moved 9 to 29 places, "
-              "because scores bunch tightly and one year of new permits, rents, and "
-              "migration re-shuffles close neighbors. That is exactly why every rank "
-              "ships with a range.")
+              "(positive = rose). Moves inside a market's rank range are noise. The two "
+              f"editions' underlying scores agree closely (correlation {score_corr:.2f}); "
+              "most rank movement is compression, not disagreement: in the middle of the "
+              "table one rank is worth well under a hundredth of a score point, so a "
+              "small real change moves a market many places. What genuinely changes "
+              "between years is whose jobs and incomes grew fastest; the structural "
+              "measures (migration, building, affordability) barely move. Even between "
+              "two fully finalized years the top 10 has historically kept only 1 to 6 of "
+              "its names. That is exactly why every rank ships with a range.")
 tbl = cmp.sort_values("acc")[["cbsa_title", "acc", "spec", "move"]].rename(columns={
     "cbsa_title": "Metro", "acc": f"{base_year} vintage", "spec": "2025 screen",
     "move": "Move"})
