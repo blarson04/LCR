@@ -24,6 +24,7 @@ d = data.load()
 ed = data.edition(d)
 rank = ed["rank"]
 
+theme.eyebrow("Multifamily research · explore a market")
 st.markdown("# Compare markets")
 theme.caption("Two or three markets side by side: where each stands on every measure, "
               "and which themes drive the difference.")

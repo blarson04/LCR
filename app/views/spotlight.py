@@ -34,6 +34,7 @@ code = top["cbsa_code"]
 city = top["cbsa_title"].split(",")[0]
 
 # ---- Header -------------------------------------------------------------------
+theme.eyebrow("Multifamily research · the report")
 st.markdown(f"# Market spotlight: {city}")
 theme.caption(f"A closer look at the market ranked first in the {ed['horizon']} screen, "
               "and the case the data makes for it.")

@@ -36,6 +36,7 @@ if show_change:
     rank = rank.merge(d["prior_rank"], on="cbsa_code", how="left")
 
 # ---- Header -----------------------------------------------------------------
+theme.eyebrow("Multifamily research · the report")
 st.markdown("# Full rankings")
 if ed.get("vintage"):
     theme.caption(
@@ -126,7 +127,7 @@ if has_tiers:
             first3 = ", ".join(m.split(",")[0] for m in members.head(3)["cbsa_title"])
             detail = f"{first3}, …" if len(members) > 3 else first3
         tier_rows += (
-            f"<div style='padding:.42rem 0;border-bottom:1px solid {theme.LINE}'>"
+            f"<div class='rowline'>"
             f"<span style='font-weight:500'>{t}</span>"
             f"<span style='color:{theme.MUTED};float:right;font-variant-numeric:tabular-nums'>"
             f"{len(members)} markets</span>"

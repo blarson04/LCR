@@ -24,6 +24,7 @@ d = data.load()
 ed = data.edition(d)
 rank = ed["rank"]
 
+theme.eyebrow("Multifamily research · explore a market")
 st.markdown("# Metro detail")
 theme.caption("Why a market ranks where it does: its score, the themes driving it, "
               "and each measure in plain terms.")

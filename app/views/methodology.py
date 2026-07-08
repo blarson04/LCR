@@ -27,6 +27,7 @@ theme.inject_css(reading=True)
 d = data.load()
 spec_mode = data.is_spec(d)
 
+theme.eyebrow("Multifamily research · the report")
 st.markdown("# Methodology & about")
 theme.caption("Start here: what this project is, who built it, and how the score works. "
               "The findings follow on the Overview page.")

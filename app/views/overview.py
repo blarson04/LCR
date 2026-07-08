@@ -33,6 +33,7 @@ rank[["strength_1", "strength_2"]] = rank.apply(
     lambda r: pd.Series(data.top_strengths(r)), axis=1)
 
 # ---- Header -------------------------------------------------------------------
+theme.eyebrow("Multifamily research · the report")
 st.markdown("# The rent-growth screen")
 theme.caption(f"The {len(rank)} largest US rental markets, ranked by the fundamentals that "
               f"have historically come before strong rent growth. A {ed['horizon']} screen, "
@@ -119,7 +120,7 @@ for _, r in leaders.iterrows():
                 f"({int(r['rank_lo'])}–{int(r['rank_hi'])})</span>"
                 if has_tiers and pd.notna(r.get("rank_lo")) else f"{int(r['rank'])}")
     rows_html += (
-        f"<div style='padding:.42rem 0;border-bottom:1px solid {theme.LINE}'>"
+        f"<div class='rowline'>"
         f"<span style='color:{theme.MUTED};display:inline-block;width:3.4rem;"
         f"font-variant-numeric:tabular-nums'>{rank_txt}</span>"
         f"<span style='font-weight:500'>{r['cbsa_title']}</span>"

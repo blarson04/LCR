@@ -21,14 +21,14 @@ MODE_KEY = "ui_mode"
 _LIGHT = dict(
     INK="#1B2A3B", PAPER="#FBFBF9", SURFACE="#FFFFFF", LINE="#E4E6EA",
     MUTED="#66707D", ACCENT="#2C6E63", POS="#1E7F4F", NEG="#B3462E",
-    PROVISIONAL="#8A6D1D",
+    PROVISIONAL="#8A6D1D", ROW_HOVER="rgba(27,42,59,.035)",
     GRAY_SERIES=["#8E98A3", "#B9C0C8", "#D3D8DE"],
     SEQ_LOW="#E7ECEA", MAP_LAND="#EFF1ED", MAP_BORDER="#FFFFFF",
 )
 _DARK = dict(
     INK="#E7ECF1", PAPER="#0F151B", SURFACE="#171E26", LINE="#28313B",
     MUTED="#8C98A4", ACCENT="#45A492", POS="#3FA574", NEG="#CE6B4E",
-    PROVISIONAL="#D3AC3B",
+    PROVISIONAL="#D3AC3B", ROW_HOVER="rgba(231,236,241,.045)",
     GRAY_SERIES=["#7E8A96", "#5D6873", "#454F59"],
     SEQ_LOW="#22302B", MAP_LAND="#1B232C", MAP_BORDER="#0F151B",
 )
@@ -97,8 +97,17 @@ def inject_css(reading: bool = False) -> None:
       h1, h2, h3 {{ font-family: {FONT_HEAD}; color: {INK}; font-weight: 600;
           text-wrap: balance; }}
       h1 {{ font-size: 28px; }}
-      h2 {{ font-size: 20px; margin-top: 40px; }}
+      h2 {{ font-size: 20px; margin-top: 48px; }}
       h3 {{ font-size: 17px; }}
+      p {{ text-wrap: pretty; }}
+
+      .eyebrow {{ font-size: 11px; font-weight: 600; letter-spacing: .14em;
+          text-transform: uppercase; color: {MUTED}; margin-bottom: .4rem; }}
+      .rowline {{ padding: .42rem 0; border-bottom: 1px solid {LINE};
+          transition: background-color .15s ease; }}
+      .rowline:hover {{ background: {ROW_HOVER}; }}
+      .footlink {{ color: {MUTED} !important; }}
+      .footlink:hover {{ color: {ACCENT} !important; }}
 
       /* Links: accent is the stated use; sidebar nav keeps Streamlit's styling. */
       .block-container a {{ color: {ACCENT}; text-decoration: none; }}
@@ -160,6 +169,12 @@ def caption(text: str) -> None:
     st.markdown(f"<div class='cap'>{text}</div>", unsafe_allow_html=True)
 
 
+def eyebrow(text: str) -> None:
+    """Small kicker above a page title: situates the page inside the report
+    (linear reading order) even when the sidebar is collapsed on a phone."""
+    st.markdown(f"<div class='eyebrow'>{text}</div>", unsafe_allow_html=True)
+
+
 def badge(provisional: bool, label: str | None = None) -> str:
     """HTML badge; proxied/preliminary data must always carry its badge (skill §4)."""
     if provisional:
@@ -184,7 +199,20 @@ def style_fig(fig: go.Figure, height: int = 380) -> go.Figure:
 
 
 def page_footer() -> None:
+    """Report-style footer: brand line, the reading order, then the fine print."""
+    links = " · ".join(
+        f"<a class='footlink' href='{href}'>{label}</a>"
+        for label, href in [("Overview", "overview"), ("Full rankings", "rankings"),
+                            ("Track record", "track_record"),
+                            ("Methodology", "methodology")])
     st.markdown(
-        f"<hr style='margin-top:40px'><div class='cap'>A screening framework built on free "
+        f"<hr style='margin-top:48px'>"
+        f"<div style='display:flex;justify-content:space-between;align-items:baseline;"
+        f"flex-wrap:wrap;gap:.35rem .8rem'>"
+        f"<div><span style='font-family:{FONT_HEAD};font-size:15px;font-weight:600;"
+        f"color:{INK}'>The Rent-Growth Screener</span>"
+        f"<span class='cap'> · multifamily research</span></div>"
+        f"<div class='cap'>{links}</div></div>"
+        f"<div class='cap' style='margin-top:.7rem'>A screening framework built on free "
         f"public data (Census, IRS, BLS, BEA, Zillow, FRED). A research screen, not "
         f"investment advice.</div>", unsafe_allow_html=True)

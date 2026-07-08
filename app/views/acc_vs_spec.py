@@ -25,6 +25,7 @@ from ui import data, theme  # noqa: E402
 theme.inject_css()
 d = data.load()
 
+theme.eyebrow("Multifamily research · the fine print")
 st.markdown("# 2024 vintage vs 2025 screen")
 theme.caption("The fully finalized 2024 vintage (a 2024→2027 forecast) beside the current "
               "2025 screen (a 2025→2028 forecast on preliminary inputs; same model). "
@@ -56,7 +57,7 @@ def _top10(col, title, key):
     col.markdown(f"### {title}")
     for _, r in cmp.sort_values(key).head(10).iterrows():
         col.markdown(
-            f"<div style='padding:.28rem 0;border-bottom:1px solid {theme.LINE};font-size:14px'>"
+            f"<div class='rowline' style='padding:.28rem 0;font-size:14px'>"
             f"<span style='color:{theme.MUTED};display:inline-block;width:1.6rem'>"
             f"{int(r[key])}</span>{r['cbsa_title'].split(',')[0][:28]}</div>",
             unsafe_allow_html=True)

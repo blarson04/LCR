@@ -26,6 +26,7 @@ import config               # noqa: E402
 theme.inject_css(reading=True)
 d = data.load()
 
+theme.eyebrow("Multifamily research · the fine print")
 st.markdown("# Track record")
 theme.caption("How the screen would have performed historically, in the data a user could "
               "actually have had, plus the frozen record of every published run.")

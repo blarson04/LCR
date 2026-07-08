@@ -30,6 +30,7 @@ d = data.load()
 ed = data.edition(d)
 rank = ed["rank"].sort_values("rank").reset_index(drop=True)
 
+theme.eyebrow("Multifamily research · the report")
 st.markdown("# What drives the rankings")
 theme.caption("The five themes behind every score, in plain language: what each one "
               "measures, why it should come before rent growth, and which markets it "
