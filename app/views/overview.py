@@ -72,10 +72,15 @@ if len(d["prior_rank"]) and ed.get("vintage"):
     stay_txt = (f" {stay} of the prior edition's top ten stay in the top ten, and every "
                 f"rank is published with an uncertainty range.")
 
+lead_range = ""
+if "rank_lo" in rank.columns and pd.notna(top_row.get("rank_lo")):
+    lead_range = (f" — top of a leading cluster; its 90% rank range is "
+                  f"{int(top_row['rank_lo'])}–{int(top_row['rank_hi'])}")
+
 st.markdown("## Key findings")
 st.markdown(f"""
 - **{top_city} leads the current screen** (a {ed['year']}–{ed['year']+3} outlook), lifted
-  most by {lift}.{stay_txt}
+  most by {lift}{lead_range}.{stay_txt}
 - **The screen's top-10 markets out-grew the median market by {pp_pooled:+.1f} points of
   rent growth** over three years, averaged across six completed backtest windows. Picking
   on recent rent growth alone earned {pp_mom:+.1f}; the gap widens the further out you look.
@@ -86,31 +91,48 @@ st.markdown(f"""
   negative results.
 """)
 
-# ---- The top 10 ----------------------------------------------------------------
+# ---- The top 10, inside its leading cluster (tier + interval, P2) -------------
+has_tiers = ("tier" in rank.columns) and (rank["tier"].fillna("") != "").any()
+leaders = rank.head(10)
 st.markdown("## The top 10")
+if has_tiers:
+    n_cluster = int((rank["tier"] == "Leading cluster").sum())
+    n_in = int((leaders["tier"] == "Leading cluster").sum())
+    outside = ("" if n_in == len(leaders) else
+               f" ({len(leaders) - n_in} of the ten rank high on today's snapshot but "
+               f"carry ranges too wide to make the cluster — read those the most loosely.)")
+    theme.caption(
+        f"The exact top 10 — but read the ranges: {n_in} of these ten belong to a broader "
+        f"{n_cluster}-market leading cluster whose members could all plausibly hold a "
+        f"top-10 seat once measurement noise in the fast-moving inputs is accounted "
+        f"for. Ordering within the cluster is inside the noise.{outside}")
 rows_html = ""
 any_short = False
-for _, r in rank.head(10).iterrows():
+for _, r in leaders.iterrows():
     color = theme.POS if r["score"] >= 0 else theme.NEG
     strengths = " · ".join(s for s in (r["strength_1"], r["strength_2"]) if s) \
         or "Broadly average"
     if int(r["n_indicators"]) < data.N_IND:
         strengths += (f" · scored on {int(r['n_indicators'])} of {data.N_IND} measures")
         any_short = True
+    rank_txt = (f"{int(r['rank'])} <span style='color:{theme.MUTED};font-size:.85em'>"
+                f"({int(r['rank_lo'])}–{int(r['rank_hi'])})</span>"
+                if has_tiers and pd.notna(r.get("rank_lo")) else f"{int(r['rank'])}")
     rows_html += (
         f"<div style='padding:.42rem 0;border-bottom:1px solid {theme.LINE}'>"
-        f"<span style='color:{theme.MUTED};display:inline-block;width:1.8rem'>{int(r['rank'])}</span>"
+        f"<span style='color:{theme.MUTED};display:inline-block;width:3.4rem;"
+        f"font-variant-numeric:tabular-nums'>{rank_txt}</span>"
         f"<span style='font-weight:500'>{r['cbsa_title']}</span>"
         f"<span style='float:right;color:{color};font-variant-numeric:tabular-nums'>"
         f"{r['score']:+.2f}</span>"
-        f"<div class='cap' style='margin-left:1.8rem'>{strengths}</div></div>")
+        f"<div class='cap' style='margin-left:3.4rem'>{strengths}</div></div>")
 st.markdown(rows_html, unsafe_allow_html=True)
 short_note = (" Where a market is missing a measure at the data source, the gap takes a "
               "neutral (average) value, which can flatter or understate it; read that "
               "market's exact rank loosely." if any_short else "")
-theme.caption("Each market shows the one or two themes that lift its score most. Scores "
-              "are relative to the average market (0); ranks carry uncertainty ranges, "
-              "shown in the full rankings." + short_note)
+theme.caption("Each market shows its rank with the 90% range in parentheses, and the one "
+              "or two themes that lift its score most. Scores are relative to the average "
+              "market (0). All five tiers are on the Full rankings page." + short_note)
 
 # ---- The evidence, in one chart --------------------------------------------------
 if pp_win is not None and len(pp_win):

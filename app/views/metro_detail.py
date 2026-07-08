@@ -41,18 +41,30 @@ metro = st.selectbox("Choose a market", rank.sort_values("cbsa_title")["cbsa_tit
 row = rank[rank["cbsa_title"] == metro].iloc[0]
 code = row["cbsa_code"]
 
+tier_txt = str(row.get("tier", "") or "")
+has_tier = tier_txt not in ("", "nan")
 c1, c2, c3 = st.columns(3)
 c1.metric("Rank", f"{int(row['rank'])} ({int(row['rank_lo'])}–{int(row['rank_hi'])})",
-          help="This market's rank (1 = best). The range in parentheses shows how far "
-               "the rank moves under several reasonable alternative model weightings; "
-               "the single rank is a point inside that range, not a precise fact.")
-c2.metric("Score", f"{row['score']:+.2f}",
-          help="All eight measures combined into one number. 0 is the average market "
-               "this year; positive means stronger fundamentals than average, negative "
-               "weaker. The distance from 0 matters more than the exact decimals.")
-c3.metric("Of markets", f"{len(rank)}",
-          help="How many markets are ranked in this edition: every US metro area with "
-               "at least 500,000 people and continuous rent data.")
+          help="This market's rank (1 = best). The range in parentheses is the 90% "
+               "range once measurement noise in the two fast-moving inputs (job and "
+               "income growth) is accounted for; the single rank is a point inside "
+               "that range, not a precise fact.")
+if has_tier:
+    c2.metric("Tier", tier_txt,
+              help="The tier is the honest headline: "
+                   + data.TIER_BLURB.get(tier_txt, "")
+                   + ". Markets in the same tier are peers; ordering within a tier "
+                     "is inside the noise.")
+c_score = c3 if has_tier else c2
+c_score.metric("Score", f"{row['score']:+.2f}",
+               help="All eight measures combined into one number. 0 is the average "
+                    "market this year; positive means stronger fundamentals than "
+                    "average, negative weaker. The distance from 0 matters more than "
+                    "the exact decimals.")
+if not has_tier:
+    c3.metric("Of markets", f"{len(rank)}",
+              help="How many markets are ranked in this edition: every US metro area "
+                   "with at least 500,000 people and continuous rent data.")
 
 st.markdown(f"<div class='cap' style='margin:.6rem 0 0'>{data.why_sentence(row)}</div>",
             unsafe_allow_html=True)
@@ -121,8 +133,10 @@ if missing:
 
 if not ed["provisional"]:
     with st.expander("Context measures (tracked, not scored)"):
-        theme.caption("Tested as candidate measures but not added to the score; neither "
-                      "reliably improved accuracy. Shown for description only.")
+        theme.caption("Tested as candidate measures but not added to the score: neither "
+                      "showed a reliably detectable improvement (the test has limited "
+                      "power to see small gains, so the default is parsimony). Shown "
+                      "for description only.")
         crows = []
         for colname, (label, note) in data.CTX.items():
             v = d["ctx_year"][colname].get(code, float("nan"))

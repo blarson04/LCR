@@ -174,6 +174,14 @@ theme.caption("How the screens earned publication: two fresher-data configuratio
               "data (the vintage edition), and a fourth, adding a validated state-income "
               "chain, passed at 96.6% (the 2025 screen). All four outcomes are published; "
               "a screen that publishes its failures is the point. See Track record.")
+theme.caption("What 'validated' means here, precisely: TWO separately logged checks. "
+              "(1) The configuration passed its one-shot, pre-registered accuracy gate "
+              "on history, and (2) the data build it scores passed an automated "
+              "quality review — every input is cross-checked against an independent "
+              "second source, extreme values and geography changes are flagged, and "
+              "nothing publishes until every flag is investigated and signed off in "
+              "the public decision log. A validated configuration fed corrupted data "
+              "once; the second check exists so it cannot happen silently again.")
 
 st.markdown("Next: [Overview](overview), the key findings and the top 10.")
 

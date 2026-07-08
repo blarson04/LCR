@@ -123,7 +123,24 @@ STATE_CENTROIDS = {
     "WI": (44.6, -89.9), "WY": (43.0, -107.5),
 }
 
-# Rank-range machinery (uncertainty display): rank span across a few reasonable
+# Tier presentation (P2, decision-log 2026-07-08): the headline object is the
+# tier + rank interval, built from input-noise perturbation of the two fast-
+# moving growth inputs (see src/rank_intervals.py). Deterministic tier rule,
+# stated wherever tiers show.
+TIER_ORDER = ["Leading cluster", "Strong", "Mid", "Weak", "Lagging"]
+TIER_BLURB = {
+    "Leading cluster": "plausibly a top-10 market once measurement noise is accounted for",
+    "Strong": "reliably in the upper ranks, but not a clear top-10 candidate",
+    "Mid": "middle of the pack",
+    "Weak": "reliably in the lower ranks",
+    "Lagging": "at the bottom on these fundamentals",
+}
+INTERVAL_HELP = ("The 90% range for this market's rank once measurement noise in the two "
+                 "fast-moving inputs (job growth and income growth) is accounted for. "
+                 "Ranks inside each other's ranges are statistically tied.")
+
+# Rank-range machinery (weight-scheme sensitivity display, kept for the
+# accuracy-vs-speculation page): rank span across a few reasonable
 # alternative weightings.
 SCHEME_FACTORS = {"current": {}, "equal": None, "demand-tilt": {"Demand": 1.5},
                   "supply-tilt": {"Supply": 1.6}, "affordability-light": {"Affordability": 0.4}}
@@ -242,14 +259,32 @@ def load() -> dict:
     has_spec = (config.NOWCAST_PUBLISHED
                 and len(nowcast) > 0 and len(nc_raw) > 0 and len(nc_norm) > 0)
 
-    acc_rank = scored[scored["year"] == SCORE_YEAR].merge(
-        rank_ranges(norm, SCORE_YEAR), on="cbsa_code", how="left")
+    # Input-noise rank intervals + tiers (P2): the interval shown sitewide.
+    # Falls back to the weight-scheme range when the committed CSV lacks an
+    # edition (e.g. mid-regeneration), so pages always have rank_lo/rank_hi.
+    iv_path = config.PROCESSED_DIR / "rank_intervals.csv"
+    iv_all = (pd.read_csv(iv_path, dtype={"cbsa_code": str})
+              if iv_path.exists() else pd.DataFrame())
+
+    def _with_interval(rank_df, edition_label, norm_df, year):
+        iv = (iv_all[iv_all["edition"] == edition_label]
+              [["cbsa_code", "rank_lo", "rank_median", "rank_hi", "tier"]]
+              if len(iv_all) else pd.DataFrame())
+        if len(iv):
+            return rank_df.merge(iv, on="cbsa_code", how="left")
+        out = rank_df.merge(rank_ranges(norm_df, year), on="cbsa_code", how="left")
+        out["rank_median"] = out["rank"]
+        out["tier"] = ""
+        return out
+
+    acc_rank = _with_interval(scored[scored["year"] == SCORE_YEAR],
+                              "2023", norm, SCORE_YEAR)
     acc_raw = raw[raw["year"] == SCORE_YEAR].set_index("cbsa_code")
     acc_pct = (norm[norm["year"] == SCORE_YEAR].set_index("cbsa_code")[list(INDICATORS)]
                .rank(pct=True) * 100)
 
     if has_spec:
-        spec_rank = nowcast.merge(rank_ranges(nc_norm, SPEC_YEAR), on="cbsa_code", how="left")
+        spec_rank = _with_interval(nowcast, "current_2025", nc_norm, SPEC_YEAR)
         spec_raw = nc_raw.set_index("cbsa_code")
         spec_pct = nc_norm.set_index("cbsa_code")[list(INDICATORS)].rank(pct=True) * 100
     else:
@@ -265,7 +300,7 @@ def load() -> dict:
     v_norm = _vcsv(f"vintage_{VINTAGE_YEAR}_norm.csv")
     has_vintage = len(v_rank_raw) > 0 and len(v_raw) > 0 and len(v_norm) > 0
     if has_vintage:
-        vint_rank = v_rank_raw.merge(rank_ranges(v_norm, VINTAGE_YEAR), on="cbsa_code", how="left")
+        vint_rank = _with_interval(v_rank_raw, "vintage_2024", v_norm, VINTAGE_YEAR)
         vint_raw = v_raw.set_index("cbsa_code")
         vint_pct = v_norm.set_index("cbsa_code")[list(INDICATORS)].rank(pct=True) * 100
     else:

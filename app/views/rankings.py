@@ -106,6 +106,38 @@ theme.caption(f"Darker green = stronger fundamentals. {top3[0]} leads the {ed['y
               f"their strengths are on the Overview page; every market's rank, range, and "
               f"drivers are in the table below.")
 
+# ---- Tiers: the headline object (P2) ------------------------------------------
+has_tiers = ("tier" in rank.columns) and (rank["tier"].fillna("") != "").any()
+if has_tiers:
+    st.markdown("## The tiers")
+    theme.caption(
+        "Single ranks overstate precision: the two fastest-moving inputs (job and income "
+        "growth) are noisy year to year, so each market gets a 90% rank range and a tier. "
+        "Markets in the same tier are better read as peers than as an ordering.")
+    tier_rows = ""
+    for t in data.TIER_ORDER:
+        members = rank[rank["tier"] == t]
+        if not len(members):
+            continue
+        if t == "Leading cluster":
+            names = ", ".join(m.split(",")[0] for m in members["cbsa_title"])
+            detail = names
+        else:
+            first3 = ", ".join(m.split(",")[0] for m in members.head(3)["cbsa_title"])
+            detail = f"{first3}, …" if len(members) > 3 else first3
+        tier_rows += (
+            f"<div style='padding:.42rem 0;border-bottom:1px solid {theme.LINE}'>"
+            f"<span style='font-weight:500'>{t}</span>"
+            f"<span style='color:{theme.MUTED};float:right;font-variant-numeric:tabular-nums'>"
+            f"{len(members)} markets</span>"
+            f"<div class='cap'>{detail}</div></div>")
+    st.markdown(tier_rows, unsafe_allow_html=True)
+    lead_n = int((rank["tier"] == "Leading cluster").sum())
+    theme.caption(f"Tier rule, applied the same way every edition: a market joins the "
+                  f"Leading cluster when its range reaches the top 10 and its typical rank "
+                  f"sits in the top quarter; the other tiers band by typical rank. "
+                  f"{lead_n} markets make the current Leading cluster.")
+
 # ---- Full table (progressive disclosure) -------------------------------------
 with st.expander(f"See all {len(rank)} markets"):
     n_total = data.N_IND
@@ -113,6 +145,7 @@ with st.expander(f"See all {len(rank)} markets"):
         "Rank": [f"{int(r['rank'])} ({int(r['rank_lo'])}–{int(r['rank_hi'])})"
                  for _, r in rank.iterrows()],
         "Metro": rank["cbsa_title"],
+        **({"Tier": rank["tier"]} if has_tiers else {}),
         "Score": rank["score"],
         "Top strength": rank["strength"],
         "Top drag": rank["drag"],
@@ -142,9 +175,14 @@ with st.expander(f"See all {len(rank)} markets"):
                  column_config={
                      "Rank": st.column_config.TextColumn(
                          help="This market's rank out of all markets. The range in "
-                              "parentheses shows how far the rank moves under several "
-                              "reasonable alternative model weightings; treat markets "
-                              "with overlapping ranges as roughly tied."),
+                              "parentheses is the 90% range once measurement noise in "
+                              "the two fast-moving inputs (job and income growth) is "
+                              "accounted for; treat markets with overlapping ranges "
+                              "as roughly tied."),
+                     "Tier": st.column_config.TextColumn(
+                         help="The tier is the honest headline: markets in the same "
+                              "tier are peers on these fundamentals, and the exact "
+                              "ordering within a tier is inside the noise."),
                      "Score": st.column_config.TextColumn(
                          help="The composite score: all eight measures combined. 0 is "
                               "the average market that year; higher is stronger "
@@ -174,8 +212,8 @@ with st.expander(f"See all {len(rank)} markets"):
                   f"than a guess, which can flatter or understate that market, so lean "
                   f"on their rank ranges rather than their exact ranks."
                   if n_short else "")
-    theme.caption(f"Rank ranges show the span across several reasonable model weightings; "
-                  f"treat this as a screen, not a precise ordering. {change_note}"
+    theme.caption(f"Rank ranges are 90% intervals under measured input noise; treat this "
+                  f"as a screen, not a precise ordering. {change_note}"
                   f"Strength and drag are the themes that helped or hurt each market's "
                   f"score the most; 'no material drag' is common among top-ranked "
                   f"markets and means exactly that, not missing data.{short_note}")

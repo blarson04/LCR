@@ -235,6 +235,14 @@ st.markdown(
 theme.caption("A validation bar that never fails anything proves nothing. Ours failed two of "
               "four attempts, including one at a margin of 0.34 points, which is exactly "
               "why the two that passed mean something.")
+theme.caption("Two disclosures, on the record: the fourth attempt's fix was diagnosed from "
+              "the same historical windows it was then scored on, so its pass is weaker "
+              "evidence than a fully out-of-sample pass would be — the real test is the "
+              "frozen 2025→2028 call itself, whose realized outcome we are pre-committed "
+              "to publish when 2028 data closes, whatever it shows. And since July 2026, "
+              "passing a gate is no longer sufficient to publish: the data build itself "
+              "must also clear an automated quality review (cross-source checks on every "
+              "input), signed off in the public decision log.")
 
 st.markdown("## Honest limits")
 st.markdown(
