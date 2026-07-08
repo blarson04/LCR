@@ -292,12 +292,32 @@ trailing rent growth is exactly the NOI ≈ rents − expenses redundancy flagge
 asset-price sub-index has real signal (τ 0.186) but adds nothing the composite lacks; and the
 Δ-unemployment candidate was auto-orient *flipped* — rising unemployment predicting stronger
 3-yr rent growth (a counter-cyclical recovery artifact of the 2015–24 sample) — yet still
-cleared no value-add bar. Across two gate cycles, **eight candidates have now failed to
-reliably improve the composite**: the parsimony is earned, not asserted.
+cleared no value-add bar. Across two gate cycles, **no candidate has shown a reliably
+detectable improvement over the composite**. Stated with its limits: with only ~6
+overlapping evaluation windows the value-add test has limited power against small true
+improvements, so these are "not detectably better" results, not "proven useless" — and the
+project defaults to parsimony rather than to accumulation.
 """
 
     # v3 Phase 4: the industry-baseline replica ("versus industry practice").
     industry_md, industry_bullet = "", ""
+    # P5 robustness pair (2026-07-08): answers "different universe" / "wrong task".
+    robustness_md = ""
+    rrp = PROC / "replica_robustness.csv"
+    if rrp.exists():
+        rr = pd.read_csv(rrp)
+        lines = []
+        for _, r in rr.iterrows():
+            lines.append(f"- **{r['task']}** ({'top-50 subuniverse' if r['exhibit'] == 'top50_subuniverse' else 'full universe'}): "
+                         f"composite {r['tau_full']:+.3f} vs replica {r['tau_replica']:+.3f}, "
+                         f"gap {r['gap']:+.3f} (95% CI [{r['ci_lo']:+.3f}, {r['ci_hi']:+.3f}])")
+        robustness_md = ("\n**Robustness pair (pre-registered 2026-07-08, first results "
+                         "final):** the two strongest hostile objections were tested "
+                         "directly. Restricted to the 50 largest metros (the industry "
+                         "universe) the replica has no detectable signal at all; scored at "
+                         "tasks closer to its implied objective (1-yr horizon; a blended "
+                         "rent + asset-value target) it does no better. The composite is "
+                         "reliably ahead on every exhibit:\n\n" + "\n".join(lines) + "\n")
     ibp = PROC / "industry_baseline.csv"
     blp = PROC / "baseline_comparison.csv"
     if ibp.exists() and blp.exists():
@@ -355,7 +375,7 @@ against a prediction target.
 110-metro universe (theirs: top 50); the industry matrix targets "opportunistic multifamily
 investment" broadly and never claims to predict 3-yr rent growth. This scores the *practice*
 of equal-weight conditions indices at our task, not any vendor's product at theirs.
-"""
+{robustness_md}"""
 
     # v3-P3 temporal-uncertainty honesty.
     uncertainty_md = ""
@@ -398,6 +418,12 @@ with hand-set weights into a composite score. Walk-forward validation shows the 
 honestly-reported result. Every run is frozen to a pre-registration registry for an auditable
 track record. It is positioned as a *screening framework, not a prediction engine*.
 
+**The paper's spine:** *validation discipline, not data access, is the scarce input in market
+selection.* Roughly 90% of a leading professional research product runs on the same free
+sources this project uses; what separates the two is that every component, weight scheme, and
+data build here had to survive a pre-registered test — and the ones that failed are published.
+Every major exhibit below serves that one thesis.
+
 **Headline numbers**
 - Universe: **{n_metros} metros**, scored on the **2023** cross-section; panel spans **{panel_years}**.
 - Pre-COVID 3-yr: τ **{pc3:.3f}**, precision@10 **{pc3p:.2f}**.  Shock 3-yr: τ **{sh3:.3f}**.
@@ -421,6 +447,41 @@ OMB CBSA delineation.
 population floor but fails the rent gate is logged:
 
 {dropped_tbl}
+
+---
+
+## 2b. Data quality — the delineation problem (an infrastructure contribution)
+
+**Federal metro-level series are silently corrupted by OMB delineation changes, and any
+researcher using them inherits the problem.** When OMB redraws a metro's county membership
+(2013, 2018, 2020, 2023 bulletins), the agencies adopt the new boundaries at different times
+and *without breaking series identifiers*: QCEW area files switch boundaries between annual
+files (2018→2019 and 2023→2024), and the ACS metro API returns each survey year under the
+delineation current at release. The result is level breaks that masquerade as growth — this
+project found fake metro job prints as large as **±17%** (New Orleans −16.9%, Fresno +15.6%)
+and fake population/housing-stock changes as large as **−35%** (New Haven, whose Connecticut
+geography switched from counties to planning regions), all inside otherwise-clean federal
+data. Of this panel's 110 metros, **39 have county membership that differs across the
+delineation vintages the panel spans** — the problem is the norm for long metro panels,
+not an edge case.
+
+**Detection protocol (now automated, run per refresh):** (1) cross-source growth diffs for
+every measure with an independent sister series — QCEW jobs vs CES, BEA income vs QCEW pay,
+Zillow home values vs FHFA HPI, ACS population vs Census PEP — flagging divergences beyond
+4pp or 3σ of the within-year diff distribution; (2) a distributional gate blocking any input
+growth beyond 4σ of its year's cross-section; (3) a boundary watchlist diffing each CBSA's
+county membership against a committed reference; (4) verification by area-file-vs-county-sum
+ratio. **Fix:** rebuild affected series from county-level data (county FIPS are stable across
+delineations) aggregated on the current boundary; where a geography ceases to exist (the
+Connecticut planning regions), chain across the seam with a boundary-stable growth rate.
+
+**Stated honestly:** a validated edition of this screen shipped with nine corrupted metros,
+and the first detections came from author skepticism about specific results, not from
+automation. The protocol above is that skepticism systematized; publication is now
+mechanically blocked until the panel's quality report is clean or every flag is dispositioned
+in the public decision log. The #1 rank was held by a data artifact twice before these
+controls existed — rank #1 is an extreme-value seat, and extreme values are
+disproportionately errors.
 
 ---
 
@@ -517,21 +578,39 @@ record auditable — a core credibility differentiator.
 
 ---
 
-## 8. Suggested paper structure
+## 8. Paper structure (v4 revision — the validation-discipline spine)
 
-1. **Introduction** — the gap (no transparent, auditable, free-data multifamily screener),
-   plus the ~90%-free observation: the leading industry index runs almost entirely on the
-   same free sources (§5f), so the differentiator is validation discipline, not data access.
+*Spine: validation discipline, not data access, is the scarce input in market selection.
+Every exhibit serves it. Venue: SSRN working paper + a practitioner write-up first; if
+refereed, a practitioner outlet (e.g., Journal of Real Estate Portfolio Management), not an
+academic econ journal — the contribution is disciplined method applied to practice.*
+
+1. **Introduction** — the gap (no transparent, auditable, free-data multifamily screener);
+   the ~90%-free observation AND the headline contrast (composite 3-yr τ vs the
+   industry-style replica, §5f) moved up front: together they motivate everything.
 2. **Framework** — screening vs. prediction; the five themes and why (→ `decision-log.md`).
 3. **Data** — sources, universe definition, the rent-coverage gate, dropped metros (§2).
-4. **Methodology** — indicators, within-year normalization, weighting, scoring (§3).
-5. **Validation** — walk-forward design, regimes, winsorizing, metrics; results (§5).
-6. **Findings & discussion** — the regime story, 3y≈1y, what the top/bottom say (§4–5).
-7. **Versus industry practice** — the free-Arbor replica result and the failed
-   "re-packaged momentum" prediction, published as logged (§5f); the gated-candidates
-   negative results (§5e).
-8. **Pre-registration & reproducibility** — the registry as a differentiator (§6).
-9. **Limitations & future work** — §7 + fitted weights, AI-exposure indicator, vacancy.
+4. **Data quality** — the delineation problem, detection protocol, county-rollup fix (§2b).
+   Framed as an infrastructure contribution useful to any researcher using metro-level
+   federal data — including the honest paragraph that a validated edition shipped with nine
+   corrupted metros before the protocol existed.
+5. **Methodology** — indicators, within-year normalization, weights (per the pending
+   monetization decision), scoring (§3).
+6. **Validation** — walk-forward design, regimes, winsorizing, metrics; per-window ranges as
+   the PRIMARY uncertainty statement; the four-attempt gate arc with both failures (§5, §5d).
+7. **Versus industry practice** — the replica result, the failed "re-packaged momentum"
+   prediction published as logged, the robustness pair (top-50 subuniverse; alternate-task
+   fairness), and the fairness caveats inline (§5f). The claim is "equal-weight conditions
+   indices are not rent-growth predictors," never "we beat [vendor]."
+8. **Mechanism** — the horizon finding: the composite strengthens toward 4–5-year horizons
+   while momentum decays — direct evidence that fundamentals express over time (§5b).
+9. **Gated candidates** — eight rejections with the low-power-honest framing: "no reliably
+   detectable improvement; with ~6 windows the test has limited power, so we default to
+   parsimony" (§5e).
+10. **Registry & reproducibility** — the frozen-run registry, and the binding 2028
+    pre-commitment to publish the realized performance of the 2025→2028 screen whatever it
+    shows (§6).
+11. **Limitations & future work** — §7, stated as limits on the claims, not disclaimers.
 """
     out = OUT_DIR / "paper-brief.md"
     out.write_text(md, encoding="utf-8")

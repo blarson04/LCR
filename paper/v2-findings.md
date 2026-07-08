@@ -179,8 +179,9 @@ indicators, and whether augmenting the composite at 10% *reliably* improves 3-yr
   downloads (403). Genuinely non-redundant but weak, with zero reliable value-add.
 
 **Neither is adopted as a scored indicator** — both are kept as panel *context* columns. The
-recurring Tier-2 result: **no new free signal reliably improved the model**, reinforcing that it's
-a parsimonious, honestly-bounded framework (the gate is doing its job).
+recurring Tier-2 result: **no new free signal showed a reliably detectable improvement** (with
+~6 overlapping windows the test has limited power against small gains, so the default is
+parsimony, not a claim that nothing could ever help) — the gate is doing its job.
 
 ---
 

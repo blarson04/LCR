@@ -113,9 +113,11 @@ growth) is what carries the signal. Disclosed below.
 
 **Consequence.** Zero adoptions (pre-registered expectation: 0–2). The model remains the
 frozen 8-indicator v2.0.0 — no version bump, no regeneration, no site changes. Across two
-gate cycles (P5–P7 in v2; C1–C3, C6a, C6b here), **eight candidates have now been tested
-and none has reliably improved the composite** — the parsimonious spec is earned, not
-asserted. The CREMI series (including cap rates and occupancy, noted in the Phase 2 audit
+gate cycles (P5–P7 in v2; C1–C3, C6a, C6b here), **eight candidates have been tested and
+none has shown a reliably detectable improvement**. Stated with its limits: with ~6
+overlapping evaluation windows the value-add test has limited power against small true
+improvements, so this is "not detectably better," not "proven useless" — the project
+defaults to parsimony rather than to accumulation. The CREMI series (including cap rates and occupancy, noted in the Phase 2 audit
 but outside the frozen list) remain available as context via `src/ingest/cremi.py`.
 
 *Data vintage: panel through 2024 (QCEW 2024 gaps for Cleveland/Dayton as disclosed);
