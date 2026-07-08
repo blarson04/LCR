@@ -40,34 +40,33 @@ st.markdown(
     "Every market is scored on the same eight measures, grouped into the five themes "
     "below, ordered here from the heaviest theme in the score to the lightest. Each "
     "measure compares a market against all the others in the same year, so only relative "
-    "standing counts, and each theme contributes a fixed share of the final score (the "
-    "exact shares are the project's proprietary core and are not published). No market "
-    "is ever hand-adjusted.")
+    "standing counts, and each theme contributes a fixed, published share of the final "
+    "score. No market is ever hand-adjusted.")
 
 THEMES = [
-    ("Demand", "the heaviest theme", "Who is moving in, hiring, and earning",
+    ("Demand", "40% of the score", "Who is moving in, hiring, and earning",
      "Net domestic migration, job growth, and income growth. Markets that people and "
      "paychecks are moving into fill apartments first and support rent increases later; "
      "migration is the single heaviest measure in the screen. This is the screen's "
      "biggest bet, and the backtests reward it: demand today shows up in rents over the "
      "following three years."),
-    ("Supply", "the second-heaviest", "How much new housing is being built",
+    ("Supply", "25% of the score", "How much new housing is being built",
      "Building permits relative to the housing that already exists, counted the opposite "
      "way: the *less* a market is building, the better it scores. Heavy construction "
      "today is new competition for every existing rental tomorrow. This is the screen's "
      "contrarian edge; it is why several fast-growing Sun Belt markets that over-built "
      "sit near the bottom despite strong demand."),
-    ("Affordability", "a moderate share", "Whether rents have room to grow",
+    ("Affordability", "20% of the score", "Whether rents have room to grow",
      "Two measures: rent as a share of local income (lower is better; stretched rents "
      "have nowhere to go), and the cost of owning versus renting (higher is better; "
      "when buying is far pricier than renting, households stay renters longer and "
      "demand stays in the rental pool)."),
-    ("Momentum", "a deliberately small share", "What rents have done lately",
+    ("Momentum", "a deliberately small 10%", "What rents have done lately",
      "Recent rent growth, deliberately held to a small weight and used as confirmation "
      "only. Rent momentum is genuinely informative, but on its own it decays with time "
      "and inverted badly in the 2021-22 shock; the screen uses it as a supporting "
      "witness, not the verdict."),
-    ("Resilience", "the lightest theme", "How diversified the local economy is",
+    ("Resilience", "5% of the score", "How diversified the local economy is",
      "Employment spread across industries. A market that leans on a single employer or "
      "sector carries more downside risk to rents when that sector stumbles; diversity "
      "earns a small, steady credit."),

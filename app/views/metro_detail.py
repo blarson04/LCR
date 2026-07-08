@@ -110,12 +110,19 @@ for k in data.INDICATORS:
     if pd.isna(val):
         missing.append(data.PRETTY[k].lower())
     rows.append({"Measure": data.PRETTY[k],
+                 "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
                  "Value": "–" if pd.isna(val) else data.FMT[k](val),
                  "Percentile": ed["pct"][k].get(code, float("nan"))})
 st.dataframe(
-    pd.DataFrame(rows).style.set_properties(subset=["Measure"], **{"font-weight": "500"}),
+    pd.DataFrame(rows).style
+      .set_properties(subset=["Measure"], **{"font-weight": "500"})
+      .set_properties(subset=["Weight"], **{"font-variant-numeric": "tabular-nums",
+                                            "text-align": "right"}),
     hide_index=True, use_container_width=True,
     column_config={
+        "Weight": st.column_config.TextColumn(
+            help="This measure's fixed share of the composite score, identical for "
+                 "every market."),
         "Value": st.column_config.TextColumn(
             help="The measure in real-world units for this market, before any scoring."),
         "Percentile": st.column_config.ProgressColumn(

@@ -25,6 +25,10 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-07-08 — AUTHOR DECISION (P1): the weights are PUBLISHED; site-level concealment ends
+
+The author accepted the external review's recommendation. Rationale on the record: concealment was already broken (the public repo carries `config.py`, this log, and the paper brief — site-level hiding was theater); it poisoned the reproducibility story that is the project's differentiator; and the v2 weight-robustness work showed hypothesis-driven schemes land within noise of each other, so the weights are demonstrably not the moat — the validation infrastructure, component selection, data-repair knowledge, and freshness pipeline are. **Executed:** exact weights restored sitewide (methodology theme table with per-measure shares, themes-page shares, the vintage ledger's Weight column, metro detail's Weight column, and the provenance caption back to weight-sums); the "deliberately not published" copy removed and replaced with the honest line — the weights are published because the testing, not the numbers, is the secret. Monetization targets the product layer (current validated screen, refresh alerts, spotlight depth, API), never `config.py`.
+
 ### 2026-07-08 — D7/D8 OUTCOME: rebuild complete on boundary-consistent data; two former top-5 seats were riding fake job prints; both editions re-frozen; QA report GREEN
 
 **The rebuild executed once, per the spec; no result-based iteration.** All 35 rollup metros' QCEW series and all 39 affected metros' population/housing series now sit on the current boundary for every year; the previously flagged fake prints resolved to CES-agreeing values (Grand Rapids +3.4% → +0.2% vs CES +0.4%; New York −0.8% → +2.2% vs CES +2.3%); zero boundary-class breaks remain in any input series; Cleveland, Poughkeepsie, and Dayton have full population/housing history for the first time (their historical `net_migration` and `permits_to_stock` were silently neutral-filled before).
