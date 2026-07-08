@@ -27,7 +27,18 @@ def main() -> None:
          "decision-log 2026-07-08); it may only change via a new gate")
     print("config: OK")
 
-    # 2. The scoring pipeline reproduces a full ranking from committed data.
+    # 2. P0 data-QA regime (decision-log 2026-07-08): a QA report exists for
+    #    exactly this panel build, every blocker is dispositioned, and the
+    #    golden-metro values (the D1-D6-verified inputs) still hold.
+    from src import data_qa
+    ok, msg = data_qa.publication_gate()
+    assert ok, f"data-QA publication gate: {msg}"
+    golden = data_qa.golden_flags()
+    bad = [f for f in golden if f["severity"] == "BLOCKER"]
+    assert not bad, f"golden-metro regression: {len(bad)} value(s) changed, e.g. {bad[0]['detail']}"
+    print(f"data QA: OK ({msg}; golden metros hold)")
+
+    # 3. The scoring pipeline reproduces a full ranking from committed data.
     from src import score as score_mod
     scored = score_mod.score()
     latest = scored[scored["year"] == score_mod.SCORE_YEAR]
@@ -35,7 +46,7 @@ def main() -> None:
     assert latest["rank"].min() == 1 and latest["rank"].max() == 110
     print(f"scoring: OK (110 metros ranked for {score_mod.SCORE_YEAR})")
 
-    # 3. Every site page renders without exception, in both themes.
+    # 4. Every site page renders without exception, in both themes.
     from streamlit.testing.v1 import AppTest
     views = ["overview", "themes", "rankings", "spotlight", "metro_detail", "compare",
              "track_record", "methodology", "acc_vs_spec"]
@@ -48,7 +59,7 @@ def main() -> None:
             assert not at.exception, f"{view} [{mode}]: {at.exception[0].value}"
         print(f"page {view}: OK")
 
-    # 4. The router boots.
+    # 5. The router boots.
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=180)
     at.run()
     assert not at.exception, f"router: {at.exception[0].value}"

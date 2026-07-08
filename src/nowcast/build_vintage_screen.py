@@ -72,6 +72,17 @@ def main() -> None:
     normalize.normalize(ind).query("year == @VINTAGE_YEAR").to_csv(
         OUT / f"vintage_{VINTAGE_YEAR}_norm.csv", index=False)
 
+    if "--stage-only" in sys.argv:
+        print(f"staged only (no registry freeze): vintage_{VINTAGE_YEAR}_*.csv written; "
+              "run again without --stage-only after the data-QA report is "
+              "green/dispositioned")
+        return
+
+    # P0 data-QA regime (decision-log 2026-07-08): freezing = publication;
+    # blocked until the QA report for THIS panel build is green/dispositioned.
+    from src import data_qa
+    data_qa.assert_publication_clear()
+
     # ---- freeze to the registry (immutable) --------------------------------
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_dir = config.PREDICTIONS_DIR / stamp

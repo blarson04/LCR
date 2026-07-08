@@ -169,7 +169,14 @@ def freeze_2025(ranking: pd.DataFrame) -> None:
 
 def main() -> None:
     ranking, prov = build()
-    freeze_2025(ranking)
+    if "--stage-only" in sys.argv:
+        print("staged only (no registry freeze); run again without --stage-only "
+              "after the data-QA report is green/dispositioned")
+    else:
+        # P0 data-QA regime (decision-log 2026-07-08): freezing = publication.
+        from src import data_qa
+        data_qa.assert_publication_clear()
+        freeze_2025(ranking)
     by = prov.groupby("provenance")["weight"].sum()
     print(f"=== PROVISIONAL {NOWCAST_YEAR} nowcast ranking (NOT finalized) ===\n")
     print("Score composition by data provenance (share of total weight):")

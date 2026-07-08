@@ -51,6 +51,12 @@ def _sha256(path: Path) -> str:
 def freeze_run(score_year: int = score_mod.SCORE_YEAR) -> Path:
     """Freeze the current model output to a new timestamped, immutable folder.
     Returns the run directory."""
+    # P0 data-QA regime (decision-log 2026-07-08): nothing freezes for
+    # publication without a green (or fully dispositioned) QA report that
+    # matches the current panel build.
+    from src import data_qa
+    data_qa.assert_publication_clear()
+
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_dir = config.PREDICTIONS_DIR / stamp
     run_dir.mkdir(parents=True, exist_ok=False)   # never overwrite an existing run

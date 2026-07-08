@@ -1,0 +1,15 @@
+{
+  "stamp": "20260708T150327Z",
+  "panel_sha256": "64b127bd1efe5a23b00a659a0cc1b61603251723b780908fbd9e61fdf3f27f53",
+  "status": "GREEN",
+  "n_blockers_open": 0,
+  "n_blockers_total": 113,
+  "n_warns": 0,
+  "checks": [
+    "cross_source",
+    "outlier_gate",
+    "boundary_watchlist",
+    "top10_review",
+    "golden_metros"
+  ]
+}

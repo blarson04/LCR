@@ -1,0 +1,181 @@
+cbsa_code,cbsa_title,year,column,value
+10580,"Albany-Schenectady-Troy, NY",2022,avg_annual_pay,70814.0
+10580,"Albany-Schenectady-Troy, NY",2022,emp_hhi,0.10331006706444595
+10580,"Albany-Schenectady-Troy, NY",2022,housing_units,422241.0
+10580,"Albany-Schenectady-Troy, NY",2022,net_migration,-1015.0
+10580,"Albany-Schenectady-Troy, NY",2022,per_capita_income,68063.47930140585
+10580,"Albany-Schenectady-Troy, NY",2022,permits_mf,1257.0
+10580,"Albany-Schenectady-Troy, NY",2022,permits_total,2635.0
+10580,"Albany-Schenectady-Troy, NY",2022,population,904617.0
+10580,"Albany-Schenectady-Troy, NY",2022,rental_vacancy,0.041598323937643865
+10580,"Albany-Schenectady-Troy, NY",2022,total_emp,431837.0
+10580,"Albany-Schenectady-Troy, NY",2022,zhvi,304091.5726727857
+10580,"Albany-Schenectady-Troy, NY",2022,zori,1419.1878747002013
+10580,"Albany-Schenectady-Troy, NY",2023,avg_annual_pay,73961.0
+10580,"Albany-Schenectady-Troy, NY",2023,emp_hhi,0.11223835945704169
+10580,"Albany-Schenectady-Troy, NY",2023,housing_units,424620.0
+10580,"Albany-Schenectady-Troy, NY",2023,net_migration,-507.0
+10580,"Albany-Schenectady-Troy, NY",2023,per_capita_income,72861.82008172192
+10580,"Albany-Schenectady-Troy, NY",2023,permits_mf,836.0
+10580,"Albany-Schenectady-Troy, NY",2023,permits_total,1907.0
+10580,"Albany-Schenectady-Troy, NY",2023,population,904682.0
+10580,"Albany-Schenectady-Troy, NY",2023,rental_vacancy,0.0370237388314253
+10580,"Albany-Schenectady-Troy, NY",2023,total_emp,440776.0
+10580,"Albany-Schenectady-Troy, NY",2023,zhvi,319260.35576574755
+10580,"Albany-Schenectady-Troy, NY",2023,zori,1482.5424737844107
+10580,"Albany-Schenectady-Troy, NY",2024,avg_annual_pay,77281.0
+10580,"Albany-Schenectady-Troy, NY",2024,emp_hhi,0.11271031090788977
+10580,"Albany-Schenectady-Troy, NY",2024,housing_units,426194.0
+10580,"Albany-Schenectady-Troy, NY",2024,net_migration,
+10580,"Albany-Schenectady-Troy, NY",2024,per_capita_income,76558.72619692715
+10580,"Albany-Schenectady-Troy, NY",2024,permits_mf,1068.0
+10580,"Albany-Schenectady-Troy, NY",2024,permits_total,2366.0
+10580,"Albany-Schenectady-Troy, NY",2024,population,913485.0
+10580,"Albany-Schenectady-Troy, NY",2024,rental_vacancy,0.021414488719701467
+10580,"Albany-Schenectady-Troy, NY",2024,total_emp,449552.0
+10580,"Albany-Schenectady-Troy, NY",2024,zhvi,339213.75456610584
+10580,"Albany-Schenectady-Troy, NY",2024,zori,1554.6469871847664
+18140,"Columbus, OH",2022,avg_annual_pay,64907.0
+18140,"Columbus, OH",2022,emp_hhi,0.09238980090616242
+18140,"Columbus, OH",2022,housing_units,926137.0
+18140,"Columbus, OH",2022,net_migration,-2942.0
+18140,"Columbus, OH",2022,per_capita_income,62140.70394157488
+18140,"Columbus, OH",2022,permits_mf,6292.0
+18140,"Columbus, OH",2022,permits_total,12075.0
+18140,"Columbus, OH",2022,population,2161511.0
+18140,"Columbus, OH",2022,rental_vacancy,0.04374046998133185
+18140,"Columbus, OH",2022,total_emp,1060330.0
+18140,"Columbus, OH",2022,zhvi,295001.191919842
+18140,"Columbus, OH",2022,zori,1325.6232664512515
+18140,"Columbus, OH",2023,avg_annual_pay,66896.0
+18140,"Columbus, OH",2023,emp_hhi,0.09323051863297371
+18140,"Columbus, OH",2023,housing_units,937057.0
+18140,"Columbus, OH",2023,net_migration,-380.0
+18140,"Columbus, OH",2023,per_capita_income,65205.730767110595
+18140,"Columbus, OH",2023,permits_mf,5706.0
+18140,"Columbus, OH",2023,permits_total,11440.0
+18140,"Columbus, OH",2023,population,2180271.0
+18140,"Columbus, OH",2023,rental_vacancy,0.033185932254353755
+18140,"Columbus, OH",2023,total_emp,1077384.0
+18140,"Columbus, OH",2023,zhvi,308317.81756888394
+18140,"Columbus, OH",2023,zori,1393.2329714391342
+18140,"Columbus, OH",2024,avg_annual_pay,70062.0
+18140,"Columbus, OH",2024,emp_hhi,0.1641562757191277
+18140,"Columbus, OH",2024,housing_units,948275.0
+18140,"Columbus, OH",2024,net_migration,
+18140,"Columbus, OH",2024,per_capita_income,68095.9900277571
+18140,"Columbus, OH",2024,permits_mf,7645.0
+18140,"Columbus, OH",2024,permits_total,13962.0
+18140,"Columbus, OH",2024,population,2225377.0
+18140,"Columbus, OH",2024,rental_vacancy,0.044613132820571694
+18140,"Columbus, OH",2024,total_emp,1091010.0
+18140,"Columbus, OH",2024,zhvi,323684.8604923151
+18140,"Columbus, OH",2024,zori,1451.0057053920857
+19430,"Dayton-Kettering-Beavercreek, OH",2022,avg_annual_pay,58564.0
+19430,"Dayton-Kettering-Beavercreek, OH",2022,emp_hhi,0.10588060426606125
+19430,"Dayton-Kettering-Beavercreek, OH",2022,housing_units,372427.0
+19430,"Dayton-Kettering-Beavercreek, OH",2022,net_migration,322.0
+19430,"Dayton-Kettering-Beavercreek, OH",2022,per_capita_income,56464.67726479766
+19430,"Dayton-Kettering-Beavercreek, OH",2022,permits_mf,934.0
+19430,"Dayton-Kettering-Beavercreek, OH",2022,permits_total,2265.0
+19430,"Dayton-Kettering-Beavercreek, OH",2022,population,813980.0
+19430,"Dayton-Kettering-Beavercreek, OH",2022,rental_vacancy,0.02388941512675197
+19430,"Dayton-Kettering-Beavercreek, OH",2022,total_emp,363031.0
+19430,"Dayton-Kettering-Beavercreek, OH",2022,zhvi,194873.91719796264
+19430,"Dayton-Kettering-Beavercreek, OH",2022,zori,1131.457218534817
+19430,"Dayton-Kettering-Beavercreek, OH",2023,avg_annual_pay,60981.0
+19430,"Dayton-Kettering-Beavercreek, OH",2023,emp_hhi,0.11564533365743898
+19430,"Dayton-Kettering-Beavercreek, OH",2023,housing_units,374126.0
+19430,"Dayton-Kettering-Beavercreek, OH",2023,net_migration,838.0
+19430,"Dayton-Kettering-Beavercreek, OH",2023,per_capita_income,59781.12072069424
+19430,"Dayton-Kettering-Beavercreek, OH",2023,permits_mf,548.0
+19430,"Dayton-Kettering-Beavercreek, OH",2023,permits_total,1766.0
+19430,"Dayton-Kettering-Beavercreek, OH",2023,population,816546.0
+19430,"Dayton-Kettering-Beavercreek, OH",2023,rental_vacancy,0.039399003357270826
+19430,"Dayton-Kettering-Beavercreek, OH",2023,total_emp,368184.0
+19430,"Dayton-Kettering-Beavercreek, OH",2023,zhvi,203900.6272693498
+19430,"Dayton-Kettering-Beavercreek, OH",2023,zori,1201.727143748157
+19430,"Dayton-Kettering-Beavercreek, OH",2024,avg_annual_pay,63086.0
+19430,"Dayton-Kettering-Beavercreek, OH",2024,emp_hhi,0.11794057552204902
+19430,"Dayton-Kettering-Beavercreek, OH",2024,housing_units,375325.0
+19430,"Dayton-Kettering-Beavercreek, OH",2024,net_migration,
+19430,"Dayton-Kettering-Beavercreek, OH",2024,per_capita_income,62359.44946090004
+19430,"Dayton-Kettering-Beavercreek, OH",2024,permits_mf,571.0
+19430,"Dayton-Kettering-Beavercreek, OH",2024,permits_total,2056.0
+19430,"Dayton-Kettering-Beavercreek, OH",2024,population,821740.0
+19430,"Dayton-Kettering-Beavercreek, OH",2024,rental_vacancy,0.06799731766005286
+19430,"Dayton-Kettering-Beavercreek, OH",2024,total_emp,371885.0
+19430,"Dayton-Kettering-Beavercreek, OH",2024,zhvi,218071.3376563972
+19430,"Dayton-Kettering-Beavercreek, OH",2024,zori,1268.2313079448365
+23420,"Fresno, CA",2022,avg_annual_pay,53753.48918749048
+23420,"Fresno, CA",2022,emp_hhi,0.08040873167761692
+23420,"Fresno, CA",2022,housing_units,395942.0
+23420,"Fresno, CA",2022,net_migration,-2499.0
+23420,"Fresno, CA",2022,per_capita_income,50412.32810285337
+23420,"Fresno, CA",2022,permits_mf,714.0
+23420,"Fresno, CA",2022,permits_total,4628.0
+23420,"Fresno, CA",2022,population,1177521.0
+23420,"Fresno, CA",2022,rental_vacancy,0.02936502179460971
+23420,"Fresno, CA",2022,total_emp,466173.0
+23420,"Fresno, CA",2022,zhvi,385635.11059567524
+23420,"Fresno, CA",2022,zori,1756.5847372092833
+23420,"Fresno, CA",2023,avg_annual_pay,55805.305816039916
+23420,"Fresno, CA",2023,emp_hhi,0.08079808145258739
+23420,"Fresno, CA",2023,housing_units,399660.0
+23420,"Fresno, CA",2023,net_migration,-3043.0
+23420,"Fresno, CA",2023,per_capita_income,52513.715445182585
+23420,"Fresno, CA",2023,permits_mf,764.0
+23420,"Fresno, CA",2023,permits_total,4263.0
+23420,"Fresno, CA",2023,population,1183301.0
+23420,"Fresno, CA",2023,rental_vacancy,0.030017765358183762
+23420,"Fresno, CA",2023,total_emp,473157.0
+23420,"Fresno, CA",2023,zhvi,384602.96491839085
+23420,"Fresno, CA",2023,zori,1846.96638086907
+23420,"Fresno, CA",2024,avg_annual_pay,57688.52108758633
+23420,"Fresno, CA",2024,emp_hhi,0.08307109387697331
+23420,"Fresno, CA",2024,housing_units,403271.0
+23420,"Fresno, CA",2024,net_migration,
+23420,"Fresno, CA",2024,per_capita_income,56699.37800374425
+23420,"Fresno, CA",2024,permits_mf,304.0
+23420,"Fresno, CA",2024,permits_total,3782.0
+23420,"Fresno, CA",2024,population,1189557.0
+23420,"Fresno, CA",2024,rental_vacancy,0.03696611690180706
+23420,"Fresno, CA",2024,total_emp,483934.0
+23420,"Fresno, CA",2024,zhvi,401330.2423752078
+23420,"Fresno, CA",2024,zori,1906.4945733140055
+25540,"Hartford-West Hartford-East Hartford, CT",2022,avg_annual_pay,75677.0
+25540,"Hartford-West Hartford-East Hartford, CT",2022,emp_hhi,0.11140108088594229
+25540,"Hartford-West Hartford-East Hartford, CT",2022,housing_units,498933.0
+25540,"Hartford-West Hartford-East Hartford, CT",2022,net_migration,-2065.0
+25540,"Hartford-West Hartford-East Hartford, CT",2022,per_capita_income,71815.64140556933
+25540,"Hartford-West Hartford-East Hartford, CT",2022,permits_mf,
+25540,"Hartford-West Hartford-East Hartford, CT",2022,permits_total,
+25540,"Hartford-West Hartford-East Hartford, CT",2022,population,1151750.0
+25540,"Hartford-West Hartford-East Hartford, CT",2022,rental_vacancy,0.03678702250130821
+25540,"Hartford-West Hartford-East Hartford, CT",2022,total_emp,602873.0
+25540,"Hartford-West Hartford-East Hartford, CT",2022,zhvi,305768.8900887138
+25540,"Hartford-West Hartford-East Hartford, CT",2022,zori,1602.338385568977
+25540,"Hartford-West Hartford-East Hartford, CT",2023,avg_annual_pay,77963.0
+25540,"Hartford-West Hartford-East Hartford, CT",2023,emp_hhi,0.10542234275879449
+25540,"Hartford-West Hartford-East Hartford, CT",2023,housing_units,501000.0
+25540,"Hartford-West Hartford-East Hartford, CT",2023,net_migration,-1977.0
+25540,"Hartford-West Hartford-East Hartford, CT",2023,per_capita_income,75411.12690438263
+25540,"Hartford-West Hartford-East Hartford, CT",2023,permits_mf,1385.0
+25540,"Hartford-West Hartford-East Hartford, CT",2023,permits_total,2058.0
+25540,"Hartford-West Hartford-East Hartford, CT",2023,population,1160000.0
+25540,"Hartford-West Hartford-East Hartford, CT",2023,rental_vacancy,0.05588614529671354
+25540,"Hartford-West Hartford-East Hartford, CT",2023,total_emp,610960.0
+25540,"Hartford-West Hartford-East Hartford, CT",2023,zhvi,331428.5376184305
+25540,"Hartford-West Hartford-East Hartford, CT",2023,zori,1717.7114113688867
+25540,"Hartford-West Hartford-East Hartford, CT",2024,avg_annual_pay,81328.0
+25540,"Hartford-West Hartford-East Hartford, CT",2024,emp_hhi,0.0987031244691302
+25540,"Hartford-West Hartford-East Hartford, CT",2024,housing_units,503328.0
+25540,"Hartford-West Hartford-East Hartford, CT",2024,net_migration,
+25540,"Hartford-West Hartford-East Hartford, CT",2024,per_capita_income,79426.6048501198
+25540,"Hartford-West Hartford-East Hartford, CT",2024,permits_mf,1169.0
+25540,"Hartford-West Hartford-East Hartford, CT",2024,permits_total,1887.0
+25540,"Hartford-West Hartford-East Hartford, CT",2024,population,1169048.0
+25540,"Hartford-West Hartford-East Hartford, CT",2024,rental_vacancy,0.04268432147073914
+25540,"Hartford-West Hartford-East Hartford, CT",2024,total_emp,616380.8132088151
+25540,"Hartford-West Hartford-East Hartford, CT",2024,zhvi,365361.5448291334
+25540,"Hartford-West Hartford-East Hartford, CT",2024,zori,1838.0001367774187
