@@ -44,6 +44,20 @@ PEP_FILES = [
 ]
 
 
+def pep_migration_estimate_2025(*, refresh: bool = False) -> pd.Series:
+    """CBSA -> net domestic migration for estimate-year 2025 (vintage-2025
+    county file). SEPARATE from the frozen PEP_FILES list on purpose (v0.5
+    mid-year spec, decision-log 2026-07-20): the fleet's historical PEP panel
+    keeps its vintage; only the mid-year layer reads this file."""
+    from src import crosswalk
+    df = _fetch(f"{_BASE}/2020-2025/counties/totals/co-est2025-alldata.csv",
+                "co-est2025-alldata.csv", refresh=refresh)
+    long = _long_from_file(df, [2025])
+    metro = crosswalk.aggregate_counties_to_cbsa(
+        long, "county_fips", ["net_domestic_mig"], how="sum")
+    return metro.set_index("cbsa_code")["net_domestic_mig"]
+
+
 def _fetch(url: str, name: str, *, refresh: bool = False) -> pd.DataFrame:
     cache = PEP_RAW_DIR / name
     if cache.exists() and not refresh:
