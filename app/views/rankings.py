@@ -1,8 +1,9 @@
 """
-Rankings: answers one question: which markets look strongest?
+Rankings: answers one question: where does every market stand?
 
-Headline view = map + top-10 list (the point in 10 seconds). The full table
-and the numeric breakdown live behind expanders (progressive disclosure).
+The map, then the full table with tiers and rank ranges as the headline
+objects. The tier machinery and the rank-movement explainer live in
+expanders (v4 rebuild).
 """
 
 from __future__ import annotations
@@ -30,7 +31,6 @@ ed = data.edition(d)
 rank = ed["rank"].sort_values("rank").reset_index(drop=True)
 rank[["strength", "drag"]] = rank.apply(
     lambda r: pd.Series(data.strength_drag(r)), axis=1)
-# Change vs the frozen prior edition (only meaningful for the vintage screen).
 show_change = bool(ed.get("vintage")) and len(d["prior_rank"]) > 0
 if show_change:
     rank = rank.merge(d["prior_rank"], on="cbsa_code", how="left")
@@ -38,48 +38,29 @@ if show_change:
 # ---- Header -----------------------------------------------------------------
 theme.eyebrow("Multifamily research · the report")
 st.markdown("# Full rankings")
-if ed.get("vintage"):
-    theme.caption(
-        f"Where all {len(rank)} markets stand: a {ed['horizon']} screen scored on "
-        f"{ed['year']} data, the newest vintage validated for publication (see Track "
-        f"record).")
-else:
-    theme.caption(
-        f"The {len(rank)} largest US metros ranked by fundamentals that historically precede "
-        f"rent growth: a {ed['horizon']} screen scored on "
-        + ("preliminary data for the current year." if ed["provisional"]
-           else f"{ed['year']} fundamentals, the latest finalized vintage (slow federal "
-                f"inputs mean much of its forecast window has already elapsed)."))
+theme.caption(
+    f"All {len(rank)} markets in the {ed['horizon']} screen, with a tier and a rank "
+    "range for each: a screen, not a precise ordering.")
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
-if ed.get("vintage"):
-    theme.caption(f"This ranking is also supported one year further out "
-                  f"({ed['year']}→{ed['year']+4}); the 4-year view backtested slightly "
-                  f"stronger. Beyond that the data cannot validate.")
-
 if not ed["provisional"]:
-    # Ex-ante rule only (v3-P6): no hindsight regime labels feed the flag.
-    if d["nat_growth"] > config.REGIME_FLAG_THRESHOLD:
-        theme.caption(f"Elevated-uncertainty flag: national rent growth in {ed['year']} was "
-                      f"{d['nat_growth']:+.1%}, above the "
-                      f"{config.REGIME_FLAG_THRESHOLD:.1%} rule; in the two years this flag "
-                      f"fired historically (2021–22), the screen's accuracy broke down. It "
-                      f"describes the vintage year, not today.")
-    else:
-        theme.caption(f"Conditions in the {ed['year']} scoring year looked typical: national "
-                      f"rent growth {d['nat_growth']:+.1%}, under the "
-                      f"{config.REGIME_FLAG_THRESHOLD:.1%} uncertainty-flag rule (a published "
-                      f"rule that fires only in the two years the screen's accuracy broke). "
-                      f"It describes the vintage year, not today.")
+    flag_on = d["nat_growth"] > config.REGIME_FLAG_THRESHOLD
+    theme.caption(
+        (f"Elevated-uncertainty flag: national rent growth in {ed['year']} was "
+         f"{d['nat_growth']:+.1%}, above the published rule; in the two years this "
+         f"flag fired historically (2021–22), the screen's accuracy broke down."
+         if flag_on else
+         f"Conditions in the {ed['year']} scoring year looked typical: national rent "
+         f"growth {d['nat_growth']:+.1%}, under the published uncertainty-flag rule "
+         f"(it fires only in the two years the screen's accuracy broke)."))
 st.write("")
 
-# ---- Headline: the map --------------------------------------------------------
+# ---- The map ----------------------------------------------------------------
 mp = rank.merge(d["coords"], on="cbsa_code", how="left")
-mp["strength_txt"] = mp["strength"]
 fig = px.scatter_geo(
     mp, lat="lat", lon="lon", color="score", scope="usa",
     hover_name="cbsa_title", size=[8] * len(mp), size_max=12,
     color_continuous_scale=theme.SEQ_SCALE,
-    custom_data=["rank", "score", "strength_txt"])
+    custom_data=["rank", "score", "strength"])
 fig.update_traces(
     marker=dict(line=dict(width=0.6, color=theme.MAP_BORDER)),
     hovertemplate="<b>%{hovertext}</b><br>Rank %{customdata[0]} · score "
@@ -98,153 +79,119 @@ fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=10, len=0.6,
 st.plotly_chart(theme.style_fig(fig, 470), use_container_width=True)
 top3 = [t.split(",")[0].split("-")[0] for t in rank.head(3)["cbsa_title"]]
 theme.caption(f"Darker green = stronger fundamentals. {top3[0]} leads; {top3[1]} and "
-              f"{top3[2]} round out the top three. Every market's rank, range, and "
-              f"drivers are in the table below.")
+              f"{top3[2]} round out the top three.")
 
-# ---- Tiers: the headline object (P2) ------------------------------------------
+# ---- The table --------------------------------------------------------------
+st.markdown("## Every market")
 has_tiers = ("tier" in rank.columns) and (rank["tier"].fillna("") != "").any()
 if has_tiers:
-    st.markdown("## The tiers")
+    n_lead = int((rank["tier"] == "Leading cluster").sum())
     theme.caption(
-        "Single ranks overstate precision, so each market gets a 90% rank range and a "
-        "tier. Markets in the same tier are peers, not an ordering.")
-    tier_rows = ""
-    for t in data.TIER_ORDER:
-        members = rank[rank["tier"] == t]
-        if not len(members):
-            continue
-        if t == "Leading cluster":
-            names = ", ".join(m.split(",")[0] for m in members["cbsa_title"])
-            detail = names
-        else:
-            first3 = ", ".join(m.split(",")[0] for m in members.head(3)["cbsa_title"])
-            detail = f"{first3}, …" if len(members) > 3 else first3
-        tier_rows += (
-            f"<div class='rowline'>"
-            f"<span style='font-weight:500'>{t}</span>"
-            f"<span style='color:{theme.MUTED};float:right;font-variant-numeric:tabular-nums'>"
-            f"{len(members)} markets</span>"
-            f"<div class='cap'>{detail}</div></div>")
-    st.markdown(tier_rows, unsafe_allow_html=True)
-    lead_n = int((rank["tier"] == "Leading cluster").sum())
-    theme.caption(f"The tier rule is fixed across editions: a market joins the Leading "
-                  f"cluster when its range reaches the top 10 and its typical rank sits "
-                  f"in the top quarter. {lead_n} markets currently qualify.")
+        f"Markets in the same tier are peers, not an ordering; {n_lead} sit in the "
+        "leading cluster. How the tiers, ranges, and edition-to-edition moves work: "
+        "the notes below the table.")
 
-# ---- Full table (progressive disclosure) -------------------------------------
-with st.expander(f"See all {len(rank)} markets"):
-    n_total = data.N_IND
-    cols = {
-        "Rank": [f"{int(r['rank'])} ({int(r['rank_lo'])}–{int(r['rank_hi'])})"
-                 for _, r in rank.iterrows()],
-        "Metro": rank["cbsa_title"],
-        **({"Tier": rank["tier"]} if has_tiers else {}),
-        "Score": rank["score"],
-        "Top strength": rank["strength"],
-        "Top drag": rank["drag"],
-        "Measures": [f"{int(n)} of {n_total}" for n in rank["n_indicators"]],
-    }
-    if show_change:
-        def _chg(r):
-            if pd.isna(r["prior_rank"]):
-                return "new"
-            delta = int(r["prior_rank"]) - int(r["rank"])
-            return f"{delta:+d}" if delta else "0"
-        cols["Vs 2023"] = rank.apply(_chg, axis=1)
-    tbl = pd.DataFrame(cols)
-    styler = (tbl.style
-              .format({"Score": "{:+.2f}"})
-              .map(lambda v: f"color:{theme.POS}" if v >= 0 else f"color:{theme.NEG}",
-                   subset=["Score"])
-              .set_properties(subset=["Score", "Measures"],
-                              **{"font-variant-numeric": "tabular-nums",
-                                 "text-align": "right"})
-              .set_properties(subset=["Metro"], **{"font-weight": "500"}))
-    if show_change:
-        styler = styler.set_properties(subset=["Vs 2023"],
-                                       **{"font-variant-numeric": "tabular-nums",
-                                          "text-align": "right"})
-    st.dataframe(styler, hide_index=True, use_container_width=True, height=520,
-                 column_config={
-                     "Rank": st.column_config.TextColumn(
-                         help="This market's rank out of all markets. The range in "
-                              "parentheses is the 90% range once measurement noise in "
-                              "the two fast-moving inputs (job and income growth) is "
-                              "accounted for; treat markets with overlapping ranges "
-                              "as roughly tied."),
-                     "Tier": st.column_config.TextColumn(
-                         help="The tier is the honest headline: markets in the same "
-                              "tier are peers on these fundamentals, and the exact "
-                              "ordering within a tier is inside the noise."),
-                     "Score": st.column_config.TextColumn(
-                         help="The composite score: all eight measures combined. 0 is "
-                              "the average market that year; higher is stronger "
-                              "fundamentals for future rent growth."),
-                     "Top strength": st.column_config.TextColumn(
-                         help="The theme that lifts this market's score the most. "
-                              "'Broadly average' means no theme helps it meaningfully."),
-                     "Top drag": st.column_config.TextColumn(
-                         help="The theme that pulls this market's score down the most. "
-                              "'No material drag' means nothing pulls it down "
-                              "meaningfully; strong markets often have none."),
-                     "Measures": st.column_config.TextColumn(
-                         help="How many of the eight measures had data for this market. "
-                              "A missing measure takes a neutral (exactly average) "
-                              "value, which can flatter or understate the market, so "
-                              "read a short-count market's exact rank loosely."),
-                     "Vs 2023": st.column_config.TextColumn(
-                         help="Rank change since the frozen 2023 edition; positive "
-                              "means the market moved up.")})
-    n_short = int((rank["n_indicators"] < n_total).sum())
-    change_note = ("The 'vs 2023' column compares against the frozen prior edition; a "
-                   "move inside a market's rank range is noise, not a trend. "
-                   if show_change else "")
-    short_note = (f" {n_short} markets are missing a measure at the source and take a "
-                  f"neutral fill; lean on their ranges."
-                  if n_short else "")
-    theme.caption(f"Treat this as a screen, not a precise ordering: ranges are 90% "
-                  f"intervals under measured input noise. {change_note}"
-                  f"Column headers explain each field on hover.{short_note}")
+n_total = data.N_IND
+cols = {
+    "Rank": [f"{int(r['rank'])} ({int(r['rank_lo'])}–{int(r['rank_hi'])})"
+             for _, r in rank.iterrows()],
+    **({"Tier": rank["tier"]} if has_tiers else {}),
+    "Metro": rank["cbsa_title"],
+    "Score": rank["score"],
+    "Top strength": rank["strength"],
+    "Top drag": rank["drag"],
+    "Measures": [f"{int(n)} of {n_total}" for n in rank["n_indicators"]],
+}
+if show_change:
+    def _chg(r):
+        if pd.isna(r["prior_rank"]):
+            return "new"
+        delta = int(r["prior_rank"]) - int(r["rank"])
+        return f"{delta:+d}" if delta else "0"
+    cols["Vs 2023"] = rank.apply(_chg, axis=1)
+tbl = pd.DataFrame(cols)
+styler = (tbl.style
+          .format({"Score": "{:+.2f}"})
+          .map(lambda v: f"color:{theme.POS}" if v >= 0 else f"color:{theme.NEG}",
+               subset=["Score"])
+          .set_properties(subset=["Score", "Measures"],
+                          **{"font-variant-numeric": "tabular-nums",
+                             "text-align": "right"})
+          .set_properties(subset=["Metro"], **{"font-weight": "500"}))
+if show_change:
+    styler = styler.set_properties(subset=["Vs 2023"],
+                                   **{"font-variant-numeric": "tabular-nums",
+                                      "text-align": "right"})
+st.dataframe(styler, hide_index=True, use_container_width=True, height=560,
+             column_config={
+                 "Rank": st.column_config.TextColumn(
+                     help="This market's rank out of all markets. The range in "
+                          "parentheses is the 90% range once measurement noise in "
+                          "the two fast-moving inputs (job and income growth) is "
+                          "accounted for; treat markets with overlapping ranges "
+                          "as roughly tied."),
+                 "Tier": st.column_config.TextColumn(
+                     help="The tier is the honest headline: markets in the same "
+                          "tier are peers on these fundamentals, and the exact "
+                          "ordering within a tier is inside the noise."),
+                 "Score": st.column_config.TextColumn(
+                     help="The composite score: all eight measures combined. 0 is "
+                          "the average market that year; higher is stronger "
+                          "fundamentals for future rent growth."),
+                 "Top strength": st.column_config.TextColumn(
+                     help="The theme that lifts this market's score the most. "
+                          "'Broadly average' means no theme helps it meaningfully."),
+                 "Top drag": st.column_config.TextColumn(
+                     help="The theme that pulls this market's score down the most. "
+                          "'No material drag' means nothing pulls it down "
+                          "meaningfully; strong markets often have none."),
+                 "Measures": st.column_config.TextColumn(
+                     help="How many of the eight measures had data for this market. "
+                          "A missing measure takes a neutral (exactly average) "
+                          "value, which can flatter or understate the market, so "
+                          "read a short-count market's exact rank loosely."),
+                 "Vs 2023": st.column_config.TextColumn(
+                     help="Rank change since the frozen 2023 edition; positive "
+                          "means the market moved up.")})
+n_short = int((rank["n_indicators"] < n_total).sum())
+theme.caption(f"Column headers explain each field on hover. "
+              + (f"{n_short} markets are missing a measure at the source and take a "
+                 f"neutral fill; lean on their ranges. " if n_short else "")
+              + (f"This ranking is also supported one year further out "
+                 f"({ed['year']}→{ed['year']+4}); beyond that the data cannot validate."
+                 if ed.get("vintage") else ""))
 
-# ---- Diverging bars: every market against the average -------------------------
-with st.expander("Every market against the average"):
-    theme.caption("Composite score relative to the average market that year (zero line). "
-                  "The default view shows the top and bottom 25.")
-    show_all = st.toggle(f"Show all {len(rank)} markets", key="diverging_all")
-    if show_all:
-        sub = rank
-        labels = [f"{int(r['rank'])}  {r['cbsa_title'].split(',')[0][:24]}"
-                  for _, r in sub.iterrows()]
-        vals = sub["score"].tolist()
-    else:
-        head, tail = rank.head(25), rank.tail(25)
-        gap_label = f"(…{len(rank) - 50} markets in between…)"
-        labels = ([f"{int(r['rank'])}  {r['cbsa_title'].split(',')[0][:24]}"
-                   for _, r in head.iterrows()] + [gap_label]
-                  + [f"{int(r['rank'])}  {r['cbsa_title'].split(',')[0][:24]}"
-                     for _, r in tail.iterrows()])
-        vals = head["score"].tolist() + [None] + tail["score"].tolist()
-    colors = [(theme.POS if (v or 0) >= 0 else theme.NEG) for v in vals]
-    figd = go.Figure(go.Bar(
-        x=vals, y=labels, orientation="h", marker_color=colors, marker_line_width=0,
-        hovertemplate="%{y}<br>score %{x:+.2f}<extra></extra>"))
-    figd.update_yaxes(autorange="reversed", showgrid=False,
-                      tickfont=dict(size=11, color=theme.MUTED))
-    height = 24 * len(labels) + 60
-    figd = theme.style_fig(figd, height)
-    figd.update_xaxes(showgrid=True, gridcolor=theme.LINE, zeroline=True,
-                      zerolinecolor=theme.MUTED, zerolinewidth=1,
-                      title="Composite score (0 = the average market)")
-    figd.update_yaxes(showgrid=False)
-    st.plotly_chart(figd, use_container_width=True)
-    lead, trail = rank.iloc[0], rank.iloc[-1]
-    theme.caption(f"{lead['cbsa_title'].split(',')[0]} leads at {lead['score']:+.2f}; "
-                  f"{trail['cbsa_title'].split(',')[0]} trails at {trail['score']:+.2f}. "
-                  f"The spread matters more than any single value.")
+with st.expander("How the tiers and rank ranges are built"):
+    theme.caption(
+        "Single ranks overstate precision. The two fastest-moving inputs (job growth "
+        "and income growth) agree only weakly between editions, so each market's rank "
+        "is re-computed 1,000 times with those two inputs jittered by their measured "
+        "noise; the range is where the rank lands 90% of the time, and the tier bands "
+        "the typical rank. The tier rule is fixed across editions: a market joins the "
+        "Leading cluster when its range reaches the top 10 and its typical rank sits "
+        "in the top quarter; Strong, Mid, Weak, and Lagging band the rest.")
+    theme.caption(
+        "This interval captures input-measurement noise only, not model error; the "
+        "accuracy statement is the walk-forward record on Track record. A separate "
+        "weight-sensitivity range (how far ranks move under alternative reasonable "
+        "weightings) tells the same story: exact ranks are soft, tiers are stable.")
+
+with st.expander("Why ranks move between editions"):
+    theme.caption(
+        "Rank moves between editions mix one real year of market change with "
+        "measurement noise in the fast-moving inputs; most movement is compression in "
+        "the crowded middle of the table, where a tiny score change moves a market "
+        "many places. Even two fully finalized years historically keep only 1 to 6 of "
+        "the same top-10 names, so turnover is normal, not a signal. A tested "
+        "smoothing fix (averaging three years of the noisy inputs) cut the churn but "
+        "reliably cost accuracy, so it was rejected and published as a negative "
+        "result; the ranges above are the honest answer. Side-by-side editions: the "
+        "expander on Home.")
 
 with st.expander("Advanced view: how each score breaks down"):
-    theme.caption("Contribution of each theme to the composite score, in standardized units "
-                  "(0 = the average market that year; positive helps, negative hurts).")
+    theme.caption("Contribution of each theme to the composite score, in standardized "
+                  "units (0 = the average market that year; positive helps, negative "
+                  "hurts).")
     adv = rank[["rank", "cbsa_title", "score", "bucket_Demand", "bucket_Supply",
                 "bucket_Affordability", "bucket_Momentum", "bucket_Resilience"]].rename(
         columns={"rank": "Rank", "cbsa_title": "Metro", "score": "Score",
@@ -252,10 +199,11 @@ with st.expander("Advanced view: how each score breaks down"):
                  "bucket_Affordability": "Affordability", "bucket_Momentum": "Momentum",
                  "bucket_Resilience": "Resilience"})
     num_cols = ["Score", "Demand", "Supply", "Affordability", "Momentum", "Resilience"]
-    _theme_help = {b: (f"How much the {b} theme adds to or subtracts from this market's "
-                       f"composite score. 0 means the theme neither helps nor hurts; "
-                       f"positive helps, negative hurts.")
-                   for b in ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]}
+    _theme_help = {b: (f"How much the {b} theme adds to or subtracts from this "
+                       f"market's composite score. 0 means the theme neither helps "
+                       f"nor hurts; positive helps, negative hurts.")
+                   for b in ["Demand", "Supply", "Affordability", "Momentum",
+                             "Resilience"]}
     st.dataframe(
         adv.style.format({c: "{:+.2f}" for c in num_cols})
            .set_properties(subset=num_cols, **{"font-variant-numeric": "tabular-nums",
@@ -269,5 +217,8 @@ with st.expander("Advanced view: how each score breaks down"):
                 help="The composite score: the five theme contributions summed. 0 is "
                      "the average market that year."),
             **{b: st.column_config.TextColumn(help=h) for b, h in _theme_help.items()}})
+
+st.markdown("Next: [pick a market to explore](metro), or "
+            "[how the score works](how_it_works).")
 
 theme.page_footer()

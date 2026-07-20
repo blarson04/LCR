@@ -202,9 +202,9 @@ def page_footer() -> None:
     """Report-style footer: brand line, the reading order, then the fine print."""
     links = " · ".join(
         f"<a class='footlink' href='{href}'>{label}</a>"
-        for label, href in [("Overview", "overview"), ("Full rankings", "rankings"),
-                            ("Track record", "track_record"),
-                            ("Methodology", "methodology")])
+        for label, href in [("Home", "home"), ("Full rankings", "rankings"),
+                            ("How it works", "how_it_works"),
+                            ("Track record", "track_record")])
     st.markdown(
         f"<hr style='margin-top:48px'>"
         f"<div style='display:flex;justify-content:space-between;align-items:baseline;"

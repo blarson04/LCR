@@ -47,7 +47,7 @@ with st.sidebar:
                 "<div class='cap' style='margin-top:.4rem'>The same frozen model on "
                 "preliminary 2025 inputs. This configuration <b>passed its "
                 "pre-registered validation gate</b>, keeping 96.6% of the finalized "
-                "model's signal. Details: Methodology.</div>",
+                "model's signal. Details: How it works.</div>",
                 unsafe_allow_html=True)
     st.markdown("<div class='cap' style='margin-top:.8rem'>Appearance</div>",
                 unsafe_allow_html=True)
@@ -56,21 +56,15 @@ with st.sidebar:
     # Sync Streamlit's native theme AFTER the widget renders (may rerun once).
     theme.sync_native_theme()
 
-# ---- Pages: a report's table of contents (reading order, tools, fine print) ---
-report = [
-    st.Page("views/methodology.py", title="Methodology & about", default=True),
-    st.Page("views/overview.py", title="Overview"),
-    st.Page("views/themes.py", title="What drives the rankings"),
+# ---- Pages: the report's table of contents (v4: five pages, two groups) ------
+screen = [
+    st.Page("views/home.py", title="Home", default=True),
     st.Page("views/rankings.py", title="Full rankings"),
-    st.Page("views/spotlight.py", title="Market spotlight"),
+    st.Page("views/metro.py", title="Explore a market"),
 ]
-explore = [
-    st.Page("views/metro_detail.py", title="Metro detail"),
-    st.Page("views/compare.py", title="Compare markets"),
+fine_print = [
+    st.Page("views/how_it_works.py", title="How it works"),
+    st.Page("views/track_record.py", title="Track record"),
 ]
-fine_print = [st.Page("views/track_record.py", title="Track record")]
-if d["has_spec"]:
-    fine_print.append(st.Page("views/acc_vs_spec.py", title="2024 vintage vs 2025 screen"))
 
-st.navigation({"The report": report, "Explore a market": explore,
-               "The fine print": fine_print}).run()
+st.navigation({"The screen": screen, "The fine print": fine_print}).run()
