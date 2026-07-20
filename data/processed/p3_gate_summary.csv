@@ -1,0 +1,2 @@
+tau_current,tau_multi_year,gap,gap_ci_lo,gap_ci_hi,prong_a_pass,edition_spearman_variant,edition_spearman_baseline,prong_b_threshold,prong_b_pass,verdict,bootstrap_B,seed,n_metros_editions
+0.4310753903834319,0.3629883381649579,-0.068087052218474,-0.1126176753553583,-0.02237521114618491,False,0.8478101120302955,0.683,0.8,True,REJECT,800,42,110

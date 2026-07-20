@@ -6,6 +6,46 @@ record). Each phase's results land here as they complete. Governance record:
 
 ---
 
+## P3 — Multi-year growth inputs: calmer, but reliably less accurate — REJECTED (2026-07-20)
+
+The measured churn defect (edition-to-edition agreement 0.288/0.278 for `job_growth` /
+`income_growth` vs ≥ 0.83 for every other input) had one obvious model-side remedy:
+replace the two single-year growth inputs with 3-year mean growth, switched together as
+one candidate. The spec was frozen 2026-07-08 (definition, both gate prongs, thresholds,
+one attempt); the gate ran once on 2026-07-20 on the D7/D8-corrected panel.
+
+| Prong | Result | Threshold | Verdict |
+| --- | --- | --- | --- |
+| A — not reliably worse | pooled 3-yr τ 0.363 vs 0.431; gap −0.068, 95% CI [−0.113, −0.022] | CI not entirely below zero | **FAIL** |
+| B — reliably calmer | edition-to-edition score Spearman 0.848 (baseline 0.683) | ≥ 0.80 | PASS |
+
+**The candidate is rejected: the model stays frozen v2.0.0.** The result is unusually
+informative for a negative: prong B confirms the smoothing works exactly as intended —
+edition churn drops well past the pre-registered bar — but prong A shows the smoothing
+*pays for calm with real accuracy*, and reliably so (the CI on the loss excludes zero;
+the bar was deliberately lenient, requiring only "not reliably worse," and the candidate
+failed even that). The single-year growth prints are not pure measurement noise around a
+slow-moving fundamental; their fresh component carries predictive signal that a 3-year
+mean averages away. Churn and signal arrive in the same column.
+
+**Consequence, per the pre-registered spec:** tiers + rank intervals (P2, live on the
+site) remain the churn answer — the noise is presented honestly rather than smoothed
+away at a measured cost to accuracy. Nine model-change candidates have now been gated
+across three cycles; zero adopted.
+
+*Data vintage: D7/D8-corrected panel (through 2024; proxied 2025 edition under proxy
+scheme v0.4). Mechanics: identical walk-forward on both variants, fixed prediction
+years, metro-cluster bootstrap B=800, seed 42; both editions rebuilt under the variant
+for prong B, with the 2025 row's year-T component supplied by the same v0.4 proxies
+(CES jobs; state-chained income) and a missing proxy treated as a missing component
+under the frozen ≥2-of-3 rule. Machinery was verified against the published record
+before the run (current-model τ reproduces 0.431; the edition-rebuild path reproduces
+both published editions to machine precision and the 0.683 baseline). Runner
+`src/p3_gate.py`; outputs `data/processed/p3_gate_summary.csv`,
+`p3_gate_windows.csv`.*
+
+---
+
 ## Phase 4 — Versus industry practice: the free-Arbor replica (2026-07-07)
 
 The project's implicit claim — that a validated, deliberately weighted, parsimonious screen
