@@ -37,18 +37,14 @@ with st.sidebar:
         f"<div class='cap' style='margin-bottom:.8rem'>Multifamily research · v{config.MODEL_VERSION}</div>",
         unsafe_allow_html=True)
     if d["has_spec"]:
-        st.markdown("<div class='cap'>Data edition</div>", unsafe_allow_html=True)
-        st.radio("Data edition", [data.SPEC_LABEL, data.FINAL_LABEL],
-                 key=data.EDITION_KEY, label_visibility="collapsed")
-        if data.is_spec(d):
-            st.markdown(theme.badge(True, "Validated 2025→2028 forecast · proxied inputs"),
-                        unsafe_allow_html=True)
-            st.markdown(
-                "<div class='cap' style='margin-top:.4rem'>The same frozen model on "
-                "preliminary 2025 inputs. This configuration <b>passed its "
-                "pre-registered validation gate</b>, keeping 96.6% of the finalized "
-                "model's signal. Details: How it works.</div>",
-                unsafe_allow_html=True)
+        st.markdown(theme.badge(True, "Validated 2025→2028 forecast · proxied inputs"),
+                    unsafe_allow_html=True)
+        st.markdown(
+            "<div class='cap' style='margin-top:.4rem'>The frozen model on "
+            "preliminary 2025 inputs. This configuration <b>passed its "
+            "pre-registered validation gate</b>, keeping 96.6% of the finalized "
+            "model's signal. Details: How it works.</div>",
+            unsafe_allow_html=True)
     st.markdown("<div class='cap' style='margin-top:.8rem'>Appearance</div>",
                 unsafe_allow_html=True)
     st.radio("Appearance", ["Light", "Dark"], key=theme.MODE_KEY,
@@ -56,15 +52,13 @@ with st.sidebar:
     # Sync Streamlit's native theme AFTER the widget renders (may rerun once).
     theme.sync_native_theme()
 
-# ---- Pages: the report's table of contents (v4: five pages, two groups) ------
-screen = [
-    st.Page("views/home.py", title="Home", default=True),
+# ---- Pages: methodology-first reading order (author direction 2026-07-20) ----
+report = [
+    st.Page("views/how_it_works.py", title="How it works", default=True),
+    st.Page("views/home.py", title="Key findings"),
     st.Page("views/rankings.py", title="Full rankings"),
     st.Page("views/metro.py", title="Explore a market"),
 ]
-fine_print = [
-    st.Page("views/how_it_works.py", title="How it works"),
-    st.Page("views/track_record.py", title="Track record"),
-]
+fine_print = [st.Page("views/track_record.py", title="Track record")]
 
-st.navigation({"The screen": screen, "The fine print": fine_print}).run()
+st.navigation({"The report": report, "The fine print": fine_print}).run()

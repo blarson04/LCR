@@ -42,16 +42,18 @@ theme.caption(
     f"All {len(rank)} markets in the {ed['horizon']} screen, with a tier and a rank "
     "range for each: a screen, not a precise ordering.")
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
-if not ed["provisional"]:
-    flag_on = d["nat_growth"] > config.REGIME_FLAG_THRESHOLD
-    theme.caption(
-        (f"Elevated-uncertainty flag: national rent growth in {ed['year']} was "
-         f"{d['nat_growth']:+.1%}, above the published rule; in the two years this "
-         f"flag fired historically (2021–22), the screen's accuracy broke down."
-         if flag_on else
-         f"Conditions in the {ed['year']} scoring year looked typical: national rent "
-         f"growth {d['nat_growth']:+.1%}, under the published uncertainty-flag rule "
-         f"(it fires only in the two years the screen's accuracy broke)."))
+# Scoring-year uncertainty flag (ex-ante rule, v3-P6): computed for the active
+# edition's scoring year so the disclosure stays on-surface (2026-07-20).
+nat = data.national_rent_growth(d["panel"], ed["year"])
+flag_on = nat > config.REGIME_FLAG_THRESHOLD
+theme.caption(
+    (f"Elevated-uncertainty flag: national rent growth in {ed['year']} is "
+     f"{nat:+.1%}, above the published rule; in the two years this flag fired "
+     f"historically (2021–22), the screen's accuracy broke down."
+     if flag_on else
+     f"Conditions in the {ed['year']} scoring year look typical: national rent "
+     f"growth {nat:+.1%}, under the published uncertainty-flag rule (it fires "
+     f"only in the two years the screen's accuracy broke)."))
 st.write("")
 
 # ---- The map ----------------------------------------------------------------
@@ -185,8 +187,7 @@ with st.expander("Why ranks move between editions"):
         "the same top-10 names, so turnover is normal, not a signal. A tested "
         "smoothing fix (averaging three years of the noisy inputs) cut the churn but "
         "reliably cost accuracy, so it was rejected and published as a negative "
-        "result; the ranges above are the honest answer. Side-by-side editions: the "
-        "expander on Home.")
+        "result; the ranges above are the honest answer.")
 
 with st.expander("Advanced view: how each score breaks down"):
     theme.caption("Contribution of each theme to the composite score, in standardized "

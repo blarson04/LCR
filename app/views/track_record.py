@@ -238,6 +238,6 @@ with st.expander("How sure are we? The uncertainty behind the averages"):
   they say which metros, conditional on the six windows history happened to provide,
   and are silent about what the next regime does.""")
 
-st.markdown("Next: [back to the screen](home).")
+st.markdown("Next: [back to the key findings](home).")
 
 theme.page_footer()

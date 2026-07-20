@@ -1,9 +1,11 @@
 """
-How it works: answers one question: how is the score built, and by whom?
+How it works: the site's front door (author direction 2026-07-20).
 
-Methodology and the theme explainers merged and condensed (v4 rebuild): five
-plain paragraphs, the published weight table, the data ledger, the repair
-story, the current-screen proxy scheme, and the author. Depth in expanders.
+Opens with the thesis in larger type, explains the methodology, then defines
+every number a reader will meet on the later pages (score, rank range, tier,
+tau, precision@10, the pp edge) in plain language with why each matters.
+This page is exempted from the 400-word surface budget by the same author
+direction; depth still layers into expanders.
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ for _p in (str(ROOT), str(APP)):
         sys.path.insert(0, _p)
 
 from ui import data, theme          # noqa: E402
+import config                       # noqa: E402
 from src.nowcast import proxy_map as pmap  # noqa: E402
 
 theme.inject_css(reading=True)
@@ -29,21 +32,33 @@ d = data.load()
 ed = data.edition(d)
 rank = ed["rank"].sort_values("rank").reset_index(drop=True)
 
-theme.eyebrow("Multifamily research · the fine print")
-st.markdown("# How it works")
-theme.caption("How the score is built, what feeds it, and who built it.")
+theme.eyebrow("Multifamily research · the report")
+st.markdown(
+    f'<div style="font-family:{theme.FONT_HEAD};font-size:32px;font-weight:600;'
+    f'line-height:1.25;color:{theme.INK};margin-bottom:.6rem;text-wrap:balance">'
+    "Private companies pay heavily for market data. Can you still find an edge "
+    "with free, public data?</div>",
+    unsafe_allow_html=True)
+theme.caption("This site is the tested answer: a rent-growth screen for the "
+              f"{len(rank)} largest US rental markets, built entirely on free public "
+              "data, validated before publication. This page explains how it works "
+              "and what every number means.")
+st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 st.write("")
 
+# ---- The method -------------------------------------------------------------
+st.markdown("## The method")
 st.markdown(f"""
-Can free public data tell strong future rental markets from weak ones in advance? The
-screen ranks the **{len(rank)} largest US metro areas** (over 500,000 people, with
-continuous rent data) on **{data.N_IND} measures** of fundamentals that historically
-come before strong rent growth. Each measure is compared within the same
-year, flipped where more is worse, weighted by a published share, and summed into one
-score. No market is ever hand-adjusted.
+The screen ranks every US metro area over 500,000 people with continuous rent data on
+**{data.N_IND} measures** of fundamentals that historically come before strong rent
+growth. Each measure is compared across markets within the same year (so nationwide
+swings cancel out), flipped where more is worse (heavy construction, stretched rents),
+weighted by a fixed published share, and summed into one score. The same formula runs
+for every market; no market is ever hand-adjusted; the weights are set by judgment,
+published in full, and stress-tested rather than statistically fitted.
 """)
 
-# ---- The five themes (condensed) --------------------------------------------
+# ---- The five themes --------------------------------------------------------
 st.markdown("## The five themes")
 
 THEMES = [
@@ -118,7 +133,77 @@ theme.caption("Fixed, published in full, set by judgment rather than fitted, and
               "stress-tested: alternatives land within noise, so the testing, not "
               "the weights, is the point.")
 
-# ---- Data: sources, vintages, repairs ---------------------------------------
+# ---- What the numbers mean --------------------------------------------------
+st.markdown("## What the numbers mean")
+st.markdown(
+    "Every number on this site, in plain terms, and why it matters:")
+
+bt = d["backtest"]
+_p3 = bt[(bt.horizon == 3) & (bt.regime == "POOLED")]
+pooled_tau = float(_p3["mean_tau"].iloc[0]) if len(_p3) else float("nan")
+pooled_p10 = float(_p3["mean_precision@10"].iloc[0]) if len(_p3) else float("nan")
+pp_pooled = float("nan")
+_es = config.PROCESSED_DIR / "effect_size_windows.csv"
+if _es.exists():
+    _ew = pd.read_csv(_es)
+    pp_pooled = float(_ew[_ew.strategy == "Composite (model)"]
+                      ["top10_pp_vs_median"].mean())
+
+GLOSSARY = [
+    ("The composite score",
+     "All eight weighted measures summed; 0 is the average market that year, positive "
+     "is stronger, negative weaker.",
+     "It is the ranking's raw material; the distance from 0 matters more than the "
+     "exact decimals."),
+    ("Rank and the 90% range",
+     "The market's position (1 = best) plus the range its rank lands in 90% of the "
+     "time once measured noise in the two fast-moving inputs is accounted for.",
+     "A single rank oversells precision; markets with overlapping ranges are "
+     "statistically tied, and treating them otherwise invites bad decisions."),
+    ("Tiers (Leading cluster to Lagging)",
+     "Bands built from the rank ranges under a fixed rule; same-tier markets are "
+     "peers, not an ordering.",
+     "The tier is the honest headline: it is what the data can actually support."),
+    ("Weighted Kendall's tau",
+     "A rank-agreement score from −1 to +1 between the screen's ranking and the rent "
+     "growth that actually followed; 0 means no relationship, and extra weight goes "
+     "to getting the top markets right.",
+     "It is the main accuracy test: it asks whether the whole ranking pointed the "
+     f"right way, not whether one pick got lucky. This screen scores {pooled_tau:.2f} "
+     "pooled on finalized data; random guessing scores about 0."),
+    ("Precision@10",
+     "Of the screen's top 10 markets, the share that landed in the top quarter of "
+     "all markets by actual rent growth.",
+     "It grades the short list an investor would actually look at; "
+     f"{pooled_p10:.0%} pooled, with a caveat: one miss moves it by 10 points, so "
+     "read it with tau."),
+    ("The top-10 edge, in points",
+     "How much more 3-year rent growth the screen's top 10 delivered than the median "
+     f"market: {pp_pooled:+.1f} points averaged across six completed windows.",
+     "It converts the statistics into money terms: the units an underwriting "
+     "decision is made in."),
+    ("Validated",
+     "Two separately logged checks passed: a one-shot, pre-registered accuracy gate "
+     "on history, and an automated data-quality review with every flag signed off "
+     "in the public decision log.",
+     "A bar that never fails proves nothing; two configurations failed it and were "
+     "published, which is what makes the passes meaningful."),
+    ("Proxied inputs",
+     "The current screen substitutes validated fast-publishing sources for inputs "
+     "that publish one to two years late; the badge marks it wherever it applies.",
+     "It is why a 2025→2028 forecast can exist at all, and the substitution kept "
+     "96.6% of the finalized model's signal in testing."),
+]
+gl_html = ""
+for term, what, why in GLOSSARY:
+    gl_html += (
+        f"<div class='rowline'><span style='font-weight:600'>{term}.</span> "
+        f"<span style='font-size:14px'>{what}</span>"
+        f"<div class='cap' style='margin-top:.15rem'><b>Why it matters:</b> "
+        f"{why}</div></div>")
+st.markdown(gl_html, unsafe_allow_html=True)
+
+# ---- The data ---------------------------------------------------------------
 st.markdown("## The data")
 st.markdown(
     "Everything comes from free public sources (Census, IRS, BLS, BEA, Zillow, FRED), "
@@ -143,12 +228,12 @@ with st.expander("Data sources and vintages, measure by measure"):
                              "text-align": "right"}),
         hide_index=True, use_container_width=True,
         column_config={"Data through": st.column_config.TextColumn(
-            help="The most recent year of data feeding this measure in the "
-                 "vintage screen. Nothing on this site is shown without its data "
-                 "vintage.")})
-    theme.caption(f"The ledger for the {data.VINTAGE_YEAR}-vintage screen. "
-                  "* Connecticut redrew its geography between 2023 and 2024, so the "
-                  "three Connecticut metros' job and income growth are chained using "
+            help="The most recent FINALIZED year behind this measure. The current "
+                 "screen layers validated fast-publishing substitutes on top, as "
+                 "described below.")})
+    theme.caption("The finalized sources each measure is built from. * Connecticut "
+                  "redrew its geography between 2023 and 2024, so the three "
+                  "Connecticut metros' job and income growth are chained using "
                   "validated boundary-stable substitutes; a disclosed fix for those "
                   "three markets only.")
 
@@ -209,6 +294,6 @@ mathematics. Everything here is my own work: every method documented, every clai
 validated before publication, failed experiments published beside the successes.
 """)
 
-st.markdown("Next: [Track record](track_record), every completed call graded.")
+st.markdown("Next: [Key findings](home), what the screen says right now.")
 
 theme.page_footer()

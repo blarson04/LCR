@@ -33,57 +33,14 @@ rank[["strength_1", "strength_2"]] = rank.apply(
 
 # ---- Header -----------------------------------------------------------------
 theme.eyebrow("Multifamily research · the report")
-st.markdown("# The rent-growth screen")
-theme.caption(f"The {len(rank)} largest US rental markets, ranked by fundamentals that "
-              f"have historically come before strong rent growth. A research screen "
-              "built on free public data; not investment advice.")
+st.markdown("# Key findings")
+theme.caption(f"What the screen says right now: the {len(rank)} largest US rental "
+              "markets, ranked by fundamentals that have historically come before "
+              "strong rent growth. A research screen; not investment advice.")
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
-
-with st.expander("What \"validated\" means, and the two editions compared"):
-    theme.caption(
-        "Validated means two separately logged checks: the configuration passed a "
-        "one-shot, pre-registered accuracy gate on history, and the data build passed "
-        "an automated quality review, with every flag investigated and signed off in "
-        "the public decision log. Two earlier configurations failed the gate and were "
-        "published as negative results (see Track record).")
-    theme.caption(
-        f"Two editions publish. The {data.SPEC_YEAR}→{data.SPEC_YEAR+3} current screen "
-        f"(the default) runs the frozen model on preliminary {data.SPEC_YEAR} inputs; "
-        f"its configuration kept 96.6% of the finalized model's signal in testing. The "
-        f"{data.VINTAGE_YEAR}→{data.VINTAGE_YEAR+3} vintage runs on fully finalized "
-        f"{data.VINTAGE_YEAR} data. Switch editions in the sidebar.")
-    if d.get("has_vintage") and d.get("has_spec"):
-        val = d["vint_rank"][["cbsa_code", "cbsa_title", "rank", "score"]].rename(
-            columns={"rank": "vint", "score": "score_v"})
-        spec = d["spec_rank"][["cbsa_code", "rank", "score"]].rename(
-            columns={"rank": "spec", "score": "score_s"})
-        cmp = val.merge(spec, on="cbsa_code")
-        corr = float(cmp[["score_v", "score_s"]].dropna().corr().iloc[0, 1])
-        theme.caption(
-            f"The two editions' scores agree closely (correlation {corr:.2f}); rank "
-            "moves between them mix one real year of market change with proxy noise, "
-            "and most movement is compression in the crowded middle of the table. "
-            "Even two finalized years historically keep only 1 to 6 of the same "
-            "top-10 names.")
-        cmp["move"] = cmp["vint"] - cmp["spec"]
-        tbl = cmp.sort_values("spec")[["cbsa_title", "vint", "spec", "move"]].rename(
-            columns={"cbsa_title": "Metro", "vint": f"{data.VINTAGE_YEAR} vintage",
-                     "spec": f"{data.SPEC_YEAR} screen", "move": "Move"})
-        st.dataframe(
-            tbl.style.format({f"{data.VINTAGE_YEAR} vintage": "{:.0f}",
-                              f"{data.SPEC_YEAR} screen": "{:.0f}", "Move": "{:+.0f}"})
-               .map(lambda v: f"color:{theme.POS}" if v > 0
-                    else (f"color:{theme.NEG}" if v < 0 else ""), subset=["Move"])
-               .set_properties(subset=["Metro"], **{"font-weight": "500"}),
-            hide_index=True, use_container_width=True, height=300,
-            column_config={
-                f"{data.VINTAGE_YEAR} vintage": st.column_config.TextColumn(
-                    help="Rank in the fully finalized vintage edition (1 = best)."),
-                f"{data.SPEC_YEAR} screen": st.column_config.TextColumn(
-                    help="Rank in the current screen built on preliminary inputs."),
-                "Move": st.column_config.TextColumn(
-                    help="Rank change between the two editions; positive means the "
-                         "market rose in the current screen. Small moves are noise.")})
+theme.caption("Built on preliminary 2025 inputs through validated substitutes; what "
+              "\"validated\" means and how every number works: "
+              "<a href='how_it_works'>How it works</a>.")
 st.write("")
 
 # ---- Key findings -----------------------------------------------------------

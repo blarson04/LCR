@@ -33,9 +33,9 @@ INDICATORS = config.INDICATORS
 N_IND = len(INDICATORS)
 BUCKETS = ["Demand", "Supply", "Affordability", "Momentum", "Resilience"]
 
-EDITION_KEY = "edition"
-FINAL_LABEL = "2024→2027 vintage (fully finalized)"
-SPEC_LABEL = "2025→2028 current (validated proxies)"
+# The sidebar edition toggle was removed 2026-07-20 (author decision: the
+# current screen is the only edition shown); the vintage frames stay loaded
+# as fallback data and for Track record.
 
 # ---- Plain-language dictionaries -------------------------------------------
 PRETTY = {
@@ -345,14 +345,14 @@ def load() -> dict:
 
 
 def is_spec(d: dict | None = None) -> bool:
-    """Current edition from the global sidebar toggle. The validated 2025→2028
-    current screen is the DEFAULT (author decision 2026-07-08: lead with the
-    forecast window that is actually ahead, not the older vintage)."""
-    choice = st.session_state.get(EDITION_KEY, SPEC_LABEL)
-    spec = str(choice) == SPEC_LABEL
-    if d is not None and not d["has_spec"]:
-        return False
-    return spec
+    """The validated 2025→2028 current screen is the ONLY edition the site
+    shows (author decision 2026-07-20: users want the most recent forecast;
+    the finalized vintage remains in the registry and on Track record, and
+    the vintage frames below stay loaded as the fallback if the current
+    screen's outputs are ever missing)."""
+    if d is not None:
+        return bool(d["has_spec"])
+    return True
 
 
 def edition(d: dict) -> dict:
