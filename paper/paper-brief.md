@@ -1,6 +1,6 @@
 # Multifamily Rent-Growth Screener — Paper Brief (model v2.0.0)
 
-*Auto-generated 2026-07-08 from the model outputs. Regenerate with
+*Auto-generated 2026-07-20 from the model outputs. Regenerate with
 `python src/paper_brief.py`. Every number here is pulled directly from the processed data —
 nothing is hand-typed. Companion docs: `decision-log.md` (the "why"), `v1-build-spec.md` (v1
 how), `v2-plan.md` + `paper/v2-findings.md` (the rigor pass that produced v2).*
@@ -193,6 +193,8 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 | 1 | 2021 | shock | 110 | 0.450 | 0.60 |
 | 1 | 2022 | shock | 110 | 0.190 | 0.30 |
 | 1 | 2023 | normalization | 110 | 0.173 | 0.50 |
+
+**Precision lumpiness (appendix):** with n=110 metros, precision@10 moves in 0.1 lumps — one top-10 miss swings a window by 10 points. Co-reported once: pooled 3-yr precision@20 is **0.58** beside precision@10's 0.65 (per-window detail: `data/processed/precision_k.csv`). Same story at half the lump size; the pre-registered headline metric remains precision@10.
 
 **Three findings for the paper**
 1. **It works in normal times.** Pre-COVID 3-yr τ ≈ 0.59, precision@10 ≈ 88% — the

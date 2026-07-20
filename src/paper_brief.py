@@ -111,6 +111,20 @@ def build() -> Path:
     bw["precision@10"] = bw["precision@10"].map(lambda v: f"{v:.2f}")
     bt_windows_tbl = _md_table(bw)
 
+    # v4-A5: precision@20 co-report (lumpiness appendix; headline stays p@10).
+    p20_note = ""
+    p20_path = config.PROCESSED_DIR / "precision_k.csv"
+    if p20_path.exists():
+        pk = pd.read_csv(p20_path)
+        pooled = pk[pk["pred_year"].astype(str) == "POOLED"].iloc[0]
+        p20_note = (
+            f"\n**Precision lumpiness (appendix):** with n=110 metros, precision@10 moves "
+            f"in 0.1 lumps — one top-10 miss swings a window by 10 points. Co-reported "
+            f"once: pooled 3-yr precision@20 is **{pooled['precision_at_20']:.2f}** beside "
+            f"precision@10's {pooled['precision_at_10']:.2f} (per-window detail: "
+            f"`data/processed/precision_k.csv`). Same story at half the lump size; the "
+            f"pre-registered headline metric remains precision@10.\n")
+
     dropped_tbl = _md_table(dropped.rename(columns={
         "cbsa_title": "Metro", "population": "Population", "reason": "Reason"})
         .assign(Population=lambda d: d["Population"].map("{:,.0f}".format))
@@ -531,7 +545,7 @@ and precision@10 (share of the top 10 landing in the realized top quartile).
 **Every window**
 
 {bt_windows_tbl}
-
+{p20_note}
 **Three findings for the paper**
 1. **It works in normal times.** Pre-COVID 3-yr τ ≈ {pc3:.2f}, precision@10 ≈ {pc3p:.0%} — the
    top-10 picks landed in the realized top quartile ~{pc3p:.0%} of the time.
