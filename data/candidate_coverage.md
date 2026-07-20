@@ -35,3 +35,18 @@ these requires a new dated decision-log entry before any accuracy is computed.
 ZORDI where history allows); the proprietary capital-markets block remains omitted-and-
 disclosed, though CREMI's cap-rate series may partially stand in — a spec decision to log
 before Phase 4 runs.
+
+---
+
+## V4 acquisition audits (2026-07-20)
+
+Phase-2-style audits for the frozen V4 list (decision-log 2026-07-20); no accuracy
+computed anywhere.
+
+| Candidate | Verdict | Evidence |
+|---|---|---|
+| V4-1 USPS PMT | **KILLED at acquisition** | Licensed commercial product: 12-Month Historical Limited $31,000/yr (per-state $868), 48-Month Limited $45,000, Enterprise $69,000 (order form PMT001, 2026-05 rev.), behind a license agreement + EPF access request. Fails the free-data constraint; PEP stays the freshest free migration instrument. |
+| V4-3 Zillow ZORF | **KILLED at acquisition** | Metro-level ZORF is not freely published. The portal's own download menu offers only `National_zorf_growth_uc_{sfr,mfr}_sm_month.csv` (one national row); all metro-pattern URLs 404. Revisit only if Zillow ships metro ZORF (new dated entry required). |
+| V4-4 Apartment List | **Passes acquisition** (live layer only) | Free monthly metro downloads: vacancy index 2017-01+, time-on-market 2019-01+. Confirms the pre-registered "history too short for the annual walk-forward" expectation; eligible as a current-conditions display candidate only. |
+| V4-2 trailing 2-yr permits | No acquisition needed (BPS already ingested) | Gate frozen in the Phase-0 entry; run no earlier than the next federal vintage landing (P6 attempt cap). |
+| V4-5 Freddie Mac AIMI | Context only, permanently | ~25 metros; fails the coverage kill-rule by construction. |
