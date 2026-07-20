@@ -20,7 +20,7 @@ for _p in (str(ROOT), str(APP)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from ui import data, theme  # noqa: E402
+from ui import data, diagrams, theme  # noqa: E402
 import config               # noqa: E402
 
 theme.inject_css(reading=True)
@@ -34,6 +34,9 @@ st.write("")
 
 # ---- 1. The edge, in plain units --------------------------------------------
 st.markdown("## The edge, in points of rent growth")
+st.markdown(diagrams.walkforward_timeline(2019), unsafe_allow_html=True)
+theme.caption("How every window is graded, shown for 2019: the call is frozen at "
+              "publication and scored three years later.")
 es_path = config.PROCESSED_DIR / "effect_size_windows.csv"
 if es_path.exists():
     st.markdown(

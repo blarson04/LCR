@@ -23,7 +23,7 @@ for _p in (str(ROOT), str(APP)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from ui import data, theme          # noqa: E402
+from ui import data, diagrams, theme  # noqa: E402
 import config                       # noqa: E402
 from src.nowcast import proxy_map as pmap  # noqa: E402
 
@@ -57,6 +57,7 @@ weighted by a fixed published share, and summed into one score. The same formula
 for every market; no market is ever hand-adjusted; the weights are set by judgment,
 published in full, and stress-tested rather than statistically fitted.
 """)
+st.markdown(diagrams.method_pipeline(), unsafe_allow_html=True)
 
 # ---- The five themes --------------------------------------------------------
 st.markdown("## The five themes")
@@ -111,6 +112,7 @@ with st.expander("Which markets each theme helps and hurts most (charts)"):
 
 # ---- The weights (published) ------------------------------------------------
 st.markdown("## The weights")
+st.markdown(diagrams.weights_bar(), unsafe_allow_html=True)
 _totals = {b: sum(data.INDICATORS[k]["weight"] for k in data.INDICATORS
                   if data.INDICATORS[k]["bucket"] == b) for b in data.BUCKETS}
 rows = []
