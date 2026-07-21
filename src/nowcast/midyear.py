@@ -12,10 +12,12 @@ Scheme (frozen in the spec):
   net_migration         PEP net domestic migration, estimate-year T-1,
                         over population <= T-2
   job_growth            CES same-months YoY; carry fallback (latest < T)
-  income_growth         neutral fill (NaN) - no usable mid-year instrument
-                        (QA: state chain T-1 0.133, flat carry -0.04)
+  income_growth         v0.6 (decision-log 2026-07-21): primary-state
+                        Q1-over-Q1 total personal income growth of T (BEA
+                        SQINC1, QA 0.464); neutral fill where missing
   rent_to_income        (Jan-May-mean ZORI x 12) over metro T-2 income level
-                        chained by state T-1 annual growth (the v0.4 chain)
+                        chained by state T-1 annual growth AND state Q1
+                        growth of T (the v0.4 consistency pattern)
   employment_diversity  carry (latest < T)
 """
 
@@ -74,12 +76,14 @@ def load_shared() -> dict:
     panel = indicators.load_panel()
     ind = indicators.compute_indicators(panel)
     from src.ingest import bea, census_pep, permits
+    from src.nowcast.income_quarterly_qa import state_q1_income_growth
     return dict(
         panel=panel, ind=ind,
         zori_m=monthly_zori_by_cbsa(), zhvi_m=monthly_zhvi_by_cbsa(),
         ces_m=monthly_ces_by_cbsa(),
         pep=census_pep.build_pep_migration_panel(),
         sg=bea.state_pc_income_growth_panel(),
+        q1=state_q1_income_growth(),
         permits_annual=permits.build_permits_panel())
 
 
@@ -114,6 +118,10 @@ def midyear_row(T: int, shared: dict,
     sg = shared["sg"]
     g_state = st.map(lambda s: sg.get((s, T - 1), float("nan")))
     income = (inc_t2 * (1.0 + g_state)).where(g_state.notna(), inc_t2)
+    # v0.6: chain one further step by the same-year Q1 state growth, and use
+    # that growth as the income_growth estimate (decision-log 2026-07-21).
+    g_q1 = st.map(lambda s: shared["q1"].get((s, T), float("nan")))
+    income = (income * (1.0 + g_q1)).where(g_q1.notna(), income)
 
     try:
         permits_ytd = bps_ytd_units(T).reindex(metros.index)
@@ -141,7 +149,7 @@ def midyear_row(T: int, shared: dict,
     jg_carry = _latest_leq(ind, "job_growth", T - 1).reindex(metros.index)
     jg = ces_t / ces_p - 1.0
     nc["job_growth"] = jg.where(jg.notna(), jg_carry)
-    nc["income_growth"] = float("nan")            # spec: neutral fill, disclosed
+    nc["income_growth"] = g_q1.to_numpy()         # v0.6 Q1 state chain; NaN=neutral
     nc["rent_to_income"] = (zori_t * 12.0) / income
     nc["employment_diversity"] = _latest_leq(ind, "employment_diversity",
                                              T - 1).reindex(metros.index)

@@ -39,6 +39,7 @@ norm = (pd.read_csv(NC / "midyear_2026_norm.csv", dtype={"cbsa_code": str})
         .set_index("cbsa_code"))
 pct = norm[list(data.INDICATORS)].rank(pct=True) * 100
 gate = pd.read_csv(NC / "gate2026_summary.csv").iloc[0]
+acc = pd.read_csv(NC / "midyear_v06_accuracy.csv").iloc[0]
 rank = rank.sort_values("rank").reset_index(drop=True)
 rank[["strength", "drag"]] = rank.apply(
     lambda r: pd.Series(data.strength_drag(r)), axis=1)
@@ -54,16 +55,18 @@ st.markdown(theme.badge(True, "Speculative 2026→2029 outlook · failed validat
 st.markdown(
     f"<div style='border:1.5px solid {theme.PROVISIONAL};border-radius:8px;"
     f"padding:.9rem 1.1rem;margin:.8rem 0;background:rgba(138,109,29,.06)'>"
-    f"<div style='font-weight:600;color:{theme.PROVISIONAL}'>This configuration "
-    f"failed its validation test. Read every rank loosely.</div>"
+    f"<div style='font-weight:600;color:{theme.PROVISIONAL}'>This screen has not "
+    f"passed validation. Read every rank loosely.</div>"
     f"<div style='font-size:14px;margin-top:.35rem'>Tested on history the same way "
-    f"as every published screen, the mid-year recipe kept only "
-    f"<b>{gate['retention']:.1%}</b> of the finalized model's signal (the "
-    f"publication bar is {gate['retention_bar']:.0%}) and matched the finalized "
-    f"top-10 on <b>{gate['mean_top10_overlap']:.1f} of 10</b> names (bar: "
-    f"{gate['overlap_bar']:.0f}), falling to 2–3 of 10 in fast-moving years. "
-    f"Both failures are published in full on Track record. For decisions, use the "
-    f"validated 2025→2028 screen.</div></div>", unsafe_allow_html=True)
+    f"as every published screen, this recipe keeps <b>{acc['retention']:.1%}</b> of "
+    f"the finalized model's signal but matches the finalized top-10 on only "
+    f"<b>{acc['mean_top10_overlap']:.1f} of 10</b> names (a validated screen needs "
+    f"{gate['overlap_bar']:.0f}), falling to 3–4 of 10 in fast-moving years. An "
+    f"earlier mid-year recipe failed its one-shot gate outright "
+    f"({gate['retention']:.1%} and {gate['mean_top10_overlap']:.1f} of 10, on Track "
+    f"record); this one adds a tested income estimate and is re-measured, not "
+    f"re-gated. For decisions, use the validated 2025→2028 screen.</div></div>",
+    unsafe_allow_html=True)
 
 # ---- The map ----------------------------------------------------------------
 mp = rank.merge(d["coords"], on="cbsa_code", how="left")
@@ -98,8 +101,9 @@ theme.caption(f"Darker green = stronger mid-year fundamentals, speculatively. "
 st.markdown("## The speculative ranking")
 theme.caption("Why it is weaker than the main screen: rents, jobs, home values, and "
               "permits use only five months of 2026 data; migration is one year "
-              "stale; and income growth is not observable mid-year, so every market "
-              "is scored on at most 7 of 8 measures with income taken as neutral.")
+              "stale; and income growth is a state-level estimate (each metro takes "
+              "its primary state's early-2026 income growth, a tested stand-in that "
+              "agrees with finalized metro income about half the time by rank).")
 
 tbl = pd.DataFrame({
     "Rank": rank["rank"].astype(int),
@@ -123,7 +127,7 @@ st.dataframe(
                  "validation; treat the ordering as indicative at best."),
         "Score": st.column_config.TextColumn(
             help="The composite score on mid-year data. 0 is the average market; "
-                 "income growth is excluded (neutral) for every market."),
+                 "income growth is a state-level estimate for every market."),
         "Top strength": st.column_config.TextColumn(
             help="The theme lifting this market's speculative score the most."),
         "Top drag": st.column_config.TextColumn(
@@ -150,9 +154,9 @@ c1.metric("Speculative rank", f"{int(row['rank'])}",
                "(1 = best). No 90% range is computed for a configuration that "
                "failed validation; read the rank as indicative at best.")
 c2.metric("Score", f"{row['score']:+.2f}",
-          help="At most 7 of 8 measures combined (income is neutral for every "
-               "market). 0 is the average market; the distance from 0 matters more "
-               "than the decimals.")
+          help="All eight measures combined on mid-year data (income is a "
+               "state-level estimate). 0 is the average market; the distance from 0 "
+               "matters more than the decimals.")
 st.markdown(f"<div class='cap' style='margin:.6rem 0 0'>{data.why_sentence(row)}</div>",
             unsafe_allow_html=True)
 
@@ -196,8 +200,9 @@ for k in data.INDICATORS:
     if k == "income_growth":
         rows_t.append({"Measure": data.PRETTY[k],
                        "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
-                       "Value": "not observable mid-year",
-                       "Percentile": float("nan")})
+                       "Value": ("–" if pd.isna(val)
+                                 else data.FMT[k](val) + " (state estimate)"),
+                       "Percentile": pct[k].get(code, float("nan"))})
         continue
     if pd.isna(val):
         missing.append(data.PRETTY[k].lower())
@@ -222,8 +227,8 @@ st.dataframe(
         "Percentile": st.column_config.ProgressColumn(
             min_value=0, max_value=100, format="%.0f",
             help="Where this market stands among all markets on that measure, "
-                 "direction already applied so higher is always better. Blank for "
-                 "income, which is neutral for every market mid-year.")})
+                 "direction already applied so higher is always better. Income is "
+                 "a state-level estimate, so metros in the same state tie on it.")})
 if missing:
     theme.caption(f"Data note: {', '.join(missing)} is unavailable for this market "
                   "and takes a neutral (average) fill, which can flatter or "

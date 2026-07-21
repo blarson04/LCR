@@ -28,8 +28,9 @@ OUT = config.PROCESSED_DIR / "nowcast"
 
 
 def main() -> None:
-    gate = pd.read_csv(OUT / "gate2026_summary.csv")
-    assert len(gate) == 1, "gate summary missing; the gate must run first"
+    acc_p = OUT / "midyear_v06_accuracy.csv"
+    acc = pd.read_csv(acc_p) if acc_p.exists() else pd.read_csv(OUT / "gate2026_summary.csv")
+    assert len(acc) == 1, "accuracy measurement missing; run it first"
     shared = midyear.load_shared()
     row = midyear.midyear_row(
         YEAR, shared, pep_override=census_pep.pep_migration_estimate_2025())
@@ -45,9 +46,9 @@ def main() -> None:
     norm[norm["year"] == YEAR].to_csv(OUT / f"midyear_{YEAR}_norm.csv", index=False)
     rank.to_csv(OUT / f"midyear_{YEAR}_ranking.csv", index=False)
 
-    v = gate.iloc[0]
-    print(f"Mid-year {YEAR} staging outputs written (SPECULATIVE; gate "
-          f"{v['verdict']}: retention {v['retention']:.2%}, overlap "
+    v = acc.iloc[0]
+    print(f"Mid-year {YEAR} staging outputs written (SPECULATIVE; measured "
+          f"retention {v['retention']:.2%}, overlap "
           f"{v['mean_top10_overlap']:.2f}/10).")
     print("\n  Top 10 (speculative 2026->2029 outlook):")
     for _, r in rank.head(10).iterrows():
