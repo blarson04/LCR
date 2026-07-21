@@ -59,6 +59,8 @@ report = [
     st.Page("views/rankings.py", title="Full rankings"),
     st.Page("views/metro.py", title="Explore a market"),
 ]
+speculative = [st.Page("views/outlook_2026.py", title="2026→2029 outlook")]
 fine_print = [st.Page("views/track_record.py", title="Track record")]
 
-st.navigation({"The report": report, "The fine print": fine_print}).run()
+st.navigation({"The report": report, "Speculative": speculative,
+               "The fine print": fine_print}).run()

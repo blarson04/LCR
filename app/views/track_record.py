@@ -75,7 +75,7 @@ if es_path.exists():
         f"flat. Validation reflects normal conditions; the site flags shock periods.")
 
 # ---- 2. The gate arc --------------------------------------------------------
-st.markdown("## Four gates, two failures, two passes")
+st.markdown("## Five gates, three failures, two passes")
 st.markdown(
     "Every fresher-than-finalized configuration faced the same pre-registered gate "
     "(keep 85% of the model's signal, match the top-10 on 7 of 10 names), one "
@@ -85,9 +85,12 @@ st.markdown(
     "not rounded up.\n"
     "3. **The 2024-vintage screen** (one estimated input) kept **95.5%**. **Passed.**\n"
     "4. **Income chained by state growth** (the fix for failure #2's diagnosed cause) "
-    "kept **96.6%**. **Passed**; it is the current 2025→2028 screen.")
+    "kept **96.6%**. **Passed**; it is the current 2025→2028 screen.\n"
+    "5. **The mid-year 2026 screen** (five months of data; income not observable) "
+    "kept **82.7%** and matched **4.8 of 10**. **Failed both bars**; it ships only "
+    "as a labeled speculative outlook, never as a validated screen.")
 theme.caption("A validation bar that never fails anything proves nothing; ours failed "
-              "two of four attempts. Separately, nine candidate measures and model "
+              "three of five attempts. Separately, nine candidate measures and model "
               "variants have been gated one-shot; zero were adopted, every negative "
               "result published.")
 with st.expander("Two disclosures about the gates"):
