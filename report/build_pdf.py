@@ -119,7 +119,7 @@ def chart_all_markets() -> Path:
         ax.invert_yaxis()
         ax.axvline(0, color=MUTED, linewidth=0.8)
         style_ax(ax)
-        ax.tick_params(axis="y", labelsize=5.6)
+        ax.tick_params(axis="y", labelsize=6.3)
         ax.tick_params(axis="x", labelsize=7)
         lim = max(abs(rank["score"].min()), abs(rank["score"].max())) * 1.12
         ax.set_xlim(-lim, lim)
@@ -211,8 +211,10 @@ def chart_effect() -> Path:
     ax.set_axisbelow(True)
     ax.tick_params(length=0, labelsize=8)
     for i, v in enumerate(vals):
-        ax.annotate(f"{v:+.1f}", (i, v), textcoords="offset points",
-                    xytext=(0, 4 if v >= 0 else -11), ha="center", fontsize=7.5, color=INK)
+        # negative bars get their label above the zero line, clear of the
+        # year labels beneath the axis
+        ax.annotate(f"{v:+.1f}", (i, max(v, 0)), textcoords="offset points",
+                    xytext=(0, 4), ha="center", fontsize=7.5, color=INK)
     ax.set_ylabel("Top-10 edge (pp of rent growth)", fontsize=8)
     ax.set_xlabel("3-year window, by start year", fontsize=8)
     fig.tight_layout(pad=0.3)
@@ -300,9 +302,11 @@ S = dict(
     h1=ParagraphStyle("h1", fontName="Serif-SB", fontSize=22, leading=26,
                       textColor=C_INK, spaceAfter=6),
     h2=ParagraphStyle("h2", fontName="Serif-SB", fontSize=14.5, leading=18,
-                      textColor=C_INK, spaceBefore=16, spaceAfter=5),
+                      textColor=C_INK, spaceBefore=16, spaceAfter=5,
+                      keepWithNext=1),
     h3=ParagraphStyle("h3", fontName="Inter-SB", fontSize=10, leading=13,
-                      textColor=C_INK, spaceBefore=10, spaceAfter=3),
+                      textColor=C_INK, spaceBefore=10, spaceAfter=3,
+                      keepWithNext=1),
     body=ParagraphStyle("body", fontName="Inter", fontSize=9.2, leading=13.6,
                         textColor=C_INK, spaceAfter=6),
     bullet=ParagraphStyle("bullet", fontName="Inter", fontSize=9.2, leading=13.6,
@@ -384,11 +388,30 @@ def on_cover(canvas, doc):
         canvas.setFillColor(colors.HexColor("#8A6D1D"))
         canvas.drawString(M + 8, H - 5.28 * inch, badge)
 
-    # ---- anchored stat band: the cover's visual foundation -------------------
+    # ---- "In this report" contents (fills the cover's middle) ----------------
+    toc = ["Key findings and the top 10", "Every market against the average",
+           "The map and the tiers", "The five themes",
+           f"Market spotlight: {top_city}", "The track record",
+           "How the score is built", "The speculative 2026–2029 outlook",
+           f"Appendix: all {N} markets"]
+    ty = H - 6.1 * inch
+    canvas.setFont("Inter-SB", 8)
+    canvas.setFillColor(C_MUTED)
+    canvas.drawString(M, ty, "IN THIS REPORT")
+    canvas.setFont("Serif", 10.5)
+    for i, item in enumerate(toc):
+        y = ty - 0.34 * inch - i * 0.265 * inch
+        canvas.setFillColor(C_ACCENT)
+        canvas.rect(M, y + 1.5, 0.12 * inch, 1.1, stroke=0, fill=1)
+        canvas.setFillColor(C_INK)
+        canvas.drawString(M + 0.28 * inch, y, item)
+
+    # ---- anchored stat row (rules and type only; no fills) -------------------
     full_tau_row = bl.loc[bl["tau_3y"].idxmax()]
     band_h = 2.05 * inch
-    canvas.setFillColor(C_INK)
-    canvas.rect(0, 0, W, band_h, stroke=0, fill=1)
+    canvas.setStrokeColor(C_INK)
+    canvas.setLineWidth(1.1)
+    canvas.line(M, band_h, W - M, band_h)
     stats = [
         (f"{float(full_tau_row['tau_3y']):.2f}", "RANK AGREEMENT WITH",
          "REALIZED 3-YEAR RENT GROWTH"),
@@ -401,26 +424,26 @@ def on_cover(canvas, doc):
     for i, (num, l1, l2) in enumerate(stats):
         x = M + i * col_w
         canvas.setFont("Serif-SB", 23)
-        canvas.setFillColor(colors.white)
-        canvas.drawString(x, band_h - 0.62 * inch, num)
+        canvas.setFillColor(C_INK)
+        canvas.drawString(x, band_h - 0.52 * inch, num)
         canvas.setFont("Inter-SB", 6.4)
-        canvas.setFillColor(colors.Color(1, 1, 1, alpha=0.62))
-        canvas.drawString(x, band_h - 0.84 * inch, l1)
-        canvas.drawString(x, band_h - 0.97 * inch, l2)
-    canvas.setStrokeColor(colors.Color(1, 1, 1, alpha=0.25))
+        canvas.setFillColor(C_MUTED)
+        canvas.drawString(x, band_h - 0.74 * inch, l1)
+        canvas.drawString(x, band_h - 0.87 * inch, l2)
+    canvas.setStrokeColor(C_LINE)
     canvas.setLineWidth(0.6)
-    canvas.line(M, band_h - 1.18 * inch, W - M, band_h - 1.18 * inch)
+    canvas.line(M, band_h - 1.08 * inch, W - M, band_h - 1.08 * inch)
     canvas.setFont("Inter-SB", 8.5)
-    canvas.setFillColor(colors.white)
-    canvas.drawString(M, band_h - 1.44 * inch, "Ben Larson")
+    canvas.setFillColor(C_INK)
+    canvas.drawString(M, band_h - 1.34 * inch, "Ben Larson")
     canvas.setFont("Inter", 8)
-    canvas.setFillColor(colors.Color(1, 1, 1, alpha=0.62))
-    canvas.drawString(M, band_h - 1.60 * inch,
+    canvas.setFillColor(C_MUTED)
+    canvas.drawString(M, band_h - 1.50 * inch,
                       "Economics and applied mathematics, Indiana University")
-    canvas.drawRightString(W - M, band_h - 1.44 * inch,
+    canvas.drawRightString(W - M, band_h - 1.34 * inch,
                            f"Model v{config.MODEL_VERSION} · methods documented, "
                            f"failures published")
-    canvas.drawRightString(W - M, band_h - 1.60 * inch,
+    canvas.drawRightString(W - M, band_h - 1.50 * inch,
                            "A research screen, not investment advice")
     canvas.restoreState()
 
@@ -485,9 +508,9 @@ for _, r in rank.head(10).iterrows():
 t = Table(rows, colWidths=[0.9 * inch, 2.6 * inch, 0.7 * inch, 2.8 * inch])
 t.setStyle(TableStyle([
     ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
-    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
+    ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
+    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
+    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
     ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
     ("FONTNAME", (1, 1), (1, -1), "Inter-Md"),
     ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -535,9 +558,9 @@ if has_tiers:
     tt = Table(trows, colWidths=[1.4 * inch, 0.7 * inch, 4.9 * inch])
     tt.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
-    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
+        ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
+    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
+    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
         ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
         ("FONTNAME", (0, 1), (0, -1), "Inter-Md"),
         ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -687,9 +710,9 @@ if len(m3):
     tt = Table(rows, colWidths=[1.9 * inch, 1.3 * inch, 1.3 * inch, 1.3 * inch, 1.2 * inch])
     tt.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
-    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
+        ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
+    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
+    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
         ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
         ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
@@ -698,8 +721,10 @@ if len(m3):
         ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5),
     ]))
     story += [tt, Paragraph("3-year horizon. Real-time numbers come from the pseudo-nowcast "
-                            "test, a disclosed simplification.", S["cap"])]
-story += [Paragraph("Five gates, three failures, two passes", S["h2"]),
+                            "test, a disclosed simplification. Data vintage: finalized "
+                            "panel through 2024; rent index through May 2026.", S["cap"])]
+story += [KeepTogether([
+          Paragraph("Five gates, three failures, two passes", S["h2"]),
           Paragraph("Every fresher-than-finalized configuration had to pass the same "
                     "pre-registered gate (retain at least 85% of the model's signal and "
                     "match the top-10 on at least 7 of 10 names) in a single attempt, with "
@@ -721,7 +746,7 @@ story += [Paragraph("Five gates, three failures, two passes", S["h2"]),
                     "screen.", S["bullet"], bulletText="5."),
           Paragraph("A validation bar that never fails anything proves nothing. Ours failed "
                     "three of five attempts, which is exactly why the two that passed mean "
-                    "something.", S["cap"]),
+                    "something.", S["cap"])]),
           Paragraph("Honest limits", S["h2"]),
           Paragraph("The rent data measures asking rents, not signed leases.",
                     S["bullet"], bulletText="•"),
@@ -756,9 +781,9 @@ for b in data.BUCKETS:
 wt = Table(wrows, colWidths=[1.1 * inch, 0.7 * inch, 5.2 * inch])
 wt.setStyle(TableStyle([
     ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
-    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
+    ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
+    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
+    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
     ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.4),
     ("FONTNAME", (0, 1), (0, -1), "Inter-Md"),
     ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -786,9 +811,9 @@ for k in data.INDICATORS:
 vt = Table(vrows, colWidths=[1.9 * inch, 4.4 * inch, 0.7 * inch])
 vt.setStyle(TableStyle([
     ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
-    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
+    ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
+    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
+    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
     ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8),
     ("FONTNAME", (0, 1), (0, -1), "Inter-Md"),
     ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -829,7 +854,6 @@ if _spec_rank_p.exists() and _spec_acc_p.exists():
         f"report.", S["body"])]], colWidths=[CW])
     warn.setStyle(TableStyle([
         ("BOX", (0, 0), (-1, -1), 1.2, C_PROV),
-        ("BACKGROUND", (0, 0), (-1, -1), colors.Color(138/255, 109/255, 29/255, alpha=0.06)),
         ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
         ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
     ]))
@@ -851,9 +875,9 @@ if _spec_rank_p.exists() and _spec_acc_p.exists():
     st_t = Table(srows, colWidths=[0.6 * inch, 2.9 * inch, 0.7 * inch, 2.8 * inch])
     st_t.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
-    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
+        ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
+    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
+    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
         ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
         ("FONTNAME", (1, 1), (1, -1), "Inter-Md"),
         ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -889,9 +913,9 @@ score_colors = [("TEXTCOLOR", (2, i + 1), (2, i + 1), C_POS if r["score"] >= 0 e
                 for i, (_, r) in enumerate(rank.iterrows())]
 at.setStyle(TableStyle([
     ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7),
-    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
-    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
+    ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
+    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
+    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
     ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 7),
     ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
     ("ALIGN", (2, 0), (2, -1), "RIGHT"),

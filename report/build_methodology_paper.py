@@ -127,9 +127,11 @@ S = dict(
     authorline=ParagraphStyle("authorline", fontName="Serif", fontSize=11, leading=15,
                               textColor=C_INK, alignment=1, spaceAfter=2),
     h1=ParagraphStyle("h1", fontName="Serif-SB", fontSize=13, leading=17,
-                      textColor=C_INK, spaceBefore=16, spaceAfter=5),
+                      textColor=C_INK, spaceBefore=16, spaceAfter=5,
+                      keepWithNext=1),
     h2=ParagraphStyle("h2", fontName="Serif-SB", fontSize=10.8, leading=14,
-                      textColor=C_INK, spaceBefore=10, spaceAfter=3),
+                      textColor=C_INK, spaceBefore=10, spaceAfter=3,
+                      keepWithNext=1),
     body=ParagraphStyle("body", fontName="Serif", fontSize=10, leading=14.2,
                         textColor=C_INK, spaceAfter=6, alignment=4,
                         hyphenationLang="en_US"),
@@ -164,10 +166,21 @@ def on_page(canvas, doc):
     canvas.restoreState()
 
 
-doc = BaseDocTemplate(str(OUT), pagesize=letter, leftMargin=M, rightMargin=M,
-                      topMargin=0.9 * inch, bottomMargin=0.85 * inch,
-                      title="The Rent-Growth Screen: A Methodology and Validation Paper",
-                      author="Ben Larson")
+from reportlab.platypus.tableofcontents import TableOfContents  # noqa: E402
+
+
+class PaperDoc(BaseDocTemplate):
+    """Notifies the table of contents when a section heading lands."""
+
+    def afterFlowable(self, flowable):
+        if isinstance(flowable, _Paragraph) and flowable.style.name == "h1":
+            self.notify("TOCEntry", (0, flowable.getPlainText(), self.page))
+
+
+doc = PaperDoc(str(OUT), pagesize=letter, leftMargin=M, rightMargin=M,
+               topMargin=0.9 * inch, bottomMargin=0.85 * inch,
+               title="The Rent-Growth Screen: A Methodology and Validation Paper",
+               author="Ben Larson")
 frame = Frame(M, 0.8 * inch, CW, H - 1.75 * inch, id="main")
 doc.addPageTemplates([PageTemplate(id="page", frames=[frame], onPage=on_page)])
 
@@ -204,7 +217,13 @@ story += [
               "Results Disclosed", S["subtitle"]),
     Paragraph("Ben Larson<super>1</super> · Indiana University", S["authorline"]),
     Paragraph(TODAY, S["authorline"]),
-    Spacer(1, 18),
+    Spacer(1, 6),
+    Paragraph("First edition. Per the project's rules, any revision to this "
+              "paper will be disclosed in a revision note here, never made "
+              "silently.", ParagraphStyle(
+                  "revnote", parent=S["cap"], alignment=1, fontName="Serif",
+                  leftIndent=40, rightIndent=40)),
+    Spacer(1, 12),
     Paragraph("<b>Abstract</b>", ParagraphStyle("abshead", parent=S["h2"],
                                                 spaceBefore=0)),
     Paragraph(
@@ -240,22 +259,14 @@ story += [
 ]
 
 # ============================ contents =======================================
-story += [Paragraph("Contents", S["h1"])]
-for num, name in [
-        ("1.", "Introduction and Research Question"),
-        ("2.", "Data and the Vintage Discipline"),
-        ("3.", "The Eight Measures"),
-        ("4.", "Weighting: The Case Against Fitting"),
-        ("5.", "Validation Design"),
-        ("6.", "Validation Results"),
-        ("7.", "Governance: Gates, Freezes, and Negative Results"),
-        ("8.", "The Current Screen and the Speculative Outlook"),
-        ("9.", "Communicating Uncertainty"),
-        ("10.", "Limitations"),
-        ("11.", "The Forward Test"),
-        ("", "Primary Sources")]:
-    story.append(Paragraph(f"{num} {name}", S["toc"]))
-story.append(PageBreak())
+_toc = TableOfContents()
+_toc.levelStyles = [ParagraphStyle(
+    "tocentry", fontName="Serif", fontSize=10.5, leading=17, textColor=C_INK,
+    rightIndent=14)]
+_toc.dotsMinLevel = 0
+story += [Paragraph("Contents", ParagraphStyle("contentshead", parent=S["h1"],
+                                               keepWithNext=1)),
+          _toc, PageBreak()]
 
 # ============================ 1. introduction ================================
 story += [
@@ -359,11 +370,18 @@ story += [tbl(meas_rows, [1.75 * inch, 3.15 * inch, 1.15 * inch]),
 story += [
     Paragraph("4. Weighting: The Case Against Fitting", S["h1"]),
     Paragraph(
-        "The composite score is a fixed weighted sum: Demand 40% (migration 20, "
-        "jobs 12, income 8), Supply 25 (permits to stock, counted inversely), "
-        "Affordability 20 (rent to income 12, cost to own vs rent 8), Momentum 10 "
-        "(trailing rent growth), Resilience 5 (employment diversity). The weights "
-        "are set by judgment, published in full, and never statistically fitted.",
+        "The composite score for market <i>i</i> in year <i>t</i> is a fixed "
+        "weighted sum of the oriented within-year z-scores:", S["body"]),
+    Paragraph("<i>S<sub>it</sub></i> = Σ<sub>k</sub> "
+              "<i>w<sub>k</sub></i> · <i>z<sub>ikt</sub></i>",
+              ParagraphStyle("formula", parent=S["body"], alignment=1,
+                             spaceBefore=4, spaceAfter=8)),
+    Paragraph(
+        "with weights fixed at Demand 40% (migration 20, jobs 12, income 8), "
+        "Supply 25 (permits to stock, counted inversely), Affordability 20 (rent "
+        "to income 12, cost to own vs rent 8), Momentum 10 (trailing rent "
+        "growth), and Resilience 5 (employment diversity). The weights are set by "
+        "judgment, published in full, and never statistically fitted.",
         S["body"]),
     Paragraph(
         "The no-fitting rule is a deliberate methodological position, not an "
@@ -663,5 +681,5 @@ story += [tbl(gate_rows, [0.35 * inch, 2.6 * inch, 1.0 * inch, 1.2 * inch,
           ]
 
 print("building pdf...")
-doc.build(story)
+doc.multiBuild(story)
 print(f"done: {OUT}")
