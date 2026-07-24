@@ -35,3 +35,6 @@ HANDOFF.md
 
 # Third-party report (copyrighted; reference only, never publish)
 Arbor-Report*.pdf
+
+# PDF report intermediates (charts regenerate from code; the PDF is the output)
+report/_build/
