@@ -376,17 +376,8 @@ def on_cover(canvas, doc):
     canvas.setFont("Inter", 10)
     canvas.setFillColor(C_MUTED)
     canvas.drawString(M, H - 4.78 * inch,
-                      f"A validated {HORIZON} outlook, built entirely on free public data.")
-    # provisional badge (required wherever nowcast data appears)
-    if ed["provisional"]:
-        badge = ed.get("badge_label") or "Provisional"
-        canvas.setFont("Inter-SB", 8)
-        bw = canvas.stringWidth(badge, "Inter-SB", 8) + 16
-        canvas.setStrokeColor(colors.HexColor("#8A6D1D"))
-        canvas.setFillColor(colors.Color(138 / 255, 109 / 255, 29 / 255, alpha=0.07))
-        canvas.roundRect(M, H - 5.35 * inch, bw, 0.26 * inch, 8, stroke=1, fill=1)
-        canvas.setFillColor(colors.HexColor("#8A6D1D"))
-        canvas.drawString(M + 8, H - 5.28 * inch, badge)
+                      f"A validated {HORIZON} outlook and a speculative 2026→"
+                      f"2029 view, built entirely on free public data.")
 
     # ---- "In this report" contents (fills the cover's middle) ----------------
     toc = ["Key findings and the top 10", "Every market against the average",
