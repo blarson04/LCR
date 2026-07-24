@@ -271,7 +271,15 @@ from reportlab.pdfbase import pdfmetrics                       # noqa: E402
 from reportlab.pdfbase.ttfonts import TTFont                   # noqa: E402
 from reportlab.platypus import (BaseDocTemplate, Frame, Image, KeepTogether,
                                 NextPageTemplate, PageBreak, PageTemplate,
-                                Paragraph, Spacer, Table, TableStyle)  # noqa: E402
+                                Spacer, Table, TableStyle)  # noqa: E402
+from reportlab.platypus import Paragraph as _Paragraph  # noqa: E402
+
+from typo import smart              # noqa: E402
+
+
+def Paragraph(text, style, **kw):
+    """Every paragraph passes through the typographic-hygiene filter."""
+    return _Paragraph(smart(text), style, **kw)
 
 pdfmetrics.registerFont(TTFont("Inter", FONTS / "Inter-400.ttf"))
 pdfmetrics.registerFont(TTFont("Inter-Md", FONTS / "Inter-500.ttf"))
@@ -375,17 +383,45 @@ def on_cover(canvas, doc):
         canvas.roundRect(M, H - 5.35 * inch, bw, 0.26 * inch, 8, stroke=1, fill=1)
         canvas.setFillColor(colors.HexColor("#8A6D1D"))
         canvas.drawString(M + 8, H - 5.28 * inch, badge)
-    canvas.setFont("Inter", 9.5)
+
+    # ---- anchored stat band: the cover's visual foundation -------------------
+    full_tau_row = bl.loc[bl["tau_3y"].idxmax()]
+    band_h = 2.05 * inch
     canvas.setFillColor(C_INK)
-    canvas.drawString(M, 1.55 * inch, "Ben Larson")
-    canvas.setFont("Inter", 8.5)
-    canvas.setFillColor(C_MUTED)
-    canvas.drawString(M, 1.36 * inch,
-                      "Economics & applied mathematics, Indiana University")
-    canvas.setFont("Inter", 7.5)
-    canvas.drawString(M, 1.02 * inch,
-                      f"Model v{config.MODEL_VERSION}  ·  every method documented, every "
-                      f"ranking frozen and checkable  ·  a research screen, not investment advice")
+    canvas.rect(0, 0, W, band_h, stroke=0, fill=1)
+    stats = [
+        (f"{float(full_tau_row['tau_3y']):.2f}", "RANK AGREEMENT WITH",
+         "REALIZED 3-YEAR RENT GROWTH"),
+        (f"{pp_pooled:+.1f} pp", "TOP-10 EDGE OVER THE MEDIAN",
+         "MARKET, PER COMPLETED WINDOW"),
+        (f"{N}", "MARKETS RANKED, EVERY RANKING",
+         "FROZEN BEFORE ITS OUTCOME"),
+    ]
+    col_w = (W - 2 * M) / 3.0
+    for i, (num, l1, l2) in enumerate(stats):
+        x = M + i * col_w
+        canvas.setFont("Serif-SB", 23)
+        canvas.setFillColor(colors.white)
+        canvas.drawString(x, band_h - 0.62 * inch, num)
+        canvas.setFont("Inter-SB", 6.4)
+        canvas.setFillColor(colors.Color(1, 1, 1, alpha=0.62))
+        canvas.drawString(x, band_h - 0.84 * inch, l1)
+        canvas.drawString(x, band_h - 0.97 * inch, l2)
+    canvas.setStrokeColor(colors.Color(1, 1, 1, alpha=0.25))
+    canvas.setLineWidth(0.6)
+    canvas.line(M, band_h - 1.18 * inch, W - M, band_h - 1.18 * inch)
+    canvas.setFont("Inter-SB", 8.5)
+    canvas.setFillColor(colors.white)
+    canvas.drawString(M, band_h - 1.44 * inch, "Ben Larson")
+    canvas.setFont("Inter", 8)
+    canvas.setFillColor(colors.Color(1, 1, 1, alpha=0.62))
+    canvas.drawString(M, band_h - 1.60 * inch,
+                      "Economics and applied mathematics, Indiana University")
+    canvas.drawRightString(W - M, band_h - 1.44 * inch,
+                           f"Model v{config.MODEL_VERSION} · methods documented, "
+                           f"failures published")
+    canvas.drawRightString(W - M, band_h - 1.60 * inch,
+                           "A research screen, not investment advice")
     canvas.restoreState()
 
 
@@ -449,7 +485,9 @@ for _, r in rank.head(10).iterrows():
 t = Table(rows, colWidths=[0.9 * inch, 2.6 * inch, 0.7 * inch, 2.8 * inch])
 t.setStyle(TableStyle([
     ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-    ("TEXTCOLOR", (0, 0), (-1, 0), C_MUTED),
+    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
+    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
     ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
     ("FONTNAME", (1, 1), (1, -1), "Inter-Md"),
     ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -497,7 +535,9 @@ if has_tiers:
     tt = Table(trows, colWidths=[1.4 * inch, 0.7 * inch, 4.9 * inch])
     tt.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-        ("TEXTCOLOR", (0, 0), (-1, 0), C_MUTED),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
+    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
         ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
         ("FONTNAME", (0, 1), (0, -1), "Inter-Md"),
         ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -647,7 +687,9 @@ if len(m3):
     tt = Table(rows, colWidths=[1.9 * inch, 1.3 * inch, 1.3 * inch, 1.3 * inch, 1.2 * inch])
     tt.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-        ("TEXTCOLOR", (0, 0), (-1, 0), C_MUTED),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
+    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
         ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
         ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
@@ -714,7 +756,9 @@ for b in data.BUCKETS:
 wt = Table(wrows, colWidths=[1.1 * inch, 0.7 * inch, 5.2 * inch])
 wt.setStyle(TableStyle([
     ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-    ("TEXTCOLOR", (0, 0), (-1, 0), C_MUTED),
+    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
+    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
     ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.4),
     ("FONTNAME", (0, 1), (0, -1), "Inter-Md"),
     ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -742,7 +786,9 @@ for k in data.INDICATORS:
 vt = Table(vrows, colWidths=[1.9 * inch, 4.4 * inch, 0.7 * inch])
 vt.setStyle(TableStyle([
     ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-    ("TEXTCOLOR", (0, 0), (-1, 0), C_MUTED),
+    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
+    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
     ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8),
     ("FONTNAME", (0, 1), (0, -1), "Inter-Md"),
     ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -805,7 +851,9 @@ if _spec_rank_p.exists() and _spec_acc_p.exists():
     st_t = Table(srows, colWidths=[0.6 * inch, 2.9 * inch, 0.7 * inch, 2.8 * inch])
     st_t.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-        ("TEXTCOLOR", (0, 0), (-1, 0), C_MUTED),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
+    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
         ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
         ("FONTNAME", (1, 1), (1, -1), "Inter-Md"),
         ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
@@ -841,7 +889,9 @@ score_colors = [("TEXTCOLOR", (2, i + 1), (2, i + 1), C_POS if r["score"] >= 0 e
                 for i, (_, r) in enumerate(rank.iterrows())]
 at.setStyle(TableStyle([
     ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7),
-    ("TEXTCOLOR", (0, 0), (-1, 0), C_MUTED),
+    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("BACKGROUND", (0, 0), (-1, 0), C_INK),
+    ("LEFTPADDING", (0, 0), (-1, 0), 6), ("RIGHTPADDING", (0, 0), (-1, 0), 6),
     ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 7),
     ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
     ("ALIGN", (2, 0), (2, -1), "RIGHT"),

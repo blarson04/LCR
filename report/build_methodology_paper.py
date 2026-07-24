@@ -94,7 +94,15 @@ from reportlab.pdfbase import pdfmetrics                       # noqa: E402
 from reportlab.pdfbase.ttfonts import TTFont                   # noqa: E402
 from reportlab.platypus import (BaseDocTemplate, Frame, KeepTogether,
                                 NextPageTemplate, PageBreak, PageTemplate,
-                                Paragraph, Spacer, Table, TableStyle)  # noqa: E402
+                                Spacer, Table, TableStyle)  # noqa: E402
+from reportlab.platypus import Paragraph as _Paragraph  # noqa: E402
+
+from typo import smart              # noqa: E402
+
+
+def Paragraph(text, style, **kw):
+    """Every paragraph passes through the typographic-hygiene filter."""
+    return _Paragraph(smart(text), style, **kw)
 
 pdfmetrics.registerFont(TTFont("Serif", FONTS / "SourceSerif4-400.ttf"))
 pdfmetrics.registerFont(TTFont("Serif-SB", FONTS / "SourceSerif4-600.ttf"))
@@ -106,7 +114,7 @@ pdfmetrics.registerFontFamily("Serif", normal="Serif", bold="Serif-SB",
 C_INK, C_MUTED = colors.HexColor(INK), colors.HexColor(MUTED)
 C_ACCENT, C_LINE = colors.HexColor(ACCENT), colors.HexColor(LINE)
 W, H = letter
-M = 1.0 * inch
+M = 1.15 * inch          # ~85 characters per line at 10pt serif (Butterick range)
 CW = W - 2 * M
 
 S = dict(
@@ -123,13 +131,14 @@ S = dict(
     h2=ParagraphStyle("h2", fontName="Serif-SB", fontSize=10.8, leading=14,
                       textColor=C_INK, spaceBefore=10, spaceAfter=3),
     body=ParagraphStyle("body", fontName="Serif", fontSize=10, leading=14.2,
-                        textColor=C_INK, spaceAfter=6, alignment=4),
+                        textColor=C_INK, spaceAfter=6, alignment=4,
+                        hyphenationLang="en_US"),
     bullet=ParagraphStyle("bullet", fontName="Serif", fontSize=10, leading=14.2,
                           textColor=C_INK, leftIndent=16, bulletIndent=4,
-                          spaceAfter=4, alignment=4),
+                          spaceAfter=4, alignment=4, hyphenationLang="en_US"),
     abstract=ParagraphStyle("abstract", fontName="Serif", fontSize=10, leading=14.2,
                             textColor=C_INK, spaceAfter=6, alignment=4,
-                            leftIndent=6, rightIndent=6),
+                            leftIndent=6, rightIndent=6, hyphenationLang="en_US"),
     cap=ParagraphStyle("cap", fontName="Serif", fontSize=8.5, leading=11.5,
                        textColor=C_MUTED, spaceBefore=2, spaceAfter=8),
     toc=ParagraphStyle("toc", fontName="Serif", fontSize=10.5, leading=17,
