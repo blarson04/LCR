@@ -463,8 +463,7 @@ story += [eyebrow("Key findings"),
           Paragraph(f"<b>The screen's top-10 markets out-grew the median market by "
                     f"{pp_pooled:+.1f} points of rent growth</b> over three years, averaged "
                     f"across six completed backtest windows. Picking on recent rent growth "
-                    f"alone earned {pp_mom:+.1f}; the gap widens the further out you look.",
-                    S["bullet"], bulletText="•"),
+                    f"alone earned {pp_mom:+.1f}.", S["bullet"], bulletText="•"),
           Paragraph(f"<b>Every measure had to earn its place by test.</b> An industry-style "
                     f"scorecard rebuilt from the same free data barely beats chance "
                     f"({ind_tau:.2f} on a -1 to +1 rank-agreement scale, vs {full_tau:.2f} "
@@ -486,9 +485,9 @@ story += [Paragraph("Overview", S["h2"]),
           Paragraph("The top 10", S["h2"])]
 if has_tiers:
     story.append(Paragraph(
-        f"Read the ranges: {n_in} of these ten sit in a {n_cluster}-market leading "
-        f"cluster, any of whose members could plausibly hold a top-10 seat. Ordering "
-        f"inside the cluster is noise.", S["cap"]))
+        f"{n_in} of these ten sit in a {n_cluster}-market leading cluster; any market "
+        f"in that cluster could plausibly hold a top-10 seat, so treat the exact "
+        f"ordering loosely.", S["cap"]))
 rows = [["Rank", "Metro", "Score", "What lifts it most"]]
 for _, r in rank.head(10).iterrows():
     strengths = " · ".join(s for s in (r["strength_1"], r["strength_2"]) if s) \
@@ -513,8 +512,8 @@ t.setStyle(TableStyle([
 ]))
 story += [t,
           Paragraph("Rank (90% range), score vs the average market (0), and the themes "
-                    "that lift each score most. Scores are standardized; the spread matters "
-                    "more than any single value.", S["cap"]),
+                    "that lift each score most. The spread between markets matters more "
+                    "than any single value.", S["cap"]),
           PageBreak()]
 
 # ---- Chart 1: every market ------------------------------------------------------
@@ -672,18 +671,19 @@ story += [eyebrow("Has it worked?"),
           Image(str(P_EFFECT), width=6.6 * inch, height=2.3 * inch),
           Paragraph(f"Calm windows came in between "
                     f"{comp[comp.pred_year <= 2019]['top10_pp_vs_median'].min():+.1f} and "
-                    f"{comp[comp.pred_year <= 2019]['top10_pp_vs_median'].max():+.1f} points; "
-                    f"the 2021-22 shock windows were roughly flat, where pure rent momentum "
-                    f"flipped firmly negative. Validation reflects normal market conditions; "
-                    f"the framework underperforms in shocks.", S["cap"])]
+                    f"{comp[comp.pred_year <= 2019]['top10_pp_vs_median'].max():+.1f} points. "
+                    f"The 2021-22 shock windows were roughly flat; picking on rent momentum "
+                    f"alone turned firmly negative in those same windows. The screen earns "
+                    f"its edge in normal conditions and loses most of it in shocks.",
+                    S["cap"])]
 if len(m3):
     story += [Paragraph("What was achievable in real time", S["h2"]),
-              Paragraph("Two vintages are shown: <i>real-time</i> uses only data a user "
-                        "could have had at the time; <i>finalized</i> uses the complete "
-                        "revised data that arrives about two years later - a ceiling no "
-                        "live user ever had. Agreement is weighted Kendall's tau, a "
-                        "rank-agreement score from -1 to +1 where 0 means no relationship.",
-                        S["body"])]
+              Paragraph("The same backtest, two ways: <i>real-time</i> uses only data a "
+                        "user could have had at the time; <i>finalized</i> uses the "
+                        "complete revised data that arrives about two years later - a "
+                        "ceiling no live user ever had. Agreement is weighted Kendall's "
+                        "tau, a rank-agreement score from -1 to +1 where 0 means no "
+                        "relationship.", S["body"])]
     tv = m3.rename(columns={
         "horizon": "Horizon", "regime": "Period",
         "mean_tau_ps": "Tau (real-time)", "mean_tau_fin": "Tau (finalized)",
@@ -716,10 +716,10 @@ if len(m3):
                             "panel through 2024; rent index through May 2026.", S["cap"])]
 story += [KeepTogether([
           Paragraph("Five gates, three failures, two passes", S["h2"]),
-          Paragraph("Every fresher-than-finalized configuration had to pass the same "
-                    "pre-registered gate (retain at least 85% of the model's signal and "
-                    "match the top-10 on at least 7 of 10 names) in a single attempt, with "
-                    "the outcome published either way:", S["body"]),
+          Paragraph("Every screen built on early or estimated data had to pass the same "
+                    "pre-registered test (keep at least 85% of the finalized model's "
+                    "signal and match its top 10 on at least 7 of 10 names) in a single "
+                    "attempt, with the outcome published either way:", S["body"]),
           Paragraph("<b>2025 screen, five estimated inputs</b> kept 74.8% of the signal. "
                     "<b>Failed;</b> not published.", S["bullet"], bulletText="1."),
           Paragraph("<b>2025 screen, fresher jobs data</b> kept 84.66%. <b>Failed by a "
@@ -785,10 +785,10 @@ wt.setStyle(TableStyle([
     ("VALIGN", (0, 0), (-1, -1), "TOP"),
 ]))
 story += [wt,
-          Paragraph("The weights are fixed, published in full, set by judgment rather than "
-                    "fitted, and stress-tested - reasonable alternatives land within noise "
-                    "of each other, so the testing, not the weights, is the point.",
-                    S["cap"]),
+          Paragraph("The weights are fixed, published in full, set by judgment rather "
+                    "than fitted, and stress-tested - reasonable alternative weightings "
+                    "score about the same, so the testing, not the weights, is the "
+                    "point.", S["cap"]),
           Paragraph("Where the data comes from", S["h2"])]
 _cell_md = ParagraphStyle("cellmd", fontName="Inter-Md", fontSize=8, leading=10.5,
                           textColor=C_INK)
@@ -849,15 +849,13 @@ if _spec_rank_p.exists() and _spec_acc_p.exists():
         ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
     ]))
     story += [eyebrow("Speculative outlook"),
-              Paragraph("The 2026-2029 view, for what it is worth", S["h1"]), *hr(),
+              Paragraph("The speculative 2026-2029 outlook", S["h1"]), *hr(),
               warn, Spacer(1, 8),
-              Paragraph("The same frozen model run on data through May 2026: five months "
-                        "of rents, jobs, home values, and permits; migration one estimate "
-                        "year stale; and income growth taken from each metro's primary "
-                        "state (an early-2026 estimate that agrees with finalized metro "
-                        "income about half the time by rank, so metros in one state tie "
-                        "on it). It exists because readers asked for the newest possible "
-                        "view.", S["body"]),
+              Paragraph("This is the same frozen model run on data through May 2026: "
+                        "five months of rents, jobs, home values, and permits; migration "
+                        "one year stale; and income growth estimated from each metro's "
+                        "state, so metros in the same state share one income figure.",
+                        S["body"]),
               Paragraph("The speculative top 10", S["h2"])]
     srows = [["Rank", "Metro", "Score", "What lifts it most"]]
     for _, r in spec_rank.head(10).iterrows():
@@ -889,9 +887,10 @@ if _spec_rank_p.exists() and _spec_acc_p.exists():
 # ---- Appendix: full table -----------------------------------------------------------
 story += [eyebrow("Appendix"),
           Paragraph(f"All {N} markets", S["h1"]), *hr(),
-          Paragraph("Treat this as a screen, not a precise ordering: ranges are 90% "
-                    "intervals under measured input noise; markets with overlapping ranges "
-                    "are roughly tied.", S["cap"])]
+          Paragraph("Treat this as a screen, not a precise ordering: the range beside "
+                    "each rank shows where that rank lands 90% of the time once "
+                    "measurement noise is accounted for, and markets with overlapping "
+                    "ranges are roughly tied.", S["cap"])]
 arows = [["Rank", "Metro", "Score", "Top strength", "Top drag"]]
 for _, r in rank.iterrows():
     rng = (f"{int(r['rank'])}  ({int(r['rank_lo'])}-{int(r['rank_hi'])})"

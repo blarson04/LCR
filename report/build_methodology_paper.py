@@ -274,11 +274,11 @@ story += [
     Paragraph(
         "Institutional real-estate investors buy market selection: proprietary rent "
         "series, pipeline databases, and research teams that rank metros for "
-        "acquisition. The premise of this project is a specific, testable question: "
-        "how much of that edge is actually in the data access, and how much is in "
-        "the discipline? Put concretely: can a screen built exclusively from free "
-        "public sources rank the largest US rental markets by their <i>future</i> "
-        "three-year rent growth well enough to be useful?", S["body"]),
+        "acquisition. This project asks how much of that edge is in the data access "
+        "and how much is in the discipline. Concretely: can a screen built "
+        "exclusively from free public sources rank the largest US rental markets by "
+        "their <i>future</i> three-year rent growth well enough to be useful?",
+        S["body"]),
     Paragraph(
         "The claim under examination is deliberately narrow. The screen does not "
         "forecast rent levels, returns, or any single market's path; it ranks "
@@ -464,8 +464,9 @@ story += [tbl(bl_rows, [3.7 * inch, 1.2 * inch, 1.2 * inch]),
           Paragraph(
               f"The most consequential row is the industry-style index: a faithful "
               f"free-data replica of a leading published opportunity matrix (ten "
-              f"equal-weighted condition categories; six replicable from free "
-              f"sources), frozen before its single run. It scores "
+              f"equal-weighted condition categories, six of them replicable from free "
+              f"sources), with its construction fixed before its one and only run. "
+              f"It scores "
               f"{float(ib['tau_3y']):.2f} at this task, below simple persistence, "
               f"and the composite's edge over it is reliable (gap "
               f"{float(ib['gap_tau_3y']):+.2f}, 95% CI [{float(ib['gap_ci_lo']):+.2f}, "
@@ -503,11 +504,10 @@ story += [tbl(bl_rows, [3.7 * inch, 1.2 * inch, 1.2 * inch]),
           Paragraph(
               "<b>Pre-registration with one attempt.</b> No predictive computation "
               "may run on a candidate before a dated log entry freezes its "
-              "definition, gate, thresholds, consequence, and attempt count; a "
-              "specification logged on day T may not run before day T+1 (the "
-              "cooling-off rule); at most one new attempt per federal data-release "
-              "cycle; first results are final, with no re-runs and no tuning.",
-              S["bullet"], bulletText="•"),
+              "definition, test, thresholds, and consequence. A specification "
+              "logged on day T may not run before day T+1, and at most one new "
+              "attempt is allowed per federal data-release cycle. First results "
+              "are final: no re-runs, no tuning.", S["bullet"], bulletText="•"),
           Paragraph(
               "<b>Frozen registry.</b> Every published run is frozen with its "
               "scores, inputs, and settings, and never edited; prior runs are "
@@ -602,14 +602,14 @@ story += [tbl(gate_rows, [0.35 * inch, 2.6 * inch, 1.0 * inch, 1.2 * inch,
           Paragraph("9. Communicating Uncertainty", S["h1"]),
           Paragraph(
               f"Exact ranks oversell precision. The two fastest-moving inputs "
-              f"(job and income growth) agree between editions at Spearman 0.29 "
-              f"and 0.28 respectively, while every other input agrees above 0.83; "
-              f"measured against that noise, each market's rank is re-computed "
-              f"1,000 times with those inputs jittered at their measured "
-              f"edition-to-edition agreement, and the published object is the "
-              f"90% rank interval plus a deterministic tier (a market joins the "
+              f"(job and income growth) agree between editions at rank "
+              f"correlations of only 0.29 and 0.28, while every other input "
+              f"agrees above 0.83. Each market's rank is therefore re-computed "
+              f"1,000 times with random noise added to those two inputs, sized to "
+              f"match their measured disagreement, and what publishes is the 90% "
+              f"rank interval plus a tier under a fixed rule: a market joins the "
               f"leading cluster when its interval reaches the top ten and its "
-              f"median rank sits in the top quarter; {n_lead} markets currently "
+              f"median rank sits in the top quarter ({n_lead} markets currently "
               f"qualify). Editions themselves turn over: even fully finalized "
               f"consecutive years historically keep only one to six of the same "
               f"top-ten names, a fact stated on every ranking surface. The "
