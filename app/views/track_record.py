@@ -161,6 +161,50 @@ if len(d["registry"]):
 theme.caption("Frozen live predictions, distinct from the backtest; each passed a "
               "pre-registered gate to publish.")
 
+isc_path = config.PROCESSED_DIR / "interim_scorecard.csv"
+if isc_path.exists():
+    st.markdown(
+        "**How the outstanding calls are tracking so far.** Early reads on the "
+        "frozen screens are positive but modest, which is what the design expects "
+        "at short horizons; the details and caveats are below.")
+    with st.expander("The interim scorecard (not the final grades)"):
+        isc = pd.read_csv(isc_path)
+        tbl_i = isc.rename(columns={
+            "screen": "Screen", "window": "Window", "read": "Read",
+            "tau": "Tau so far", "precision_at_10": "P@10 so far",
+            "top10_pp_edge": "Top-10 edge (pp)"})
+        tbl_i = tbl_i[["Screen", "Window", "Read", "Tau so far", "P@10 so far",
+                       "Top-10 edge (pp)"]]
+        st.dataframe(
+            tbl_i.style.format({"Tau so far": "{:.2f}", "P@10 so far": "{:.0%}",
+                                "Top-10 edge (pp)": "{:+.1f}"})
+                .set_properties(subset=["Tau so far", "P@10 so far",
+                                        "Top-10 edge (pp)"],
+                                **{"font-variant-numeric": "tabular-nums",
+                                   "text-align": "right"}),
+            hide_index=True, use_container_width=True,
+            column_config={
+                "Read": st.column_config.TextColumn(
+                    help="How much of the 3-year window has elapsed. A partial "
+                         "first year is the noisiest possible read."),
+                "Tau so far": st.column_config.TextColumn(
+                    help="Rank agreement between the frozen screen and rent "
+                         "growth to date, on a -1 to +1 scale; 0 means no "
+                         "relationship."),
+                "P@10 so far": st.column_config.TextColumn(
+                    help="Share of the screen's top 10 in the top quarter of "
+                         "markets by rent growth to date."),
+                "Top-10 edge (pp)": st.column_config.TextColumn(
+                    help="Percentage points of extra rent growth the screen's "
+                         "top 10 have delivered vs the median market, so far.")})
+        theme.caption(
+            "Interim tracking only: short horizons structurally favor recent "
+            "momentum and are not this model's design target (the screen is "
+            "built for the full 3-year window, where its historical edge "
+            "concentrates). Nothing here validates or invalidates a screen; the "
+            "pre-committed full-window resolutions above remain the real "
+            "grades. Rent data through May 2026.")
+
 # ---- 6. Full statistics (expanders) -----------------------------------------
 with st.expander("Full statistics: rank agreement, real-time vs finalized"):
     bt = d["backtest"]
