@@ -359,7 +359,7 @@ meas_rows = [["Measure", "Definition", "Direction"],
              ["Cost to own vs rent", "mortgage payment on the typical home / rent",
               "higher better"],
              ["Trailing rent growth", "YoY rent-index growth", "higher better"],
-             ["Employment diversity", "1 - industry concentration (HHI)",
+             ["Employment diversity", "1 minus industry concentration (HHI)",
               "higher better"]]
 story += [tbl(meas_rows, [1.75 * inch, 3.15 * inch, 1.15 * inch]),
           Paragraph("Table 1. The eight measures. YoY growth always uses the exact "

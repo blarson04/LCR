@@ -17,8 +17,6 @@ def _fix(seg: str) -> str:
     # digit-digit ranges get an en dash (2016-2022, 0.90-0.96); leading minus
     # signs and hyphenated words are untouched
     seg = re.sub(r"(?<=\d)-(?=\d)", "–", seg)
-    # a spaced hyphen used as a dash becomes a spaced en dash
-    seg = seg.replace(" - ", " – ")
     # apostrophes inside words (contractions, possessives)
     seg = re.sub(r"(?<=\w)'(?=\w)", "’", seg)
     # trailing possessive (markets')

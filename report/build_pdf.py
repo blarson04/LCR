@@ -531,7 +531,7 @@ def on_cover(canvas, doc):
 
 doc = BaseDocTemplate(str(OUT), pagesize=letter, leftMargin=M, rightMargin=M,
                       topMargin=0.85 * inch, bottomMargin=0.85 * inch,
-                      title="The Rent-Growth Screen - Multifamily Research Report",
+                      title="The Rent-Growth Screen: Multifamily Research Report",
                       author="Ben Larson")
 frame = Frame(M, 0.85 * inch, CW, H - 1.7 * inch, id="main")
 doc.addPageTemplates([
@@ -660,12 +660,12 @@ THEMES = [
     ("Demand", "40% of the score", "Who is moving in, hiring, and earning",
      "Net domestic migration, job growth, and income growth. Markets that people and "
      "paychecks are moving into fill apartments first and support rent increases later. "
-     "Migration is the heaviest single measure - the screen's biggest bet, and the one "
+     "Migration is the heaviest single measure: the screen's biggest bet, and the one "
      "the backtests reward most."),
     ("Supply", "25% of the score", "How much new housing is being built",
      "Building permits relative to the housing that already exists, counted the opposite "
      "way: the less a market is building, the better it scores. Today's construction "
-     "is tomorrow's competition - the contrarian edge that pushes several fast-growing "
+     "is tomorrow's competition, the contrarian edge that pushes several fast-growing "
      "but over-built Sun Belt markets near the bottom."),
     ("Affordability", "20% of the score", "Whether rents have room to grow",
      "Two measures: rent as a share of local income (lower is better; stretched rents "
@@ -746,7 +746,7 @@ if P_TREND:
     story += [Paragraph("Rents against the national median", S["h2"]),
               Image(str(P_TREND), width=6.6 * inch, height=2.4 * inch),
               Paragraph(f"Zillow rent index, year over year; the national line is the "
-                        f"median of the screened markets. History describes the past - the "
+                        f"median of the screened markets. History describes the past; the "
                         f"rank comes from the fundamentals above.", S["cap"])]
 if int(top["rank_hi"]) > 1:
     story.append(Paragraph(f"A #1 rank is a screening result, not a verdict: under "
@@ -776,7 +776,7 @@ if len(m3):
     story += [Paragraph("What was achievable in real time", S["h2"]),
               Paragraph("The same backtest, two ways: <i>real-time</i> uses only data a "
                         "user could have had at the time; <i>finalized</i> uses the "
-                        "complete revised data that arrives about two years later - a "
+                        "complete revised data that arrives about two years later, a "
                         "ceiling no live user ever had. Agreement is weighted Kendall's "
                         "tau, a rank-agreement score from -1 to +1 where 0 means no "
                         "relationship.", S["body"])]
@@ -912,7 +912,7 @@ wt.setStyle(TableStyle([
 ]))
 story += [wt,
           Paragraph("The weights are fixed, published in full, set by judgment rather "
-                    "than fitted, and stress-tested - reasonable alternative weightings "
+                    "than fitted, and stress-tested: reasonable alternative weightings "
                     "score about the same, so the testing, not the weights, is the "
                     "point.", S["cap"]),
           Paragraph("Where the data comes from", S["h2"])]
@@ -942,7 +942,7 @@ vt.setStyle(TableStyle([
 ]))
 story += [vt,
           Paragraph("* The three Connecticut metros' job and income growth are chained "
-                    "across a 2023-24 state geography change using validated substitutes - "
+                    "across a 2023-24 state geography change using validated substitutes, "
                     "a disclosed fix for those three markets only. The current screen's "
                     "slowest inputs use validated substitutes (Census migration, monthly "
                     "employment, state-chained income); the configuration passed its "
@@ -1053,11 +1053,12 @@ story += [eyebrow("About"),
                     "willing to defend: every method documented, every claim validated "
                     "before it's published, failed experiments published alongside the "
                     "successes, and a frozen track record anyone can check against what "
-                    "actually happens. Everything here - the data pipeline, the backtests, "
-                    "the interactive site, and this report - is my own work.", S["body"]),
-          Paragraph("The interactive version of this report - every market's detail page, "
-                    "side-by-side comparisons, and the full validation record - is on the "
-                    "companion site.", S["body"]),
+                    "actually happens. Everything here, from the data pipeline and the "
+                    "backtests to the interactive site and this report, is my own work.",
+                    S["body"]),
+          Paragraph("The interactive version of this report, with every market's detail "
+                    "page, side-by-side comparisons, and the full validation record, is "
+                    "on the companion site.", S["body"]),
           Spacer(1, 14),
           Paragraph("Disclaimer", S["h3"]),
           Paragraph("This report is a research screen built on free public data (Census, "
