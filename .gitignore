@@ -38,3 +38,6 @@ Arbor-Report*.pdf
 
 # PDF report intermediates (charts regenerate from code; the PDF is the output)
 report/_build/
+
+# Personal career material (never publish)
+resume-handoff.md
