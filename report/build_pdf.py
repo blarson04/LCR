@@ -256,12 +256,102 @@ def chart_trend() -> Path | None:
     return p
 
 
+def chart_pipeline() -> Path:
+    """Five-stage method flow (the site's pipeline diagram, print edition)."""
+    from matplotlib.patches import FancyArrow, FancyBboxPatch
+    boxes = [("Free public data", "Census, BLS, BEA, Zillow"),
+             ("Eight measures", "grouped in five themes"),
+             ("Same-year comparison", "0 = the average market"),
+             ("Fixed public weights", "summed into one score"),
+             ("Rank and tier", "with a 90% rank range")]
+    fig, ax = plt.subplots(figsize=(7.0, 0.9))
+    ax.set_xlim(-0.04, 5.42)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    bw = 0.94
+    step = 1.11
+    for i, (title, sub) in enumerate(boxes):
+        x = i * step
+        ax.add_patch(FancyBboxPatch(
+            (x, 0.12), bw, 0.76, boxstyle="round,pad=0.015,rounding_size=0.045",
+            facecolor="white", edgecolor=LINE, linewidth=0.9))
+        ax.text(x + bw / 2, 0.60, title, ha="center", va="center",
+                fontsize=6.6, fontweight=600, color=INK)
+        ax.text(x + bw / 2, 0.33, sub, ha="center", va="center",
+                fontsize=5.7, color=MUTED)
+        if i < len(boxes) - 1:
+            ax.add_patch(FancyArrow(
+                x + bw + 0.035, 0.5, step - bw - 0.10, 0, width=0.006,
+                head_width=0.085, head_length=0.04, color=MUTED,
+                length_includes_head=True))
+    p = BUILD / "pipeline.png"
+    fig.savefig(p, dpi=300, bbox_inches="tight", pad_inches=0.02)
+    plt.close(fig)
+    return p
+
+
+def chart_weights_bar() -> Path:
+    """The five theme weights as one proportional single-hue bar."""
+    segs = [("Demand", 40, 1.0), ("Supply", 25, 0.82), ("Affordability", 20, 0.64),
+            ("Momentum", 10, 0.46), ("Resilience", 5, 0.28)]
+    fig, ax = plt.subplots(figsize=(7.0, 0.72))
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    x = 0.0
+    for name, pct, alpha in segs:
+        ax.barh(0.62, pct, left=x, height=0.5, color=ACCENT, alpha=alpha)
+        if pct >= 20:
+            ax.text(x + pct / 2, 0.62, f"{name} {pct}%", ha="center", va="center",
+                    fontsize=6.8, fontweight=600, color="white")
+        x += pct
+    ax.plot([87.5, 87.5], [0.30, 0.37], color=MUTED, linewidth=0.7)
+    ax.text(87.5, 0.16, "Momentum 10%", ha="center", va="center",
+            fontsize=6.2, color=MUTED)
+    ax.plot([97.5, 97.5], [0.30, 0.37], color=MUTED, linewidth=0.7)
+    ax.text(100, 0.01, "Resilience 5%", ha="right", va="center",
+            fontsize=6.2, color=MUTED)
+    p = BUILD / "weights_bar.png"
+    fig.savefig(p, dpi=300, bbox_inches="tight", pad_inches=0.02)
+    plt.close(fig)
+    return p
+
+
+def chart_timeline(start: int = 2019, horizon: int = 3) -> Path:
+    """One validation window: frozen at publication, graded three years on."""
+    fig, ax = plt.subplots(figsize=(7.0, 1.05))
+    ax.set_xlim(-0.25, horizon + 0.35)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    ax.annotate("", xy=(horizon + 0.28, 0.42), xytext=(-0.1, 0.42),
+                arrowprops=dict(arrowstyle="-|>", color=MUTED, linewidth=1.2))
+    for i in range(horizon + 1):
+        ax.plot([i, i], [0.37, 0.47], color=MUTED, linewidth=0.9)
+        ax.text(i, 0.18, str(start + i), ha="center", fontsize=6.8, color=MUTED)
+    ax.plot(0, 0.42, "o", markersize=6, color=ACCENT, zorder=5)
+    ax.text(0, 0.80, "Ranking published and frozen", ha="left", fontsize=7.2,
+            fontweight=600, color=INK)
+    ax.text(0, 0.60, f"using only data available in {start}", ha="left",
+            fontsize=6.2, color=MUTED)
+    ax.text(horizon, 0.80, "Graded against what happened", ha="right",
+            fontsize=7.2, fontweight=600, color=INK)
+    ax.text(horizon, 0.60, f"realized rent growth, {start} to {start + horizon}",
+            ha="right", fontsize=6.2, color=MUTED)
+    p = BUILD / "timeline.png"
+    fig.savefig(p, dpi=300, bbox_inches="tight", pad_inches=0.02)
+    plt.close(fig)
+    return p
+
+
 print("rendering charts...")
 P_ALL = chart_all_markets()
 P_MAP = chart_map()
 P_THEMES = {b: chart_theme(b) for b in data.BUCKETS}
 P_EFFECT = chart_effect()
 P_TREND = chart_trend()
+P_PIPE = chart_pipeline()
+P_WBAR = chart_weights_bar()
+P_TLINE = chart_timeline()
 
 
 # ============================ document =======================================
@@ -482,6 +572,9 @@ story += [Paragraph("Overview", S["h2"]),
                     f"Zillow, FRED), every method is documented, and every published ranking "
                     f"is frozen so its calls can be checked against what actually happens.",
                     S["body"]),
+          Image(str(P_PIPE), width=CW, height=CW * (0.9 / 7.0)),
+          Paragraph("How the score is built, in five steps; the full method is in the "
+                    "back of this report.", S["cap"]),
           Paragraph("The top 10", S["h2"])]
 if has_tiers:
     story.append(Paragraph(
@@ -665,6 +758,9 @@ story += [PageBreak()]
 # ---- Track record ---------------------------------------------------------------
 story += [eyebrow("Has it worked?"),
           Paragraph("The track record", S["h1"]), *hr(),
+          Image(str(P_TLINE), width=CW, height=CW * (1.05 / 7.0)),
+          Paragraph("How every window is graded, shown for 2019: the call is frozen at "
+                    "publication and scored three years later.", S["cap"]),
           Paragraph("Each completed three-year window is graded the same way: how much "
                     "more rent growth did the screen's top-10 markets deliver than the "
                     "median market?", S["body"]),
@@ -714,6 +810,34 @@ if len(m3):
     story += [tt, Paragraph("3-year horizon. Real-time numbers come from the pseudo-nowcast "
                             "test, a disclosed simplification. Data vintage: finalized "
                             "panel through 2024; rent index through May 2026.", S["cap"])]
+    _g_cell = ParagraphStyle("gcell", fontName="Inter", fontSize=8, leading=10.8,
+                             textColor=C_INK)
+    _g_term = ParagraphStyle("gterm", fontName="Inter-SB", fontSize=8, leading=10.8,
+                             textColor=C_INK)
+    guide_rows = [
+        ["Tau (rank agreement)", "How well the ranking agreed with the rent growth "
+         "that followed, from -1 to +1; 0 means no relationship, and random guessing "
+         "scores about 0."],
+        ["Precision@10 (P@10)", "Of the screen's ten highest-ranked markets, the "
+         "share that landed in the top quarter by actual rent growth."],
+        ["Top-10 edge (pp)", "How many percentage points more rent growth the top "
+         "ten delivered than the median market over the window."],
+        ["Rank range and tier", "Where a rank lands 90% of the time once measurement "
+         "noise is accounted for; same-tier markets are peers, not an ordering."],
+    ]
+    gt = Table([[Paragraph(t, _g_term), Paragraph(x, _g_cell)]
+                for t, x in guide_rows],
+               colWidths=[1.55 * inch, 5.45 * inch])
+    gt.setStyle(TableStyle([
+        ("LINEABOVE", (0, 0), (-1, 0), 0.7, C_INK),
+        ("LINEBELOW", (0, 0), (-1, -2), 0.4, C_LINE),
+        ("LINEBELOW", (0, -1), (-1, -1), 0.7, C_INK),
+        ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+    ]))
+    story += [KeepTogether([Paragraph("How to read these numbers", S["h3"]), gt]),
+              Spacer(1, 4)]
 story += [KeepTogether([
           Paragraph("Five gates, three failures, two passes", S["h2"]),
           Paragraph("Every screen built on early or estimated data had to pass the same "
@@ -761,6 +885,8 @@ story += [eyebrow("Methodology"),
                     f"means better. Each measure is multiplied by a fixed weight and summed "
                     f"into one composite score; markets are ranked by it. The same formula "
                     f"runs for every market; no market is ever hand-adjusted.", S["body"])]
+story += [Image(str(P_WBAR), width=CW, height=CW * (0.72 / 7.0)),
+          Spacer(1, 4)]
 wrows = [["Theme", "Weight", "Measures (weight)"]]
 _totals = {b: sum(data.INDICATORS[k]["weight"] for k in data.INDICATORS
                   if data.INDICATORS[k]["bucket"] == b) for b in data.BUCKETS}
