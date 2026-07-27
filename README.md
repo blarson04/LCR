@@ -1,4 +1,4 @@
-# The Rent-Growth Screener
+# Larson Capital Research · The Rent-Growth Screener
 
 A transparent, backtested **screening framework** that ranks the ~110 largest US metros by
 fundamentals that historically precede **3-year forward rent growth** — built entirely on free

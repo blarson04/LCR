@@ -23,7 +23,7 @@ for _p in (str(ROOT), str(APP)):
 from ui import data, theme  # noqa: E402
 import config               # noqa: E402
 
-st.set_page_config(page_title="Multifamily Market Screener", layout="wide",
+st.set_page_config(page_title="Larson Capital Research", layout="wide",
                    initial_sidebar_state="expanded")
 
 theme.inject_css()   # applies the saved light/dark preference before anything renders
@@ -33,8 +33,8 @@ d = data.load()
 with st.sidebar:
     st.markdown(
         f"<div style='font-family:{theme.FONT_HEAD};font-size:19px;font-weight:600;"
-        f"color:{theme.INK};line-height:1.25'>The Rent-Growth Screener</div>"
-        f"<div class='cap' style='margin-bottom:.8rem'>Multifamily research · v{config.MODEL_VERSION}</div>",
+        f"color:{theme.INK};line-height:1.25'>Larson Capital Research</div>"
+        f"<div class='cap' style='margin-bottom:.8rem'>The rent-growth screener · v{config.MODEL_VERSION}</div>",
         unsafe_allow_html=True)
     if d["has_spec"]:
         st.markdown(theme.badge(True, "Validated 2025→2028 forecast · proxied inputs"),

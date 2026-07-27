@@ -7,7 +7,7 @@ chart, map + tiers, the five themes, spotlight, track record, methodology,
 appendix table, about + disclaimer. Brand tokens match app/ui/theme.py.
 
 Run:  .venv/Scripts/python.exe report/build_pdf.py
-Out:  report/Rent-Growth-Screen_Research-Report.pdf
+Out:  report/Larson_Capital_Research-Report.pdf
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ SEQ_LOW = "#E7ECEA"
 FONTS = HERE / "fonts"
 BUILD = HERE / "_build"
 BUILD.mkdir(exist_ok=True)
-OUT = HERE / "Rent-Growth-Screen_Research-Report.pdf"
+OUT = HERE / "Larson_Capital_Research-Report.pdf"
 
 for f in FONTS.glob("*.ttf"):
     font_manager.fontManager.addfont(str(f))
@@ -425,7 +425,7 @@ def on_page(canvas, doc):
     canvas.setFillColor(C_MUTED)
     canvas.setFont("Inter", 7)
     canvas.drawString(M, 0.45 * inch,
-                      "The Rent-Growth Screen  ·  a research screen, not investment advice")
+                      "Larson Capital Research  ·  a research screen, not investment advice")
     canvas.drawRightString(W - M, 0.45 * inch, f"{canvas.getPageNumber()}")
     canvas.setStrokeColor(C_LINE)
     canvas.setLineWidth(0.6)
@@ -433,7 +433,7 @@ def on_page(canvas, doc):
     canvas.setFont("Inter-SB", 6.6)
     canvas.setFillColor(C_MUTED)
     canvas.drawRightString(W - M, H - 0.5 * inch,
-                           f"MULTIFAMILY RESEARCH · {TODAY.upper()}")
+                           f"LARSON CAPITAL RESEARCH · {TODAY.upper()}")
     canvas.restoreState()
 
 
@@ -446,7 +446,8 @@ def on_cover(canvas, doc):
     canvas.line(M, H - 1.5 * inch, M + 0.42 * inch, H - 1.5 * inch)
     canvas.setFont("Inter-SB", 8.5)
     canvas.setFillColor(C_MUTED)
-    canvas.drawString(M, H - 1.78 * inch, f"MULTIFAMILY RESEARCH  ·  {TODAY.upper()}")
+    canvas.drawString(M, H - 1.78 * inch,
+                      f"LARSON CAPITAL RESEARCH  ·  {TODAY.upper()}")
     canvas.setFont("Serif-SB", 34)
     canvas.setFillColor(C_INK)
     canvas.drawString(M, H - 2.45 * inch, "The Rent-Growth")
@@ -531,7 +532,7 @@ def on_cover(canvas, doc):
 
 doc = BaseDocTemplate(str(OUT), pagesize=letter, leftMargin=M, rightMargin=M,
                       topMargin=0.85 * inch, bottomMargin=0.85 * inch,
-                      title="The Rent-Growth Screen: Multifamily Research Report",
+                      title="Larson Capital Research: The Rent-Growth Screen",
                       author="Ben Larson")
 frame = Frame(M, 0.85 * inch, CW, H - 1.7 * inch, id="main")
 doc.addPageTemplates([
@@ -601,7 +602,9 @@ t.setStyle(TableStyle([
     ("ALIGN", (2, 0), (2, -1), "RIGHT"),
     ("LINEBELOW", (0, 0), (-1, 0), 0.6, C_LINE),
     ("LINEBELOW", (0, 1), (-1, -2), 0.4, C_LINE),
-    ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5),
+    # 3.0 (not 3.5) so the reading-guide caption fits under the table on the
+    # same page instead of widowing onto the next.
+    ("TOPPADDING", (0, 0), (-1, -1), 3.0), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.0),
 ]))
 story += [t,
           Paragraph("Rank (90% range), score vs the average market (0), and the themes "

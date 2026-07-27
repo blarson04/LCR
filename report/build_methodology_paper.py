@@ -7,7 +7,7 @@ Every number is computed from the same frozen artifacts as the site and the
 research report, so the paper regenerates with each refresh.
 
 Run:  .venv/Scripts/python.exe report/build_methodology_paper.py
-Out:  report/Rent-Growth-Screen_Methodology-Paper.pdf
+Out:  report/Larson_Capital_Research_Methodology.pdf
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from ui import data                # noqa: E402
 INK, MUTED, ACCENT, LINE = "#1B2A3B", "#66707D", "#2C6E63", "#E4E6EA"
 POS, NEG, PROV = "#1E7F4F", "#B3462E", "#8A6D1D"
 FONTS = HERE / "fonts"
-OUT = HERE / "Rent-Growth-Screen_Methodology-Paper.pdf"
+OUT = HERE / "Larson_Capital_Research_Methodology.pdf"
 P = config.PROCESSED_DIR
 
 # ============================ numbers ========================================
@@ -160,7 +160,7 @@ def on_page(canvas, doc):
     canvas.setFont("Serif", 8.5)
     canvas.setFillColor(C_MUTED)
     canvas.drawRightString(W - M, H - 0.55 * inch,
-                           "The Rent-Growth Screen · Methodology and Validation Paper")
+                           "Larson Capital Research · Methodology and Validation Paper")
     canvas.setFont("Serif", 9)
     canvas.drawCentredString(W / 2, 0.5 * inch, f"Page {canvas.getPageNumber()}")
     canvas.restoreState()
@@ -179,7 +179,7 @@ class PaperDoc(BaseDocTemplate):
 
 doc = PaperDoc(str(OUT), pagesize=letter, leftMargin=M, rightMargin=M,
                topMargin=0.9 * inch, bottomMargin=0.85 * inch,
-               title="The Rent-Growth Screen: A Methodology and Validation Paper",
+               title="Larson Capital Research: A Methodology and Validation Paper",
                author="Ben Larson")
 frame = Frame(M, 0.8 * inch, CW, H - 1.75 * inch, id="main")
 doc.addPageTemplates([PageTemplate(id="page", frames=[frame], onPage=on_page)])
@@ -210,7 +210,7 @@ story = []
 # ============================ title page =====================================
 story += [
     Spacer(1, 40),
-    Paragraph("THE RENT-GROWTH SCREEN", S["brand"]),
+    Paragraph("LARSON CAPITAL RESEARCH", S["brand"]),
     Paragraph("Screening US Rental Markets for Future Rent Growth "
               "with Free Public Data", S["title"]),
     Paragraph("A Methodology and Validation Paper · Results and Negative "
