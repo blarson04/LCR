@@ -41,3 +41,6 @@ report/_build/
 
 # Personal career material (never publish)
 resume-handoff.md
+
+# Chat-paste review brief (derived from the site's own copy; regenerate, don't publish)
+site-review-handoff.md
