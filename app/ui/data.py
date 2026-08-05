@@ -244,21 +244,28 @@ def load() -> dict:
     reg_path = config.PREDICTIONS_DIR / "registry_index.csv"
     registry = pd.read_csv(reg_path) if reg_path.exists() else pd.DataFrame()
 
-    # Prior edition's frozen ranks (change-vs-edition column): read from the
-    # REGISTRY (immutable), not the regenerable working CSV, so "Vs 2023"
-    # always compares against the edition as published, even after data
-    # corrections change the recomputed 2023 cross-section.
-    prior_rank = pd.DataFrame()
-    if len(registry):
-        r23 = registry[(registry["score_year"] == 2023)
-                       & (registry["model_version"].astype(str).str.startswith("2."))]
-        if len(r23):
-            ts = r23.sort_values("timestamp_utc")["timestamp_utc"].iloc[-1]
-            rp = config.PREDICTIONS_DIR / ts / "ranking.csv"
-            if rp.exists():
-                prior_rank = (pd.read_csv(rp, dtype={"cbsa_code": str})
-                              [["cbsa_code", "rank"]]
-                              .rename(columns={"rank": "prior_rank"}))
+    # Prior editions' frozen ranks (change-vs-edition column, C-1): read from
+    # the REGISTRY (immutable), not the regenerable working CSV, so the change
+    # column always compares against the edition as published, even after data
+    # corrections change a recomputed cross-section.
+    def _frozen_rank(score_year: int) -> pd.DataFrame:
+        if not len(registry):
+            return pd.DataFrame()
+        runs = registry[(registry["score_year"] == score_year)
+                        & (registry["model_version"].astype(str)
+                           .str.startswith("2."))]
+        if not len(runs):
+            return pd.DataFrame()
+        ts = runs.sort_values("timestamp_utc")["timestamp_utc"].iloc[-1]
+        rp = config.PREDICTIONS_DIR / ts / "ranking.csv"
+        if not rp.exists():
+            return pd.DataFrame()
+        return (pd.read_csv(rp, dtype={"cbsa_code": str})
+                [["cbsa_code", "rank"]]
+                .rename(columns={"rank": "prior_rank"}))
+
+    prior_rank = _frozen_rank(2023)          # prior of the vintage edition
+    prior_rank_spec = _frozen_rank(2024)     # prior of the current screen
     trend_path = config.PROCESSED_DIR / "spotlight_rent_trend.csv"
     rent_trend = (pd.read_csv(trend_path, dtype={"cbsa_code": str})
                   if trend_path.exists() else pd.DataFrame())
@@ -347,7 +354,9 @@ def load() -> dict:
             overlap_last = float(ag.sort_values("year")["top10_overlap"].iloc[-1])
 
     return dict(scored=scored, panel=panel, coords=coords, backtest=backtest,
-                registry=registry, prior_rank=prior_rank, rent_trend=rent_trend,
+                registry=registry, prior_rank=prior_rank,
+                prior_rank_spec=prior_rank_spec, iv_all=iv_all,
+                rent_trend=rent_trend,
                 nowcast=nowcast, nc_prov=nc_prov,
                 has_spec=has_spec, acc_rank=acc_rank, acc_raw=acc_raw, acc_pct=acc_pct,
                 spec_rank=spec_rank, spec_raw=spec_raw, spec_pct=spec_pct,
@@ -368,6 +377,29 @@ def is_spec(d: dict | None = None) -> bool:
     if d is not None:
         return bool(d["has_spec"])
     return True
+
+
+def prior_edition(d: dict) -> tuple[pd.DataFrame, str]:
+    """The active edition's PRIOR edition, for the change column (C-1):
+    frozen ranks from the immutable registry merged with that edition's own
+    90% rank ranges, plus a short label. Empty frame if unavailable.
+
+    The coloring rule downstream: a move renders in slate (expected churn)
+    unless the market's NEW rank falls outside its PRIOR edition's 90%
+    range, the only moves the noise model itself flags as notable."""
+    if is_spec(d):
+        frozen, iv_label, label = d["prior_rank_spec"], "vintage_2024", "2024"
+    else:
+        frozen, iv_label, label = d["prior_rank"], "2023", "2023"
+    if not len(frozen):
+        return pd.DataFrame(), label
+    iv_all = d.get("iv_all", pd.DataFrame())
+    iv = (iv_all[iv_all["edition"] == iv_label]
+          [["cbsa_code", "rank_lo", "rank_hi"]]
+          .rename(columns={"rank_lo": "prior_lo", "rank_hi": "prior_hi"})
+          if len(iv_all) else pd.DataFrame())
+    out = frozen.merge(iv, on="cbsa_code", how="left") if len(iv) else frozen
+    return out, label
 
 
 def edition(d: dict) -> dict:

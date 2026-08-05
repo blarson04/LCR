@@ -84,6 +84,11 @@ has_tiers = ("tier" in rank.columns) and (rank["tier"].fillna("") != "").any()
 n_cluster = int((rank["tier"] == "Leading cluster").sum()) if has_tiers else 0
 n_in = int((rank.head(10)["tier"] == "Leading cluster").sum()) if has_tiers else 0
 
+# Prior edition (C-1): frozen ranks + that edition's 90% ranges, for the
+# change column and the spotlight's edition-over-edition line.
+prior_df, prior_label = data.prior_edition(d)
+show_change = len(prior_df) > 0
+
 m3_path = config.PROCESSED_DIR / "nowcast" / "gate2025_summary.csv"
 if not m3_path.exists():
     m3_path = config.PROCESSED_DIR / "nowcast" / "m3_summary.csv"
@@ -874,10 +879,28 @@ def _ordinal(x):
     return f"{n}{sfx}"
 
 
+_spot_tier = (f" and sits in the {str(top['tier']).lower()} tier"
+              if has_tiers and str(top.get("tier", "")) else "")
+_spot_move = ""
+_prior_for_spot = (prior_df[prior_df.cbsa_code == top["cbsa_code"]]
+                   if show_change else pd.DataFrame())
+if len(_prior_for_spot):
+    _pr = _prior_for_spot.iloc[0]
+    _delta = int(_pr["prior_rank"]) - int(top["rank"])
+    _inside = (pd.notna(_pr.get("prior_lo"))
+               and int(_pr["prior_lo"]) <= int(top["rank"]) <= int(_pr["prior_hi"]))
+    _moved = ("held the same rank" if _delta == 0 else
+              f"moved {_delta:+d} rank{'s' if abs(_delta) != 1 else ''}")
+    _spot_move = (f" Vs the frozen {prior_label} edition it {_moved}, "
+                  + ("inside its own 90% range, expected churn rather than a "
+                     "signal." if _inside else
+                     "outside its prior 90% range, one of the few moves the "
+                     "noise model flags as notable."))
 story += [eyebrow("Market spotlight"),
           Paragraph(f"The case for {top_city}", S["h1"]), *hr(),
           Paragraph(f"{top['cbsa_title']} ranks <b>#1 of {N}</b> markets, with a rank range "
-                    f"of {int(top['rank_lo'])}-{int(top['rank_hi'])}. Its score is built the "
+                    f"of {int(top['rank_lo'])}-{int(top['rank_hi'])}{_spot_tier}."
+                    f"{_spot_move} Its score is built the "
                     f"same way as every other market's; what sets it apart:", S["body"])]
 label_map = {"Demand": "Demand", "Supply": "Limited new supply",
              "Affordability": "Affordability", "Momentum": "Rent momentum",
@@ -906,11 +929,15 @@ if P_TREND:
               Paragraph(f"Zillow rent index, year over year; the national line is the "
                         f"median of the screened markets. History describes the past; the "
                         f"rank comes from the fundamentals above.", S["cap"])]
+# The standing closer (C-5), always present.
+_closer = "A #1 rank is a screening result, not a verdict"
 if int(top["rank_hi"]) > 1:
-    story.append(Paragraph(f"A #1 rank is a screening result, not a verdict: under "
-                           f"alternative weightings this market ranks as low as "
-                           f"#{int(top['rank_hi'])}. Read the top of the table as a group "
-                           f"of strong candidates.", S["cap"]))
+    _closer += (f": under alternative weightings this market ranks as low as "
+                f"#{int(top['rank_hi'])}. Read the top of the table as a group "
+                f"of strong candidates.")
+else:
+    _closer += "."
+story.append(Paragraph(_closer, S["cap"]))
 story += [PageBreak()]
 
 # ---- Track record ---------------------------------------------------------------
@@ -1187,16 +1214,57 @@ story += [*divider("Appendix", f"All {N} markets", P_DIV_APPX,
                     "each rank shows where that rank lands 90% of the time once "
                     "measurement noise is accounted for, and markets with overlapping "
                     "ranges are roughly tied.", S["cap"])]
-arows = [["Rank", "Metro", "Score", "Top strength", "Top drag"]]
-for _, r in rank.iterrows():
+
+# Change vs prior edition (C-1): frozen prior ranks from the registry; slate
+# unless the new rank falls outside the market's PRIOR edition's 90% range.
+if show_change:
+    rank_appx = rank.merge(prior_df, on="cbsa_code", how="left")
+    story.append(Paragraph(
+        "Rank moves mix one real year of market change with measurement noise; "
+        "a move inside a market's own 90% range is expected, not a signal. "
+        "Historically even two fully finalized years share only 1 to 6 of the "
+        "same top-10 names. Gray moves are expected churn; colored moves fall "
+        "outside the market's prior 90% range.", S["cap"]))
+else:
+    rank_appx = rank
+
+C_SLATE = C_MUTED
+
+
+def _chg_cell(r):
+    """(text, color) for the change column."""
+    if not show_change or pd.isna(r.get("prior_rank")):
+        return ("new" if show_change else "", C_SLATE)
+    delta = int(r["prior_rank"]) - int(r["rank"])
+    txt = f"{delta:+d}" if delta else "0"
+    if pd.notna(r.get("prior_lo")):
+        if int(r["rank"]) < int(r["prior_lo"]):
+            return (txt, C_POS)
+        if int(r["rank"]) > int(r["prior_hi"]):
+            return (txt, C_NEG)
+    return (txt, C_SLATE)
+
+
+head = ["Rank", "Metro", "Score"] + \
+    ([f"Vs {prior_label}"] if show_change else []) + ["Top strength", "Top drag"]
+arows = [head]
+chg_styles = []
+for i, (_, r) in enumerate(rank_appx.iterrows()):
     rng = (f"{int(r['rank'])}  ({int(r['rank_lo'])}-{int(r['rank_hi'])})"
            if pd.notna(r.get("rank_lo")) else f"{int(r['rank'])}")
-    arows.append([rng, r["cbsa_title"][:44], f"{r['score']:+.2f}",
-                  r["strength"], r["drag"]])
-at = Table(arows, colWidths=[0.85 * inch, 2.75 * inch, 0.6 * inch, 1.45 * inch, 1.35 * inch],
-           repeatRows=1)
+    row = [rng, r["cbsa_title"][:42], f"{r['score']:+.2f}"]
+    if show_change:
+        txt, col = _chg_cell(r)
+        row.append(txt)
+        chg_styles.append(("TEXTCOLOR", (3, i + 1), (3, i + 1), col))
+    row += [r["strength"], r["drag"]]
+    arows.append(row)
+_appx_widths = ([0.85 * inch, 2.45 * inch, 0.6 * inch, 0.55 * inch,
+                 1.35 * inch, 1.2 * inch] if show_change else
+                [0.85 * inch, 2.75 * inch, 0.6 * inch, 1.45 * inch, 1.35 * inch])
+at = Table(arows, colWidths=_appx_widths, repeatRows=1)
 score_colors = [("TEXTCOLOR", (2, i + 1), (2, i + 1), C_POS if r["score"] >= 0 else C_NEG)
-                for i, (_, r) in enumerate(rank.iterrows())]
+                for i, (_, r) in enumerate(rank_appx.iterrows())]
 # Ranges read as context, not noise: the range half of the Rank column and the
 # whole row sit on the tier-band component (B-4.4).
 _appx_base = [
@@ -1206,15 +1274,16 @@ _appx_base = [
     ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
     ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 7),
     ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
-    ("ALIGN", (2, 0), (2, -1), "RIGHT"),
+    ("ALIGN", (2, 0), (3 if show_change else 2, -1), "RIGHT"),
     ("LINEBELOW", (0, 0), (-1, 0), 0.6, C_LINE),
     ("LINEBELOW", (0, 1), (-1, -2), 0.3, C_LINE),
     ("TOPPADDING", (0, 0), (-1, -1), 2.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
     *score_colors,
+    *chg_styles,
 ]
 if has_tiers:
     at.setStyle(TableStyle(rl_comp.tier_band_style(_appx_base,
-                                                   rank["tier"].tolist())))
+                                                   rank_appx["tier"].tolist())))
 else:
     at.setStyle(TableStyle(_appx_base))
 story += [at, PageBreak()]

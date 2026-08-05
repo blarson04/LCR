@@ -31,9 +31,12 @@ ed = data.edition(d)
 rank = ed["rank"].sort_values("rank").reset_index(drop=True)
 rank[["strength", "drag"]] = rank.apply(
     lambda r: pd.Series(data.strength_drag(r)), axis=1)
-show_change = bool(ed.get("vintage")) and len(d["prior_rank"]) > 0
+# Change vs prior edition (C-1): frozen prior ranks + that edition's own
+# 90% ranges, from the immutable registry.
+prior, prior_label = data.prior_edition(d)
+show_change = len(prior) > 0
 if show_change:
-    rank = rank.merge(d["prior_rank"], on="cbsa_code", how="left")
+    rank = rank.merge(prior, on="cbsa_code", how="left")
 
 # ---- Header -----------------------------------------------------------------
 components.header_art("rankings")
@@ -95,6 +98,13 @@ if has_tiers:
         "leading cluster. How the tiers, ranges, and edition-to-edition moves work: "
         "the notes below the table.")
 
+if show_change:
+    theme.caption(
+        "Rank moves mix one real year of market change with measurement noise; "
+        "a move inside a market's own 90% range is expected, not a signal. "
+        "Historically even two fully finalized years share only 1 to 6 of the "
+        "same top-10 names.")
+
 n_total = data.N_IND
 cols = {
     "Rank": [f"{int(r['rank'])} ({int(r['rank_lo'])}–{int(r['rank_hi'])})"
@@ -106,13 +116,29 @@ cols = {
     "Top drag": rank["drag"],
     "Measures": [f"{int(n)} of {n_total}" for n in rank["n_indicators"]],
 }
+CHG_COL = f"Vs {prior_label}"
 if show_change:
     def _chg(r):
         if pd.isna(r["prior_rank"]):
             return "new"
         delta = int(r["prior_rank"]) - int(r["rank"])
-        return f"{delta:+d}" if delta else "0"
-    cols["Vs 2023"] = rank.apply(_chg, axis=1)
+        if delta == 0:
+            return "0"
+        return f"{'▲' if delta > 0 else '▼'} {abs(delta)}"
+
+    def _chg_color(r):
+        """Slate for expected churn; pine/clay ONLY when the new rank falls
+        outside the market's PRIOR edition's 90% range — the moves the noise
+        model itself flags as notable (C-1)."""
+        if pd.isna(r["prior_rank"]) or pd.isna(r.get("prior_lo")):
+            return theme.MUTED
+        if int(r["rank"]) < int(r["prior_lo"]):
+            return theme.POS
+        if int(r["rank"]) > int(r["prior_hi"]):
+            return theme.NEG
+        return theme.MUTED
+    cols[CHG_COL] = rank.apply(_chg, axis=1)
+    _chg_colors = rank.apply(_chg_color, axis=1).tolist()
 tbl = pd.DataFrame(cols)
 styler = (tbl.style
           .format({"Score": "{:+.2f}"})
@@ -123,9 +149,12 @@ styler = (tbl.style
                              "text-align": "right"})
           .set_properties(subset=["Metro"], **{"font-weight": "500"}))
 if show_change:
-    styler = styler.set_properties(subset=["Vs 2023"],
-                                   **{"font-variant-numeric": "tabular-nums",
-                                      "text-align": "right"})
+    styler = (styler
+              .set_properties(subset=[CHG_COL],
+                              **{"font-variant-numeric": "tabular-nums",
+                                 "text-align": "right"})
+              .apply(lambda col: [f"color:{c}" for c in _chg_colors],
+                     subset=[CHG_COL]))
 st.dataframe(styler, hide_index=True, use_container_width=True, height=560,
              column_config={
                  "Rank": st.column_config.TextColumn(
@@ -154,9 +183,12 @@ st.dataframe(styler, hide_index=True, use_container_width=True, height=560,
                           "A missing measure takes a neutral (exactly average) "
                           "value, which can flatter or understate the market, so "
                           "read a short-count market's exact rank loosely."),
-                 "Vs 2023": st.column_config.TextColumn(
-                     help="Rank change since the frozen 2023 edition; positive "
-                          "means the market moved up.")})
+                 CHG_COL: st.column_config.TextColumn(
+                     help=f"Rank change since the frozen {prior_label} edition "
+                          "(▲ = moved up). Gray moves sit inside the market's "
+                          "own 90% range and are expected churn; colored moves "
+                          "fall outside it, the only moves the noise model "
+                          "flags as notable.")})
 n_short = int((rank["n_indicators"] < n_total).sum())
 theme.caption(f"Column headers explain each field on hover. "
               + (f"{n_short} markets are missing a measure at the source and take a "
@@ -182,14 +214,11 @@ with st.expander("How the tiers and rank ranges are built"):
 
 with st.expander("Why ranks move between editions"):
     theme.caption(
-        "Rank moves between editions mix one real year of market change with "
-        "measurement noise in the fast-moving inputs; most movement is compression in "
-        "the crowded middle of the table, where a tiny score change moves a market "
-        "many places. Even two fully finalized years historically keep only 1 to 6 of "
-        "the same top-10 names, so turnover is normal, not a signal. A tested "
-        "smoothing fix (averaging three years of the noisy inputs) cut the churn but "
-        "reliably cost accuracy, so it was rejected and published as a negative "
-        "result; the ranges above are the honest answer.")
+        "Most movement is compression in the crowded middle of the table, where a "
+        "tiny score change moves a market many places. A tested smoothing fix "
+        "(averaging three years of the noisy inputs) cut the churn but reliably "
+        "cost accuracy, so it was rejected and published as a negative result; "
+        "the ranges above are the honest answer.")
 
 with st.expander("Advanced view: how each score breaks down"):
     theme.caption("Contribution of each theme to the composite score, in standardized "
