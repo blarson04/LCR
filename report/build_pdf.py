@@ -713,7 +713,7 @@ story += [*divider("Key findings", "What the screen says", P_DIV_KEY,
                     f"alone earned {pp_mom:+.1f}.", S["bullet"], bulletText="•"),
           Paragraph(f"<b>Every measure had to earn its place by test.</b> An industry-style "
                     f"scorecard rebuilt from the same free data barely beats chance "
-                    f"({ind_tau:.2f} on a -1 to +1 rank-agreement scale, vs {full_tau:.2f} "
+                    f"({ind_tau:.2f} on a −1 to +1 rank-agreement scale, vs {full_tau:.2f} "
                     f"here), and three of this project's own failed configurations were "
                     f"published as negative results.", S["bullet"], bulletText="•")]
 
@@ -1008,7 +1008,7 @@ if len(m3):
          "scores about 0."],
         ["Precision@10 (P@10)", "Of the screen's ten highest-ranked markets, the "
          "share that landed in the top quarter by actual rent growth."],
-        ["Top-10 edge (pp)", "How many percentage points more rent growth the top "
+        ["Top-10 edge (points)", "How many percentage points more rent growth the top "
          "ten delivered than the median market over the window."],
         ["Rank range and tier", "Where a rank lands 90% of the time once measurement "
          "noise is accounted for; same-tier markets are peers, not an ordering."],

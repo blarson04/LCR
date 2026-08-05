@@ -108,7 +108,7 @@ st.markdown(
     "kept **82.7%** and matched **4.8 of 10** (averaged across the test windows). "
     "**Failed both bars**; it ships only as a labeled speculative outlook, never as "
     "a validated screen.")
-theme.caption("A validation bar that never fails anything proves nothing; ours failed "
+theme.caption("A validation bar that never fails anything proves nothing; it failed "
               "three of five attempts. Separately, nine candidate measures and model "
               "variants have been gated one-shot; zero were adopted, every negative "
               "result published.")
@@ -141,7 +141,7 @@ if bl_path.exists():
         column_config={
             "3-yr tau": st.column_config.TextColumn(
                 help="How well each strategy's ranking agreed with the 3-year rent "
-                     "growth that followed, on a -1 to +1 scale where 0 means no "
+                     "growth that followed, on a −1 to +1 scale where 0 means no "
                      "relationship and random guessing scores about 0."),
             "Precision@10": st.column_config.TextColumn(
                 help="Of the 10 markets each strategy ranked highest, the share that "
@@ -212,14 +212,14 @@ if isc_path.exists():
         tbl_i = isc.rename(columns={
             "screen": "Screen", "window": "Window", "read": "Read",
             "tau": "Tau so far", "precision_at_10": "P@10 so far",
-            "top10_pp_edge": "Top-10 edge (pp)"})
+            "top10_pp_edge": "Top-10 edge (points)"})
         tbl_i = tbl_i[["Screen", "Window", "Read", "Tau so far", "P@10 so far",
-                       "Top-10 edge (pp)"]]
+                       "Top-10 edge (points)"]]
         st.dataframe(
             tbl_i.style.format({"Tau so far": "{:.2f}", "P@10 so far": "{:.0%}",
-                                "Top-10 edge (pp)": "{:+.1f}"})
+                                "Top-10 edge (points)": "{:+.1f}"})
                 .set_properties(subset=["Tau so far", "P@10 so far",
-                                        "Top-10 edge (pp)"],
+                                        "Top-10 edge (points)"],
                                 **{"font-variant-numeric": "tabular-nums",
                                    "text-align": "right"}),
             hide_index=True, use_container_width=True,
@@ -229,12 +229,12 @@ if isc_path.exists():
                          "first year is the noisiest possible read."),
                 "Tau so far": st.column_config.TextColumn(
                     help="Rank agreement between the frozen screen and rent "
-                         "growth to date, on a -1 to +1 scale; 0 means no "
+                         "growth to date, on a −1 to +1 scale; 0 means no "
                          "relationship."),
                 "P@10 so far": st.column_config.TextColumn(
                     help="Share of the screen's top 10 in the top quarter of "
                          "markets by rent growth to date."),
-                "Top-10 edge (pp)": st.column_config.TextColumn(
+                "Top-10 edge (points)": st.column_config.TextColumn(
                     help="Percentage points of extra rent growth the screen's "
                          "top 10 have delivered vs the median market, so far.")})
         theme.caption(

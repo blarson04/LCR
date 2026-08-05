@@ -74,7 +74,7 @@ if pd.notna(top_row.get("rank_lo")):
     lead_range = (f"; its 90% rank range is "
                   f"{int(top_row['rank_lo'])}–{int(top_row['rank_hi'])}")
 
-st.markdown("## Key findings")
+st.markdown("## What the screen says")
 st.markdown(f"""
 - **{top_city} leads the current screen**, lifted most by {lift}{lead_range}.
 - **The screen's top-10 markets out-grew the median market by {pp_pooled:+.1f} points

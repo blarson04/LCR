@@ -247,7 +247,8 @@ with st.expander("Data sources and vintages, measure by measure"):
 
 with st.expander("The repair story, in more detail"):
     theme.caption(
-        "The 2023 federal boundary redraw (and its predecessors) silently corrupted "
+        "The redraw's full extent: the 2023 federal boundary change (and its "
+        "predecessors) silently corrupted "
         "every metro-keyed federal series the panel uses: employment files and Census "
         "population and housing data alike mixed boundaries across years. Systematic "
         "sweeps found 35 metros needing employment rebuilt from county files on "

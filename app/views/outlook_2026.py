@@ -101,7 +101,9 @@ theme.caption("Why it is weaker than the main screen: rents, jobs, home values, 
               "permits use only five months of 2026 data; migration is one year "
               "stale; and income growth is a state-level estimate (each metro takes "
               "its primary state's early-2026 income growth, a tested stand-in that "
-              "agrees with finalized metro income about half the time by rank).")
+              "agrees with finalized metro income about half the time by rank; the "
+              "validated screen's 96.6% figure measures the whole model, not this "
+              "one input).")
 
 tbl = pd.DataFrame({
     "Rank": rank["rank"].astype(int),
@@ -237,6 +239,7 @@ theme.caption("Rent history and the finalized measures for this market: "
 theme.caption("A working view, rebuilt as data lands; unlike the validated screens it "
               "is not frozen to the registry and makes no graded claim.")
 st.markdown("Next: [the validated screen's key findings](home) · "
-            "[Track record](track_record), where this failure is logged.")
+            "[Track record](track_record), where the original mid-year gate "
+            "failure is logged.")
 
 theme.page_footer()

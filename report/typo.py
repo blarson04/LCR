@@ -17,6 +17,10 @@ def _fix(seg: str) -> str:
     # digit-digit ranges get an en dash (2016-2022, 0.90-0.96); leading minus
     # signs and hyphenated words are untouched
     seg = re.sub(r"(?<=\d)-(?=\d)", "–", seg)
+    # a leading hyphen before a digit is a minus sign (-0.5 → −0.5); only at
+    # start of segment or after whitespace/parenthesis, so hyphenated words
+    # stay hyphenated
+    seg = re.sub(r"(^|[\s(])-(?=\d)", "\\1−", seg)
     # apostrophes inside words (contractions, possessives)
     seg = re.sub(r"(?<=\w)'(?=\w)", "’", seg)
     # trailing possessive (markets')
