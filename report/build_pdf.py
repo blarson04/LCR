@@ -41,6 +41,7 @@ LINE, MUTED, ACCENT = _T["LINE"], _T["MUTED"], _T["ACCENT"]
 POS, NEG, GRAY = _T["POS"], _T["NEG"], _T["GRAY_SERIES"][0]
 SEQ_LOW = _T["SEQ_LOW"]
 FLAG = _T["PROVISIONAL"]
+_TOKENS_TINT = lcr_theme.tokens("light")["tint"]
 
 FONTS = HERE / "fonts"
 BUILD = HERE / "_build"
@@ -1025,6 +1026,28 @@ if len(m3):
     ]))
     story += [KeepTogether([Paragraph("How to read these numbers", S["h3"]), gt]),
               Spacer(1, 4)]
+
+# C-2 sidebar: methods comparison, no vendors named.
+_ind_txt = Paragraph(
+    f"Prominent 2026 industry opportunity rankings are built the way this "
+    f"project's benchmark scorecard is: equal weights across categories, chosen "
+    f"without validation, published as point ranks with no uncertainty attached. "
+    f"Within six months, roughly half of one such ranking's markets moved by "
+    f"double-digit ranks, churn of the kind this screen's rank ranges are built "
+    f"to absorb. Rebuilt from the same free public data, that scorecard style "
+    f"agrees with realized 3-year rent growth at {ind_tau:.2f} on the -1 to +1 "
+    f"tau scale; this screen's finalized-data figure is {full_tau:.2f}. A "
+    f"comparison of methods, not of any vendor's product at its own task.",
+    S["body"])
+_ind_panel = Table([[Paragraph("Against an industry ranking", S["h3"])],
+                    [_ind_txt]], colWidths=[CW])
+_ind_panel.setStyle(TableStyle([
+    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(_TOKENS_TINT)),
+    ("TOPPADDING", (0, 0), (0, 0), 8), ("BOTTOMPADDING", (0, -1), (-1, -1), 8),
+    ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+]))
+story += [KeepTogether([_ind_panel]), Spacer(1, 6)]
+
 story += [KeepTogether([
           Paragraph("Five gates, three failures, two passes", S["h2"]),
           Paragraph("Every screen built on early or estimated data had to pass the same "
@@ -1058,6 +1081,10 @@ story += [KeepTogether([
                     S["bullet"], bulletText="•"),
           Paragraph("Measure weights are set by judgment and tested, not statistically "
                     "fitted.", S["bullet"], bulletText="•"),
+          Paragraph("The supply measure reads permit levels in the scoring year; a "
+                    "sharp turn in construction starts shows up only as it enters the "
+                    "permit data, so supply inflections can lag.",
+                    S["bullet"], bulletText="•"),
           Paragraph("In shock periods like 2020-22 the screen loses most of its edge; "
                     "treat it as a screen, not a forecast.", S["bullet"], bulletText="•"),
           PageBreak()]

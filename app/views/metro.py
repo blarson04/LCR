@@ -220,6 +220,36 @@ else:
                       "and takes a neutral (average) fill in the score, which can "
                       "flatter or understate it; lean on the rank range.")
 
+    # ---- Forward-supply context (C-3): trajectory of the permit input ------
+    # Display-only: the same permits/stock ratio the supply measure reads,
+    # shown over recent scoring years. It does not touch the model.
+    _pan = d["panel"]
+    supply_hist = (_pan[(_pan["cbsa_code"] == code)
+                        & (_pan["year"] <= ed["year"])]
+                   [["year", "permits_total", "housing_units"]].dropna()
+                   .sort_values("year").tail(5))
+    if len(supply_hist) >= 3:
+        supply_hist = supply_hist.assign(
+            pts=supply_hist["permits_total"] / supply_hist["housing_units"] * 100)
+        with st.container(border=True):
+            st.markdown(
+                f"<div style='font-weight:600;color:{theme.MUTED}'>"
+                "Context, not model input</div>", unsafe_allow_html=True)
+            figs = px.bar(supply_hist, x="year", y="pts",
+                          text=[f"{v:.2f}%" for v in supply_hist["pts"]])
+            figs.update_traces(marker_color=theme.GRAY_SERIES[0],
+                               textposition="outside",
+                               textfont=dict(size=11, color=theme.MUTED))
+            figs.update_xaxes(dtick=1, title=None)
+            figs.update_yaxes(title="Permits vs existing stock (%)",
+                              rangemode="tozero")
+            st.plotly_chart(theme.style_fig(figs, 240), use_container_width=True)
+            theme.caption(
+                "New building permits as a share of existing housing, the raw "
+                "input behind the supply measure (less building scores better). "
+                "The screen scores the latest year only; the trajectory is shown "
+                "for context and does not affect the rank.")
+
     if not ed["provisional"]:
         with st.expander("Context measures (tracked, not scored)"):
             theme.caption("Tested as candidate measures but not added: neither showed "

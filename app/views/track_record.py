@@ -151,6 +151,24 @@ if bl_path.exists():
                   "ten categories free data can populate; it scores industry practice "
                   "at this task, not any vendor's product at theirs.")
 
+    # C-2: methods comparison, no vendors named.
+    st.markdown(
+        f"<div style='background:{theme.SURFACE};border:1px solid {theme.LINE};"
+        f"border-radius:8px;padding:.9rem 1.1rem;margin-top:.8rem'>"
+        f"<div style='font-family:{theme.FONT_HEAD};font-size:16px;font-weight:600'>"
+        "Against an industry ranking</div>"
+        "<div style='font-size:14px;margin-top:.35rem'>Prominent 2026 industry "
+        "opportunity rankings are built the way the benchmark scorecard above is: "
+        "equal weights across categories, chosen without validation, published as "
+        "point ranks with no uncertainty attached. Within six months, roughly half "
+        "of one such ranking's markets moved by double-digit ranks, churn of the "
+        "kind this screen's rank ranges are built to absorb. Rebuilt from the same "
+        "free public data, that scorecard style agrees with realized 3-year rent "
+        "growth at 0.14 on the −1 to +1 tau scale; this screen's finalized-data "
+        "figure is 0.43. A comparison of methods, not of any vendor's product at "
+        "its own task.</div></div>",
+        unsafe_allow_html=True)
+
 # ---- 4. Honest limits -------------------------------------------------------
 st.markdown("## Honest limits")
 st.markdown(
@@ -160,6 +178,9 @@ st.markdown(
     "insurance-cost shocks moved multifamily economics in ways no rent-side measure "
     "captures.\n"
     "- Measure weights are set by judgment and tested, not statistically fitted.\n"
+    "- The supply measure reads permit levels in the scoring year; a sharp turn in "
+    "construction starts shows up only as it enters the permit data, so supply "
+    "inflections can lag.\n"
     "- In shock periods like 2020–22 the screen loses most of its edge; treat it as a "
     "screen, not a forecast.")
 
