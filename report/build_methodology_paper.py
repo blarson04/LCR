@@ -28,8 +28,11 @@ for _p in (str(ROOT), str(APP)):
 import config                      # noqa: E402
 from ui import data                # noqa: E402
 
-INK, MUTED, ACCENT, LINE = "#1B2A3B", "#66707D", "#2C6E63", "#E4E6EA"
-POS, NEG, PROV = "#1E7F4F", "#B3462E", "#8A6D1D"
+from theme import lcr_theme        # noqa: E402
+
+_T = lcr_theme.roles("light")
+INK, MUTED, ACCENT, LINE = _T["INK"], _T["MUTED"], _T["ACCENT"], _T["LINE"]
+POS, NEG, PROV = _T["POS"], _T["NEG"], _T["PROVISIONAL"]
 FONTS = HERE / "fonts"
 OUT = HERE / "Larson_Capital_Research_Methodology.pdf"
 P = config.PROCESSED_DIR

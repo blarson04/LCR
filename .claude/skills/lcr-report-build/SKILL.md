@@ -24,12 +24,12 @@ description: Build pipeline for Larson Capital Research deliverables. ALWAYS use
 
 ## Design tokens — single source of truth
 
-All colors and type decisions flow from the tokens file (`theme/tokens.json` once
-PR 2 lands; until then `app/ui/theme.py` mirrored by the constants block at the
-top of `build_pdf.py`). **No hex codes anywhere outside the tokens module.** The
-smoke test greps for stray hex; do not add any. Matplotlib and plotly both get
-their theme from `theme/lcr_theme.py` (rcParams + plotly template) — never style
-a figure ad hoc.
+All colors and type decisions flow from [theme/tokens.json](theme/tokens.json);
+`theme/lcr_theme.py` exposes them (roles, mpl rcParams, plotly template, tier
+scale, the gold spec_tag) and `app/ui/theme.py` maps them for the site.
+**No hex codes anywhere outside tokens.json** — the smoke test greps app/,
+report/, and theme/ for strays and asserts `.streamlit/config.toml` mirrors the
+light palette. Never style a figure ad hoc.
 
 Chart rules (apply to every figure):
 - Paper background, no top/right spines, horizontal-only hairline gridlines.

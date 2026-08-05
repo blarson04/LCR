@@ -1,41 +1,44 @@
 """
-theme.py: design tokens + global styling (single source of truth).
+theme.py: the site's styling layer over the shared brand tokens.
 
-Implements the screener-site-design skill: a calm, report-like site. One
-accent color, serif headings, restrained tables and charts. Page code must
+All colors come from theme/tokens.json at the repo root (handoff B-1: one
+tokens file governs the PDF report and the site alike); this module maps
+them to the site's role names and applies the global CSS. Page code must
 never hardcode a hex value; import tokens from here.
 
-Light is the default (per the skill); a dark palette is available as a user
-preference via the sidebar toggle (session key MODE_KEY). Tokens are applied
-per run by inject_css(), so every page reads the active palette.
+Light is the default; a dark palette is available as a user preference via
+the sidebar toggle (session key MODE_KEY). Tokens are applied per run by
+inject_css(), so every page reads the active palette.
 """
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import plotly.graph_objects as go
 import streamlit as st
 
+_ROOT = Path(__file__).resolve().parents[2]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from theme import lcr_theme  # noqa: E402
+
 MODE_KEY = "ui_mode"
 
-# ---- Palettes (skill §1; dark is the same system on dark surfaces) ---------
-_LIGHT = dict(
-    INK="#1B2A3B", PAPER="#FBFBF9", SURFACE="#FFFFFF", LINE="#E4E6EA",
-    MUTED="#66707D", ACCENT="#2C6E63", POS="#1E7F4F", NEG="#B3462E",
-    PROVISIONAL="#8A6D1D", ROW_HOVER="rgba(27,42,59,.035)",
-    GRAY_SERIES=["#8E98A3", "#B9C0C8", "#D3D8DE"],
-    SEQ_LOW="#E7ECEA", MAP_LAND="#EFF1ED", MAP_BORDER="#FFFFFF",
-)
-_DARK = dict(
-    INK="#E7ECF1", PAPER="#0F151B", SURFACE="#171E26", LINE="#28313B",
-    MUTED="#8C98A4", ACCENT="#45A492", POS="#3FA574", NEG="#CE6B4E",
-    PROVISIONAL="#D3AC3B", ROW_HOVER="rgba(231,236,241,.045)",
-    GRAY_SERIES=["#7E8A96", "#5D6873", "#454F59"],
-    SEQ_LOW="#22302B", MAP_LAND="#1B232C", MAP_BORDER="#0F151B",
-)
+# ---- Palettes (theme/tokens.json; dark = same system on dark surfaces) -----
+_LIGHT = lcr_theme.roles("light")
+_DARK = lcr_theme.roles("dark")
 
 # Module-level tokens default to light; _apply() swaps them per run.
 globals().update(_LIGHT)
 SEQ_SCALE = [[0.0, _LIGHT["SEQ_LOW"]], [1.0, _LIGHT["ACCENT"]]]
+# Diverging pine↔clay for SIGNED values (composite score, rent growth):
+# clay below the average market, pine above, tint at 0 (B-3; use with
+# color_continuous_midpoint=0 so the neutral point sits at zero).
+DIV_SCALE = [[0.0, _LIGHT["NEG"]], [0.5, _LIGHT["SEQ_LOW"]],
+             [1.0, _LIGHT["POS"]]]
 
 FONT_BODY = "Inter, sans-serif"
 FONT_HEAD = "'Source Serif 4', Georgia, serif"
@@ -49,8 +52,9 @@ def _apply_tokens(mode: str) -> None:
     """Swap the module-level tokens to the active palette (no side effects)."""
     t = _DARK if mode == "Dark" else _LIGHT
     globals().update(t)
-    global SEQ_SCALE
+    global SEQ_SCALE, DIV_SCALE
     SEQ_SCALE = [[0.0, t["SEQ_LOW"]], [1.0, t["ACCENT"]]]
+    DIV_SCALE = [[0.0, t["NEG"]], [0.5, t["SEQ_LOW"]], [1.0, t["POS"]]]
 
 
 def sync_native_theme() -> None:
@@ -143,7 +147,7 @@ def inject_css(reading: bool = False) -> None:
 
       [data-testid="stMetric"] {{ background: {SURFACE}; border: 1px solid {LINE};
           border-radius: 8px; padding: .75rem 1rem;
-          box-shadow: 0 1px 3px rgba(27,42,59,.08); }}
+          box-shadow: 0 1px 3px {lcr_theme.rgba(INK, .08)}; }}
       [data-testid="stMetricLabel"] p {{ font-size: 12px; color: {MUTED}; }}
       [data-testid="stMetricValue"] {{ color: {INK}; font-weight: 600;
           font-variant-numeric: tabular-nums; }}
@@ -157,7 +161,7 @@ def inject_css(reading: bool = False) -> None:
           padding: .1rem .6rem; background: {SURFACE}; }}
       .badge-provisional {{ display: inline-block; font-size: 12px; font-weight: 600;
           color: {PROVISIONAL}; border: 1px solid {PROVISIONAL}; border-radius: 999px;
-          padding: .1rem .6rem; background: rgba(138,109,29,.07); }}
+          padding: .1rem .6rem; background: {lcr_theme.rgba(PROVISIONAL, .07)}; }}
 
       hr {{ border-color: {LINE}; }}
       [data-testid="stExpander"] {{ border: 1px solid {LINE}; border-radius: 8px;
@@ -194,7 +198,8 @@ def style_fig(fig: go.Figure, height: int = 380) -> go.Figure:
                         font_color=INK, bordercolor=LINE),
     )
     fig.update_xaxes(showgrid=False, color=MUTED, linecolor=LINE, zeroline=False)
-    fig.update_yaxes(showgrid=True, gridcolor=LINE, color=MUTED, zeroline=False)
+    fig.update_yaxes(showgrid=True, gridcolor=lcr_theme.rgba(MUTED, .20),
+                     color=MUTED, zeroline=False)
     return fig
 
 

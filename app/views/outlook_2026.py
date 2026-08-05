@@ -25,7 +25,7 @@ for _p in (str(ROOT), str(APP)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from ui import data, theme  # noqa: E402
+from ui import components, data, theme  # noqa: E402
 import config               # noqa: E402
 
 theme.inject_css()
@@ -52,11 +52,7 @@ theme.caption("The same frozen model run on data through May 2026. It exists bec
 st.markdown(theme.badge(True, "Speculative 2026→2029 outlook · failed validation"),
             unsafe_allow_html=True)
 
-st.markdown(
-    f"<div style='border:1.5px solid {theme.PROVISIONAL};border-radius:8px;"
-    f"padding:.9rem 1.1rem;margin:.8rem 0;background:rgba(138,109,29,.06)'>"
-    f"<div style='font-weight:600;color:{theme.PROVISIONAL}'>This screen has not "
-    f"passed validation. Read every rank loosely.</div>"
+components.speculative_frame(
     f"<div style='font-size:14px;margin-top:.35rem'>Tested on history the same way "
     f"as every published screen, this recipe keeps <b>{acc['retention']:.1%}</b> of "
     f"the finalized model's signal but matches the finalized top-10 on only "
@@ -66,15 +62,14 @@ st.markdown(
     f"earlier mid-year recipe failed its one-shot gate outright "
     f"({gate['retention']:.1%} and {gate['mean_top10_overlap']:.1f} of 10, on Track "
     f"record); this one adds a tested income estimate and is re-measured, not "
-    f"re-gated. For decisions, use the validated 2025→2028 screen.</div></div>",
-    unsafe_allow_html=True)
+    f"re-gated. For decisions, use the validated 2025→2028 screen.</div>")
 
 # ---- The map ----------------------------------------------------------------
 mp = rank.merge(d["coords"], on="cbsa_code", how="left")
 fig = px.scatter_geo(
     mp, lat="lat", lon="lon", color="score", scope="usa",
     hover_name="cbsa_title", size=[8] * len(mp), size_max=12,
-    color_continuous_scale=theme.SEQ_SCALE,
+    color_continuous_scale=theme.DIV_SCALE, color_continuous_midpoint=0,
     custom_data=["rank", "score", "strength"])
 fig.update_traces(
     marker=dict(line=dict(width=0.6, color=theme.MAP_BORDER)),

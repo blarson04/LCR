@@ -1,10 +1,11 @@
-# Baseline theme per the screener-site-design skill; ui/theme.py CSS refines it.
+# Baseline theme; values MUST mirror theme/tokens.json (light palette) — the
+# smoke test asserts they match. ui/theme.py CSS refines it at runtime.
 [theme]
 base = "light"
-primaryColor = "#2C6E63"
-backgroundColor = "#FBFBF9"
+primaryColor = "#1F5C43"
+backgroundColor = "#FAFAF7"
 secondaryBackgroundColor = "#FFFFFF"
-textColor = "#1B2A3B"
+textColor = "#1A2E22"
 font = "sans serif"
 
 [client]

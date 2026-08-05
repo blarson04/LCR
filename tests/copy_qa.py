@@ -237,6 +237,49 @@ def rank_range_violations(scored_latest) -> list[str]:
     return problems
 
 
+# ---- 3b. stray hex + config.toml drift (B-6) --------------------------------
+
+_HEX = re.compile(r"#[0-9A-Fa-f]{3}\b|#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{8}\b")
+
+
+def stray_hex_violations() -> list[str]:
+    """No hex color anywhere in .py under app/, report/, or theme/ — every
+    color flows from theme/tokens.json."""
+    problems = []
+    files = (list((ROOT / "app").rglob("*.py"))
+             + list((ROOT / "report").glob("*.py"))
+             + list((ROOT / "theme").glob("*.py")))
+    for path in files:
+        if "__pycache__" in path.parts:
+            continue
+        rel = path.relative_to(ROOT)
+        for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if _HEX.search(line):
+                problems.append(f"{rel}:{i}: hex color outside theme/tokens.json: "
+                                f"{line.strip()[:80]}")
+    return problems
+
+
+def config_toml_mismatches() -> list[str]:
+    """.streamlit/config.toml must mirror the tokens light palette."""
+    import json
+    tokens = json.loads((ROOT / "theme" / "tokens.json").read_text(encoding="utf-8"))
+    light = tokens["light"]
+    want = {"primaryColor": light["pine"], "backgroundColor": light["paper"],
+            "secondaryBackgroundColor": light["surface"],
+            "textColor": light["ink"]}
+    text = (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
+    problems = []
+    for key, val in want.items():
+        m = re.search(rf'{key}\s*=\s*"([^"]+)"', text)
+        if not m:
+            problems.append(f".streamlit/config.toml: {key} missing")
+        elif m.group(1).lower() != val.lower():
+            problems.append(f".streamlit/config.toml: {key} is {m.group(1)}, "
+                            f"tokens.json says {val}")
+    return problems
+
+
 # ---- 4. spellcheck ----------------------------------------------------------
 
 _WORD = re.compile(r"[A-Za-z][A-Za-z']{3,}")

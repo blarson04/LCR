@@ -61,7 +61,7 @@ mp = rank.merge(d["coords"], on="cbsa_code", how="left")
 fig = px.scatter_geo(
     mp, lat="lat", lon="lon", color="score", scope="usa",
     hover_name="cbsa_title", size=[8] * len(mp), size_max=12,
-    color_continuous_scale=theme.SEQ_SCALE,
+    color_continuous_scale=theme.DIV_SCALE, color_continuous_midpoint=0,
     custom_data=["rank", "score", "strength"])
 fig.update_traces(
     marker=dict(line=dict(width=0.6, color=theme.MAP_BORDER)),
@@ -80,8 +80,9 @@ fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=10, len=0.6,
                                           tickfont=dict(color=theme.MUTED)))
 st.plotly_chart(theme.style_fig(fig, 470), use_container_width=True)
 top3 = [t.split(",")[0].split("-")[0] for t in rank.head(3)["cbsa_title"]]
-theme.caption(f"Darker green = stronger fundamentals. {top3[0]} leads; {top3[1]} and "
-              f"{top3[2]} round out the top three.")
+theme.caption(f"Green = above the average market (score 0), clay = below; the tiers "
+              f"group markets the data cannot separate. {top3[0]} leads; {top3[1]} "
+              f"and {top3[2]} round out the top three.")
 
 # ---- The table --------------------------------------------------------------
 st.markdown("## Every market")

@@ -1,3 +1,7 @@
 # Test/CI-only additions on top of requirements.txt (never needed to run the
 # deployed app). Keep lean: the runtime requirements stay as-is by design.
 pyspellchecker>=0.8
+
+# Visual regression over the committed PDFs (tests/visual_regression.py)
+pypdfium2>=4
+pillow>=10

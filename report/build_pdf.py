@@ -31,12 +31,15 @@ for _p in (str(ROOT), str(APP)):
 
 import config                      # noqa: E402
 from ui import data                # noqa: E402  (bare mode: no Streamlit runtime)
+from theme import lcr_theme        # noqa: E402
 
-# ---- Brand tokens (mirror app/ui/theme.py light palette) --------------------
-INK, PAPER, SURFACE = "#1B2A3B", "#FBFBF9", "#FFFFFF"
-LINE, MUTED, ACCENT = "#E4E6EA", "#66707D", "#2C6E63"
-POS, NEG, GRAY = "#1E7F4F", "#B3462E", "#8E98A3"
-SEQ_LOW = "#E7ECEA"
+# ---- Brand tokens (theme/tokens.json, the single source of truth) -----------
+_T = lcr_theme.roles("light")
+INK, PAPER, SURFACE = _T["INK"], _T["PAPER"], _T["SURFACE"]
+LINE, MUTED, ACCENT = _T["LINE"], _T["MUTED"], _T["ACCENT"]
+POS, NEG, GRAY = _T["POS"], _T["NEG"], _T["GRAY_SERIES"][0]
+SEQ_LOW = _T["SEQ_LOW"]
+FLAG = _T["PROVISIONAL"]
 
 FONTS = HERE / "fonts"
 BUILD = HERE / "_build"
@@ -45,23 +48,13 @@ OUT = HERE / "Larson_Capital_Research-Report.pdf"
 
 for f in FONTS.glob("*.ttf"):
     font_manager.fontManager.addfont(str(f))
-plt.rcParams.update({
-    "font.family": "Inter", "text.color": INK, "axes.edgecolor": LINE,
-    "axes.labelcolor": MUTED, "xtick.color": MUTED, "ytick.color": MUTED,
-    "figure.facecolor": "white", "axes.facecolor": "white", "svg.fonttype": "none",
-})
+plt.rcParams.update(lcr_theme.mpl_rcparams("light"))
 
 
 def style_ax(ax, xgrid: bool = True):
-    """The site's chart template in matplotlib: hairline grid one way only,
-    recessive axes, no spines except a light bottom."""
-    for s in ("top", "right", "left"):
-        ax.spines[s].set_visible(False)
-    ax.spines["bottom"].set_color(LINE)
-    if xgrid:
-        ax.xaxis.grid(True, color=LINE, linewidth=0.7)
-        ax.set_axisbelow(True)
-    ax.tick_params(length=0, labelsize=8)
+    """The house chart template (theme/lcr_theme.py): hairline grid one way
+    only, recessive axes, no spines except a light bottom."""
+    lcr_theme.style_ax(ax, "light", xgrid=xgrid)
 
 
 # ============================ data ===========================================
@@ -149,11 +142,14 @@ def chart_map() -> Path:
     mp = rank.merge(d["coords"], on="cbsa_code", how="left")
     fig = px.scatter_geo(mp, lat="lat", lon="lon", color="score", scope="usa",
                          size=[8] * len(mp), size_max=12,
-                         color_continuous_scale=[[0.0, SEQ_LOW], [1.0, ACCENT]])
-    fig.update_traces(marker=dict(line=dict(width=0.6, color="#FFFFFF")))
-    fig.update_geos(showland=True, landcolor="#EFF1ED", showlakes=False,
-                    subunitcolor="#FFFFFF", countrycolor="#FFFFFF",
-                    coastlinecolor="#FFFFFF", bgcolor="rgba(0,0,0,0)", showframe=False)
+                         color_continuous_scale=[[0.0, NEG], [0.5, SEQ_LOW],
+                                                 [1.0, POS]],
+                         color_continuous_midpoint=0)
+    fig.update_traces(marker=dict(line=dict(width=0.6, color=_T["MAP_BORDER"])))
+    fig.update_geos(showland=True, landcolor=_T["MAP_LAND"], showlakes=False,
+                    subunitcolor=_T["MAP_BORDER"], countrycolor=_T["MAP_BORDER"],
+                    coastlinecolor=_T["MAP_BORDER"], bgcolor="rgba(0,0,0,0)",
+                    showframe=False)
     fig.add_trace(go.Scattergeo(
         lat=[v[0] for v in data.STATE_CENTROIDS.values()],
         lon=[v[1] for v in data.STATE_CENTROIDS.values()],
@@ -638,7 +634,8 @@ story += [eyebrow("Chart 1"),
 story += [eyebrow("The map"),
           Paragraph("Where the strongest markets are", S["h1"]), *hr(),
           Image(str(P_MAP), width=CW, height=CW * (560 / 980)),
-          Paragraph(f"Darker green = stronger fundamentals. "
+          Paragraph(f"Green = above the average market (score 0), clay = below; the "
+                    f"tiers below group markets the data cannot separate. "
                     f"{rank.iloc[0]['cbsa_title'].split(',')[0].split('-')[0]} leads; "
                     f"{rank.iloc[1]['cbsa_title'].split(',')[0].split('-')[0]} and "
                     f"{rank.iloc[2]['cbsa_title'].split(',')[0].split('-')[0]} round out "
@@ -975,9 +972,9 @@ if _spec_rank_p.exists() and _spec_acc_p.exists():
     spec_rank[["s_strength", "s_drag"]] = spec_rank.apply(
         lambda r: pd.Series(data.strength_drag(r)), axis=1)
     acc = pd.read_csv(_spec_acc_p).iloc[0]
-    C_PROV = colors.HexColor("#8A6D1D")
+    C_PROV = colors.HexColor(FLAG)
     warn = Table([[Paragraph(
-        f"<font name='Inter-SB' color='#8A6D1D'>This screen has not passed validation. "
+        f"<font name='Inter-SB' color='{FLAG}'>This screen has not passed validation. "
         f"Read every rank loosely.</font><br/>"
         f"Tested on history the same way as every published screen, this recipe keeps "
         f"<b>{acc['retention']:.1%}</b> of the finalized model's signal but matches the "

@@ -20,7 +20,7 @@ for _p in (str(ROOT), str(APP)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from ui import data, diagrams, theme  # noqa: E402
+from ui import components, data, diagrams, theme  # noqa: E402
 import config               # noqa: E402
 
 theme.inject_css(reading=True)
@@ -47,15 +47,7 @@ _GUIDE = [
      "Where a rank lands 90% of the time once measurement noise is accounted for; "
      "same-tier markets are peers, not an ordering."),
 ]
-_rows = "".join(
-    f"<div style='margin-top:.35rem'><span style='font-weight:600'>{t}.</span> "
-    f"<span style='font-size:13.5px'>{x}</span></div>" for t, x in _GUIDE)
-st.markdown(
-    f"<div style='background:{theme.SURFACE};border:1px solid {theme.LINE};"
-    f"border-radius:8px;padding:.8rem 1.1rem;margin-bottom:1rem'>"
-    f"<div style='font-family:{theme.FONT_HEAD};font-size:16px;font-weight:600'>"
-    f"How to read these numbers</div>{_rows}</div>",
-    unsafe_allow_html=True)
+components.glossary_panel("How to read these numbers", _GUIDE)
 
 # ---- 1. The edge, in plain units --------------------------------------------
 st.markdown("## The edge, in points of rent growth")

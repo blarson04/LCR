@@ -67,6 +67,10 @@ def main() -> None:
     assert not problems, "rank vs range:\n  " + "\n  ".join(problems)
     print("rank vs range: OK (every outlier allowlisted with a reason)")
 
+    problems = copy_qa.stray_hex_violations() + copy_qa.config_toml_mismatches()
+    assert not problems, "design tokens:\n  " + "\n  ".join(problems)
+    print("design tokens: OK (no hex outside theme/tokens.json; config.toml in sync)")
+
     spelling = copy_qa.spelling_violations()
     if spelling is None:
         print("spelling: SKIPPED (pyspellchecker not installed; "

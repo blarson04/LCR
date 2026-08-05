@@ -17,26 +17,33 @@ Design mantra: **calm confidence.** If a page feels busy, it is wrong — remove
 
 ## 1. Design tokens (single source of truth)
 
-Define these once (a `ui/theme.py` constants module) and import everywhere. Never hardcode a
-hex value in page code.
+ALL colors live in `theme/tokens.json` at the repo root (shared with the PDF report;
+handoff B-1). `app/ui/theme.py` maps them to the site's role names via
+`theme/lcr_theme.py` — import tokens from `ui/theme.py`, never hardcode a hex value
+anywhere (the smoke test greps for strays, and `.streamlit/config.toml` must mirror
+the light palette).
 
-**Palette**
+**Roles** (values in tokens.json; light + dark sets)
 
-| Token | Hex | Use |
+| Role | Token | Use |
 | --- | --- | --- |
-| `INK` | `#1B2A3B` | Headings, body text, table text |
-| `PAPER` | `#FBFBF9` | Page background |
-| `SURFACE` | `#FFFFFF` | Cards, table backgrounds |
-| `LINE` | `#E4E6EA` | Hairline borders, dividers |
-| `MUTED` | `#66707D` | Captions, secondary text, axis labels |
-| `ACCENT` | `#2C6E63` | THE brand color: links, active states, primary chart series, map high end |
-| `POS` | `#1E7F4F` | Positive data values ONLY (never decoration) |
-| `NEG` | `#B3462E` | Negative data values ONLY (never decoration) |
-| `PROVISIONAL` | `#8A6D1D` | Provisional/nowcast badge ONLY |
+| `INK` | `ink` | Headings, body text, table text |
+| `PAPER` | `paper` | Page background |
+| `SURFACE` | `surface` | Cards, table backgrounds |
+| `LINE` | `line` | Hairline borders, dividers |
+| `MUTED` | `slate` | Captions, secondary text, axis labels |
+| `ACCENT` / `POS` | `pine` | THE brand green: links, primary series, positive/validated |
+| `NEG` | `clay` | Negative data values and failure marks ONLY |
+| `PROVISIONAL` | `flag` | Gold: speculative/failed-validation content ONLY, never decorative |
 
-Rules: one accent, used sparingly — if a screen shows accent color in more than ~3 places,
-cut back. Green/red are reserved for the *direction of data* (score signs, rent growth), never
-for buttons or decoration. No gradients, no shadows heavier than `0 1px 3px rgba(27,42,59,.08)`.
+The reader learns one visual grammar: green = validated claim, clay = negative/failed,
+gold = not validated, read loosely. Enforce in review. One accent, used sparingly — if a
+screen shows accent color in more than ~3 places, cut back. No gradients, no shadows
+heavier than `0 1px 3px rgba(ink, .08)`.
+
+**Components**: use the B-4 library (`app/ui/components.py`, report twin
+`report/components.py`) — scorecard row, glossary panel, gate ledger, tier band
+helpers, speculative frame, freeze-grade rail — instead of hand-rolling equivalents.
 
 **Typography**
 
@@ -53,17 +60,9 @@ not lines or boxes.
 
 ## 2. Streamlit implementation
 
-**`.streamlit/config.toml`** (the baseline; CSS refines it):
-
-```toml
-[theme]
-base = "light"
-primaryColor = "#2C6E63"
-backgroundColor = "#FBFBF9"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#1B2A3B"
-font = "sans serif"
-```
+**`.streamlit/config.toml`** (the baseline; CSS refines it): mirrors the
+tokens.json light palette (`pine`/`paper`/`surface`/`ink`); the smoke test
+asserts they match, so update both together.
 
 **Global CSS** lives in ONE function `inject_css()` in `ui/theme.py`, called at the top of
 every page — never scatter `st.markdown(<style>...)` through page code. It should: import the
@@ -117,9 +116,10 @@ padding-top: 2.5rem}`); style tables per §4; define the `.badge-provisional` an
 - **Direct-label lines at their right end; kill the legend** whenever ≤4 series.
 - Every chart gets a caption (13px `MUTED`) stating the takeaway in words: "Charleston has
   ranked in the top 20 since 2021."
-- Choropleth map: sequential scale from `#E7ECEA` to `ACCENT`. NEVER a red-green or rainbow
-  scale for score (red/green only if the variable is signed rent growth). Metro hover shows
-  rank, score, one-line strength.
+- Score map: diverging `DIV_SCALE` (clay↔tint↔pine) with `color_continuous_midpoint=0` —
+  the composite score is signed and the negative half of the story must show (handoff B-3).
+  Sequential `SEQ_SCALE` (tint→pine) only for genuinely one-directional variables. Never
+  rainbow. Metro hover shows rank, score, one-line strength.
 
 **Uncertainty & honesty in the UI**
 - Ranks display as ranges where computed ("Rank 3 (2–6)"), with a tooltip: "Range reflects
@@ -151,7 +151,8 @@ padding-top: 2.5rem}`); style tables per §4; define the `.badge-provisional` an
 
 - Default Streamlit chrome visible (hamburger, footer, red accent).
 - A wall of 110 rows × 10 columns as the landing view.
-- Rainbow/diverging-red-green choropleth for the composite score.
+- Rainbow scales anywhere; sequential all-green for the signed composite score (it hides
+  the negative half; use `DIV_SCALE` anchored at 0).
 - More than one accent color, colored section backgrounds, emoji in headings or labels.
 - Legends when direct labels fit; gridlines in both directions; chart titles restating the
   section heading.
