@@ -23,7 +23,7 @@ for _p in (str(ROOT), str(APP)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from ui import data, diagrams, theme  # noqa: E402
+from ui import components, data, diagrams, theme  # noqa: E402
 import config                       # noqa: E402
 from src.nowcast import proxy_map as pmap  # noqa: E402
 
@@ -32,6 +32,7 @@ d = data.load()
 ed = data.edition(d)
 rank = ed["rank"].sort_values("rank").reset_index(drop=True)
 
+components.header_art("how_it_works")
 theme.eyebrow("Multifamily research · the report")
 st.markdown(
     f'<div style="font-family:{theme.FONT_HEAD};font-size:32px;font-weight:600;'
@@ -221,7 +222,8 @@ with st.expander("Data sources and vintages, measure by measure"):
         src_txt, through = data.VINTAGE_SOURCES[k]
         vrows.append({"Measure": data.PRETTY[k],
                       "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
-                      "Source": src_txt, "Data through": through})
+                      "Source": src_txt, "Data through": through,
+                      "Link": data.SOURCE_LINKS.get(k, "")})
     st.dataframe(
         pd.DataFrame(vrows).style
           .set_properties(subset=["Measure"], **{"font-weight": "500"})
@@ -229,10 +231,14 @@ with st.expander("Data sources and vintages, measure by measure"):
                           **{"font-variant-numeric": "tabular-nums",
                              "text-align": "right"}),
         hide_index=True, use_container_width=True,
-        column_config={"Data through": st.column_config.TextColumn(
-            help="The most recent FINALIZED year behind this measure. The current "
-                 "screen layers validated fast-publishing substitutes on top, as "
-                 "described below.")})
+        column_config={
+            "Data through": st.column_config.TextColumn(
+                help="The most recent FINALIZED year behind this measure. The current "
+                     "screen layers validated fast-publishing substitutes on top, as "
+                     "described below."),
+            "Link": st.column_config.LinkColumn(
+                "Source page", display_text="source page",
+                help="The primary source's public data page.")})
     theme.caption("The finalized sources each measure is built from. * Connecticut "
                   "redrew its geography between 2023 and 2024, so the three "
                   "Connecticut metros' job and income growth are chained using "

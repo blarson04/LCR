@@ -22,7 +22,7 @@ for _p in (str(ROOT), str(APP)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from ui import data, theme  # noqa: E402
+from ui import components, data, theme  # noqa: E402
 import config               # noqa: E402
 
 theme.inject_css()
@@ -36,6 +36,7 @@ if show_change:
     rank = rank.merge(d["prior_rank"], on="cbsa_code", how="left")
 
 # ---- Header -----------------------------------------------------------------
+components.header_art("rankings")
 theme.eyebrow("Multifamily research · the report")
 st.markdown("# Full rankings")
 theme.caption(

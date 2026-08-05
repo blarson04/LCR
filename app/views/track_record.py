@@ -26,6 +26,7 @@ import config               # noqa: E402
 theme.inject_css(reading=True)
 d = data.load()
 
+components.header_art("track_record")
 theme.eyebrow("Multifamily research · the fine print")
 st.markdown("# Track record")
 theme.caption("How the screen has performed against what actually happened, plus the "

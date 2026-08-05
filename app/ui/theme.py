@@ -187,16 +187,26 @@ def badge(provisional: bool, label: str | None = None) -> str:
     return f"<span class='badge-final'>{label or 'Finalized 2023'}</span>"
 
 
-def style_fig(fig: go.Figure, height: int = 380) -> go.Figure:
+def style_fig(fig: go.Figure, height: int = 380,
+              speculative: bool = False) -> go.Figure:
     """The single chart template (skill §4): paper bg, horizontal gridlines
-    only, muted axes, Inter, no legend unless the caller re-enables it."""
+    only, muted axes, Inter, no legend unless the caller re-enables it.
+
+    speculative=True bakes the gold corner tag into the figure itself (B-3:
+    a governance feature, so screenshots cannot shed the warning)."""
     fig.update_layout(
-        height=height, margin=dict(l=0, r=8, t=8, b=0),
+        height=height, margin=dict(l=0, r=8, t=18 if speculative else 8, b=0),
         font=dict(family="Inter, sans-serif", color=INK, size=13),
         paper_bgcolor=PAPER, plot_bgcolor=PAPER, showlegend=False,
         hoverlabel=dict(font_family="Inter, sans-serif", bgcolor=SURFACE,
                         font_color=INK, bordercolor=LINE),
     )
+    if speculative:
+        fig.add_annotation(
+            xref="paper", yref="paper", x=1, y=1.0, xanchor="right",
+            yanchor="bottom", showarrow=False,
+            text="<b>speculative · failed validation</b>",
+            font=dict(family="Inter, sans-serif", size=10, color=PROVISIONAL))
     fig.update_xaxes(showgrid=False, color=MUTED, linecolor=LINE, zeroline=False)
     fig.update_yaxes(showgrid=True, gridcolor=lcr_theme.rgba(MUTED, .20),
                      color=MUTED, zeroline=False)

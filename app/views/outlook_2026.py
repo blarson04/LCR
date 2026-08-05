@@ -44,6 +44,7 @@ rank = rank.sort_values("rank").reset_index(drop=True)
 rank[["strength", "drag"]] = rank.apply(
     lambda r: pd.Series(data.strength_drag(r)), axis=1)
 
+components.header_art("outlook_2026")
 theme.eyebrow("Multifamily research · the speculative outlook")
 st.markdown("# 2026→2029 outlook")
 theme.caption("The same frozen model run on data through May 2026. It exists because "
@@ -87,7 +88,8 @@ fig.add_trace(go.Scattergeo(
     hoverinfo="skip", showlegend=False))
 fig.update_layout(coloraxis_colorbar=dict(title="Score", thickness=10, len=0.6,
                                           tickfont=dict(color=theme.MUTED)))
-st.plotly_chart(theme.style_fig(fig, 470), use_container_width=True)
+st.plotly_chart(theme.style_fig(fig, 470, speculative=True),
+                use_container_width=True)
 top3 = [t.split(",")[0].split("-")[0] for t in rank.head(3)["cbsa_title"]]
 theme.caption(f"Darker green = stronger mid-year fundamentals, speculatively. "
               f"{top3[0]} leads; {top3[1]} and {top3[2]} follow. Same map, weaker "

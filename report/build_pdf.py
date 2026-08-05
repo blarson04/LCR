@@ -32,6 +32,7 @@ for _p in (str(ROOT), str(APP)):
 import config                      # noqa: E402
 from ui import data                # noqa: E402  (bare mode: no Streamlit runtime)
 from theme import lcr_theme        # noqa: E402
+from theme import hero_art         # noqa: E402
 
 # ---- Brand tokens (theme/tokens.json, the single source of truth) -----------
 _T = lcr_theme.roles("light")
@@ -360,6 +361,40 @@ P_PIPE = chart_pipeline()
 P_WBAR = chart_weights_bar()
 P_TLINE = chart_timeline()
 
+# ---- Hero art (B-7 Tier 1: generated from this edition's frozen data) -------
+print("rendering hero art...")
+_top10 = rank.head(10)
+P_COVER_ART = hero_art.save(
+    hero_art.cover_backdrop(rank["score"].tolist()),
+    BUILD / "art_cover.png", transparent=True)
+P_DIV_KEY = hero_art.save(
+    hero_art.divider_top10_ranges(_top10["rank_lo"].tolist(),
+                                  _top10["rank_hi"].tolist(),
+                                  _top10["rank"].tolist()),
+    BUILD / "art_div_key.png")
+P_DIV_THEMES = hero_art.save(
+    hero_art.divider_weights([40, 25, 20, 10, 5]),
+    BUILD / "art_div_themes.png")
+P_DIV_TRACK = hero_art.save(
+    hero_art.divider_edge_windows(comp["top10_pp_vs_median"].tolist()),
+    BUILD / "art_div_track.png")
+P_DIV_APPX = hero_art.save(
+    hero_art.divider_tier_strip(rank["tier"].tolist() if has_tiers else []),
+    BUILD / "art_div_appendix.png")
+P_DIV_SPEC = hero_art.save(
+    hero_art.divider_speculative(), BUILD / "art_div_spec.png")
+
+# Site parity (B-7.3): the same generated assets serve as page-header art on
+# the corresponding site pages; committed so the deployed site has them.
+_SITE_ART = APP / "assets" / "art"
+_SITE_ART.mkdir(parents=True, exist_ok=True)
+import shutil                       # noqa: E402
+for _src, _dst in [(P_DIV_KEY, "home.png"), (P_DIV_APPX, "rankings.png"),
+                   (P_DIV_TRACK, "track_record.png"),
+                   (P_DIV_THEMES, "how_it_works.png"),
+                   (P_DIV_SPEC, "outlook_2026.png")]:
+    shutil.copyfile(_src, _SITE_ART / _dst)
+
 
 # ============================ document =======================================
 from reportlab.lib.pagesizes import letter                     # noqa: E402
@@ -374,6 +409,7 @@ from reportlab.platypus import (BaseDocTemplate, Frame, Image, KeepTogether,
 from reportlab.platypus import Paragraph as _Paragraph  # noqa: E402
 
 from typo import smart              # noqa: E402
+import components as rl_comp        # noqa: E402  (report/components.py, B-4)
 
 
 def Paragraph(text, style, **kw):
@@ -395,22 +431,27 @@ W, H = letter
 M = 0.75 * inch
 CW = W - 2 * M
 
+# B-1 type scale: 30/20/14/10.5/9, eyebrow 8.5 letterspaced.
+_TS = lcr_theme.type_scale_pdf()
 S = dict(
-    h1=ParagraphStyle("h1", fontName="Serif-SB", fontSize=22, leading=26,
-                      textColor=C_INK, spaceAfter=6),
-    h2=ParagraphStyle("h2", fontName="Serif-SB", fontSize=14.5, leading=18,
-                      textColor=C_INK, spaceBefore=16, spaceAfter=5,
-                      keepWithNext=1),
-    h3=ParagraphStyle("h3", fontName="Inter-SB", fontSize=10, leading=13,
-                      textColor=C_INK, spaceBefore=10, spaceAfter=3,
-                      keepWithNext=1),
-    body=ParagraphStyle("body", fontName="Inter", fontSize=9.2, leading=13.6,
-                        textColor=C_INK, spaceAfter=6),
-    bullet=ParagraphStyle("bullet", fontName="Inter", fontSize=9.2, leading=13.6,
-                          textColor=C_INK, leftIndent=12, bulletIndent=2, spaceAfter=5),
-    cap=ParagraphStyle("cap", fontName="Inter", fontSize=7.8, leading=11,
-                       textColor=C_MUTED, spaceAfter=8),
-    eyebrow=ParagraphStyle("eyebrow", fontName="Inter-SB", fontSize=7.5, leading=10,
+    h1=ParagraphStyle("h1", fontName="Serif-SB", fontSize=_TS["h1"],
+                      leading=_TS["h1"] * 1.12, textColor=C_INK, spaceAfter=7),
+    h2=ParagraphStyle("h2", fontName="Serif-SB", fontSize=_TS["h2"],
+                      leading=_TS["h2"] * 1.2, textColor=C_INK, spaceBefore=16,
+                      spaceAfter=5, keepWithNext=1),
+    h3=ParagraphStyle("h3", fontName="Inter-SB", fontSize=_TS["h3"],
+                      leading=_TS["h3"] * 1.25, textColor=C_INK, spaceBefore=10,
+                      spaceAfter=3, keepWithNext=1),
+    body=ParagraphStyle("body", fontName="Inter", fontSize=_TS["body"],
+                        leading=_TS["body"] * 1.42, textColor=C_INK, spaceAfter=6),
+    bullet=ParagraphStyle("bullet", fontName="Inter", fontSize=_TS["body"],
+                          leading=_TS["body"] * 1.42, textColor=C_INK,
+                          leftIndent=12, bulletIndent=2, spaceAfter=5),
+    cap=ParagraphStyle("cap", fontName="Inter", fontSize=_TS["caption"],
+                       leading=_TS["caption"] * 1.35, textColor=C_MUTED,
+                       spaceAfter=8),
+    eyebrow=ParagraphStyle("eyebrow", fontName="Inter-SB",
+                           fontSize=_TS["eyebrow"], leading=_TS["eyebrow"] * 1.3,
                            textColor=C_MUTED, spaceAfter=2),
 )
 
@@ -427,6 +468,57 @@ def hr(width=CW, space_before=4, space_after=8):
     return [Spacer(1, space_before), t, Spacer(1, space_after)]
 
 
+# ---- Section divider band (B-1/B-7): pine field, paper-color serif title,
+# this section's own data as linework art. Structure is information: every
+# divider carries a real graphic from the frozen edition.
+C_PINE = colors.HexColor(_T["ACCENT"])
+_DIV_KICK = ParagraphStyle("div_kick", fontName="Inter-SB", fontSize=8.5,
+                           leading=11, textColor=C_PAPER)
+_DIV_TITLE = ParagraphStyle("div_title", fontName="Serif-SB", fontSize=26,
+                            leading=30, textColor=C_PAPER)
+_DIV_SUB = ParagraphStyle("div_sub", fontName="Inter", fontSize=9,
+                          leading=12.2, textColor=C_PAPER)
+
+
+def divider(kicker: str, title: str, art_path, art_ratio: float = 2.1 / 8.5,
+            subtitle: str | None = None):
+    """A half-page section divider: pine band with kicker, serif title, and
+    the section's data rendered as paper-color linework."""
+    # Letterspaced eyebrow: NBSPs, because reportlab collapses runs of
+    # ASCII spaces and Inter lacks the em-space glyph.
+    spaced = " ".join(kicker.upper()).replace(" ", "  ")
+    rows = [[Paragraph(spaced, _DIV_KICK)],
+            [Paragraph(title, _DIV_TITLE)]]
+    if subtitle:
+        rows.append([Paragraph(subtitle, _DIV_SUB)])
+    rows.append([Image(str(art_path), width=CW - 0.5 * inch,
+                       height=(CW - 0.5 * inch) * art_ratio)])
+    t = Table(rows, colWidths=[CW])
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), C_PINE),
+        ("LEFTPADDING", (0, 0), (-1, -1), 18),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 18),
+        ("TOPPADDING", (0, 0), (0, 0), 18),
+        ("TOPPADDING", (0, 1), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, -1), (-1, -1), 18),
+        ("ALIGN", (0, -1), (0, -1), "CENTER"),
+    ]))
+    return [t, Spacer(1, 16)]
+
+
+def draw_rail_mark(canvas, x, y, width=0.24 * inch, r=1.7):
+    """The freeze-grade rail reduced to its geometry (B-7 rail motif): line,
+    solid dot (frozen), open circle (graded). The running brand mark."""
+    canvas.saveState()
+    canvas.setStrokeColor(C_MUTED)
+    canvas.setLineWidth(0.8)
+    canvas.line(x + r, y, x + width - r, y)
+    canvas.setFillColor(C_MUTED)
+    canvas.circle(x + r, y, r, stroke=0, fill=1)
+    canvas.circle(x + width - r, y, r, stroke=1, fill=0)
+    canvas.restoreState()
+
+
 def on_page(canvas, doc):
     canvas.saveState()
     canvas.setFillColor(C_MUTED)
@@ -437,6 +529,7 @@ def on_page(canvas, doc):
     canvas.setStrokeColor(C_LINE)
     canvas.setLineWidth(0.6)
     canvas.line(M, 0.62 * inch, W - M, 0.62 * inch)
+    draw_rail_mark(canvas, M, H - 0.475 * inch)
     canvas.setFont("Inter-SB", 6.6)
     canvas.setFillColor(C_MUTED)
     canvas.drawRightString(W - M, H - 0.5 * inch,
@@ -477,35 +570,44 @@ def on_cover(canvas, doc):
                       f"A validated {HORIZON} outlook and a speculative 2026→"
                       f"2029 view, built entirely on free public data.")
 
-    # ---- "In this report" contents (fills the cover's middle) ----------------
-    toc = ["Key findings and the top 10", "Every market against the average",
-           "The map and the tiers", "The five themes",
-           f"Market spotlight: {top_city}", "The track record",
-           "How the score is built", "The speculative 2026–2029 outlook",
-           f"Appendix: all {N} markets"]
-    ty = H - 6.1 * inch
-    canvas.setFont("Inter-SB", 8)
-    canvas.setFillColor(C_MUTED)
-    canvas.drawString(M, ty, "IN THIS REPORT")
-    canvas.setFont("Serif", 10.5)
-    for i, item in enumerate(toc):
-        y = ty - 0.34 * inch - i * 0.265 * inch
-        canvas.setFillColor(C_ACCENT)
-        canvas.rect(M, y + 1.5, 0.12 * inch, 1.1, stroke=0, fill=1)
-        canvas.setFillColor(C_INK)
-        canvas.drawString(M + 0.28 * inch, y, item)
+    # ---- hero band: the dataset itself as cover art (B-2/B-7 Tier 1) ---------
+    # The full 110-market diverging chart, quiet and unlabeled, edge to edge.
+    canvas.drawImage(str(P_COVER_ART), 0, 3.05 * inch, width=W,
+                     height=2.35 * inch, mask="auto",
+                     preserveAspectRatio=False)
 
-    # ---- anchored stat row (rules and type only; no fills) -------------------
+    # ---- the freeze-grade rail, large (the signature element, B-1) -----------
+    rail_y = 2.72 * inch
+    rx0, rx1 = M + 0.05 * inch, W - M - 0.05 * inch
+    canvas.setStrokeColor(C_MUTED)
+    canvas.setLineWidth(1.1)
+    canvas.line(rx0 + 5, rail_y, rx1 - 5, rail_y)
+    canvas.setFillColor(C_INK)
+    canvas.setStrokeColor(C_INK)
+    canvas.circle(rx0 + 5, rail_y, 4.4, stroke=0, fill=1)
+    canvas.circle(rx1 - 5, rail_y, 4.4, stroke=1, fill=0)
+    canvas.setFont("Inter-SB", 7)
+    canvas.setFillColor(C_INK)
+    canvas.drawString(rx0, rail_y - 0.19 * inch, f"Frozen · {TODAY}")
+    canvas.drawRightString(rx1, rail_y - 0.19 * inch, "Graded · early 2029")
+    canvas.setFont("Inter", 6.6)
+    canvas.setFillColor(C_MUTED)
+    canvas.drawString(rx0, rail_y - 0.33 * inch,
+                      "every ranking published before its outcome")
+    canvas.drawRightString(rx1, rail_y - 0.33 * inch,
+                           "scored against realized rent growth, whatever it shows")
+
+    # ---- anchored stat row: each number carries its caveat inline (B-2) ------
     full_tau_row = bl.loc[bl["tau_3y"].idxmax()]
     band_h = 2.05 * inch
     canvas.setStrokeColor(C_INK)
     canvas.setLineWidth(1.1)
     canvas.line(M, band_h, W - M, band_h)
     stats = [
-        (f"{float(full_tau_row['tau_3y']):.2f}", "RANK AGREEMENT WITH",
-         "REALIZED 3-YEAR RENT GROWTH"),
-        (f"{pp_pooled:+.1f} pp", "TOP-10 EDGE OVER THE MEDIAN",
-         "MARKET, PER COMPLETED WINDOW"),
+        (f"{float(full_tau_row['tau_3y']):.2f}", "POOLED TAU ON FINALIZED DATA",
+         "RANDOM GUESSING SCORES ABOUT 0"),
+        (f"{pp_pooled:+.1f} pp", "TOP-10 EDGE PER COMPLETED WINDOW",
+         "NEAR ZERO IN THE 2020–22 SHOCK"),
         (f"{N}", "MARKETS RANKED, EVERY RANKING",
          "FROZEN BEFORE ITS OUTCOME"),
     ]
@@ -549,13 +651,54 @@ doc.addPageTemplates([
 
 story = [NextPageTemplate("page"), PageBreak()]
 
+# ---- Contents (B-5: the pre-commitment is a feature; grade dates surface) ----
+_toc_items = [
+    ("Key findings and the top 10", ""),
+    ("Every market against the average", ""),
+    ("The map and the tiers", ""),
+    ("The five themes", ""),
+    (f"Market spotlight: {top_city}", ""),
+    ("The track record",
+     "2023 calls graded mid-2027 · 2025→2028 graded early 2029"),
+    ("How the score is built", ""),
+    ("The speculative 2026–2029 outlook", "failed validation; labeled throughout"),
+    (f"Appendix: all {N} markets", ""),
+]
+_toc_title = ParagraphStyle("toc_t", fontName="Serif", fontSize=11.5,
+                            leading=15, textColor=C_INK)
+_toc_note = ParagraphStyle("toc_n", fontName="Inter", fontSize=8,
+                           leading=11, textColor=C_MUTED)
+_toc_rows = []
+for _t, _note in _toc_items:
+    _cell = [Paragraph(_t, _toc_title)]
+    if _note:
+        _cell.append(Paragraph(_note, _toc_note))
+    _toc_rows.append(["", _cell])
+_toc_tab = Table(_toc_rows, colWidths=[0.28 * inch, CW - 0.28 * inch])
+_toc_tab.setStyle(TableStyle([
+    ("LINEBEFORE", (0, 0), (0, -1), 2.2, C_ACCENT),
+    ("LINEBELOW", (0, 0), (-1, -2), 0.4, C_LINE),
+    ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+    ("LEFTPADDING", (1, 0), (1, -1), 4),
+    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+]))
+story += [eyebrow("Contents"),
+          Paragraph("In this report", S["h1"]), *hr(),
+          _toc_tab,
+          Spacer(1, 10),
+          Paragraph("Grading dates are pre-committed: each frozen screen is scored "
+                    "against realized rent growth when its window closes, whatever "
+                    "the result shows.", S["cap"]),
+          PageBreak()]
+
 # ---- Key findings ------------------------------------------------------------
 s1, s2 = data.top_strengths(top)
 lift = " and ".join(s.lower() for s in (s1, s2) if s) or "balanced fundamentals"
 lead_range = (f"; its 90% rank range is {int(top['rank_lo'])}-{int(top['rank_hi'])}"
               if pd.notna(top.get("rank_lo")) else "")
-story += [eyebrow("Key findings"),
-          Paragraph("What the screen says", S["h1"]), *hr(),
+story += [*divider("Key findings", "What the screen says", P_DIV_KEY,
+                   subtitle="The top ten's rank ranges, drawn to scale: the "
+                            "interval, not the point, is the claim."),
           Paragraph(f"<b>{top_city} leads the current screen</b> (a {HORIZON} outlook), "
                     f"lifted most by {lift}{lead_range}.", S["bullet"], bulletText="•"),
           Paragraph(f"<b>The screen's top-10 markets out-grew the median market by "
@@ -692,8 +835,10 @@ THEMES = [
      "Employment spread across industries: a market leaning on one sector carries more "
      "downside risk to rents, so diversity earns a small, steady credit."),
 ]
-story += [eyebrow("What drives the rankings"),
-          Paragraph("Five themes, eight measures", S["h1"]), *hr(),
+story += [*divider("What drives the rankings", "Five themes, eight measures",
+                   P_DIV_THEMES,
+                   subtitle="The five published weights, drawn to scale: "
+                            "40 · 25 · 20 · 10 · 5."),
           Paragraph("Every market is scored on the same eight measures, grouped into the "
                     "five themes below (heaviest first). Each measure compares markets "
                     "within the same year, each theme carries a fixed published weight, and "
@@ -769,8 +914,10 @@ if int(top["rank_hi"]) > 1:
 story += [PageBreak()]
 
 # ---- Track record ---------------------------------------------------------------
-story += [eyebrow("Has it worked?"),
-          Paragraph("The track record", S["h1"]), *hr(),
+story += [*divider("Has it worked?", "The track record", P_DIV_TRACK,
+                   subtitle="Six completed windows' top-10 edge, with the "
+                            "freeze-then-grade rail beneath: frozen at "
+                            "publication, graded three years on."),
           Image(str(P_TLINE), width=CW, height=CW * (1.05 / 7.0)),
           Paragraph("How every window is graded, shown for 2019: the call is frozen at "
                     "publication and scored three years later.", S["cap"]),
@@ -937,6 +1084,10 @@ _cell = ParagraphStyle("cell", fontName="Inter", fontSize=8, leading=10.5,
 vrows = [["Measure", "Source", "Through"]]
 for k in data.INDICATORS:
     src_txt, through = data.VINTAGE_SOURCES[k]
+    url = data.SOURCE_LINKS.get(k)
+    if url:
+        src_txt = (f"{src_txt} · <a href='{url}' color='{ACCENT}'>"
+                   f"source page</a>")
     vrows.append([Paragraph(data.PRETTY[k], _cell_md),
                   Paragraph(src_txt, _cell), through])
 vt = Table(vrows, colWidths=[1.9 * inch, 4.4 * inch, 0.7 * inch])
@@ -988,8 +1139,11 @@ if _spec_rank_p.exists() and _spec_acc_p.exists():
         ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
         ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
     ]))
-    story += [eyebrow("Speculative outlook"),
-              Paragraph("The speculative 2026-2029 outlook", S["h1"]), *hr(),
+    story += [*divider("Speculative outlook", "The speculative 2026-2029 outlook",
+                       P_DIV_SPEC,
+                       subtitle="The freeze-grade rail breaks here: this "
+                                "configuration failed its validation gate and "
+                                "makes no graded claim."),
               warn, Spacer(1, 8),
               Paragraph("This is the same frozen model run on data through May 2026: "
                         "five months of rents, jobs, home values, and permits; migration "
@@ -1025,8 +1179,10 @@ if _spec_rank_p.exists() and _spec_acc_p.exists():
               PageBreak()]
 
 # ---- Appendix: full table -----------------------------------------------------------
-story += [eyebrow("Appendix"),
-          Paragraph(f"All {N} markets", S["h1"]), *hr(),
+story += [*divider("Appendix", f"All {N} markets", P_DIV_APPX,
+                   subtitle="All 110 markets as one strip, colored by tier, "
+                            "leading cluster to lagging: the legend for the "
+                            "table that follows."),
           Paragraph("Treat this as a screen, not a precise ordering: the range beside "
                     "each rank shows where that rank lands 90% of the time once "
                     "measurement noise is accounted for, and markets with overlapping "
@@ -1041,7 +1197,9 @@ at = Table(arows, colWidths=[0.85 * inch, 2.75 * inch, 0.6 * inch, 1.45 * inch, 
            repeatRows=1)
 score_colors = [("TEXTCOLOR", (2, i + 1), (2, i + 1), C_POS if r["score"] >= 0 else C_NEG)
                 for i, (_, r) in enumerate(rank.iterrows())]
-at.setStyle(TableStyle([
+# Ranges read as context, not noise: the range half of the Rank column and the
+# whole row sit on the tier-band component (B-4.4).
+_appx_base = [
     ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7),
     ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
     ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
@@ -1053,7 +1211,12 @@ at.setStyle(TableStyle([
     ("LINEBELOW", (0, 1), (-1, -2), 0.3, C_LINE),
     ("TOPPADDING", (0, 0), (-1, -1), 2.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
     *score_colors,
-]))
+]
+if has_tiers:
+    at.setStyle(TableStyle(rl_comp.tier_band_style(_appx_base,
+                                                   rank["tier"].tolist())))
+else:
+    at.setStyle(TableStyle(_appx_base))
 story += [at, PageBreak()]
 
 # ---- About + disclaimer ------------------------------------------------------------

@@ -107,6 +107,18 @@ VINTAGE_SOURCES = {
     "employment_diversity": ("BLS employment census (QCEW), industry mix", "2024"),
 }
 
+# Primary source pages, hyperlinked wherever the sources table renders (B-5).
+SOURCE_LINKS = {
+    "net_migration": "https://www.census.gov/programs-surveys/popest.html",
+    "job_growth": "https://www.bls.gov/cew/",
+    "income_growth": "https://www.bea.gov/data/income-saving/personal-income-county-metro-and-other-areas",
+    "permits_to_stock": "https://www.census.gov/construction/bps/",
+    "rent_to_income": "https://www.zillow.com/research/data/",
+    "cost_to_own_vs_rent": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+    "trailing_rent_growth": "https://www.zillow.com/research/data/",
+    "employment_diversity": "https://www.bls.gov/cew/",
+}
+
 STATE_CENTROIDS = {
     "AL": (32.8, -86.8), "AZ": (34.2, -111.7), "AR": (34.8, -92.4), "CA": (37.2, -119.5),
     "CO": (39.0, -105.5), "CT": (41.6, -72.7), "DE": (39.0, -75.5), "DC": (38.9, -77.0),

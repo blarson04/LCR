@@ -21,7 +21,7 @@ for _p in (str(ROOT), str(APP)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from ui import data, theme  # noqa: E402
+from ui import components, data, theme  # noqa: E402
 import config               # noqa: E402
 
 theme.inject_css(reading=True)
@@ -32,6 +32,7 @@ rank[["strength_1", "strength_2"]] = rank.apply(
     lambda r: pd.Series(data.top_strengths(r)), axis=1)
 
 # ---- Header -----------------------------------------------------------------
+components.header_art("home")
 theme.eyebrow("Multifamily research · the report")
 st.markdown("# Key findings")
 theme.caption(f"What the screen says right now: the {len(rank)} largest US rental "
