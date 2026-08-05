@@ -51,7 +51,7 @@ st.write("")
 st.markdown("## The method")
 st.markdown(f"""
 The screen ranks every US metro area over 500,000 people with continuous rent data on
-**{data.N_IND} measures** of fundamentals that historically come before strong rent
+**eight measures** of fundamentals that historically come before strong rent
 growth. Each measure is compared across markets within the same year (so nationwide
 swings cancel out), flipped where more is worse (heavy construction, stretched rents),
 weighted by a fixed published share, and summed into one score. The same formula runs
