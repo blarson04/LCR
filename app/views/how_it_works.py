@@ -73,7 +73,7 @@ THEMES = [
      "nowhere to go) and the cost of owning versus renting (when buying is far "
      "pricier, households stay renters longer)."),
     ("Momentum", "10%", "Recent rent growth, deliberately held to a small weight: "
-     "informative, but it decays and inverted badly in the 2021–22 shock."),
+     "informative, but it decays and inverted badly in the 2020–22 shock."),
     ("Resilience", "5%", "Employment spread across industries; a one-sector economy "
      "carries more downside risk to rents."),
 ]
@@ -188,13 +188,13 @@ GLOSSARY = [
      "Two separately logged checks passed: a one-shot, pre-registered accuracy gate "
      "on history, and an automated data-quality review with every flag signed off "
      "in the public decision log.",
-     "A bar that never fails proves nothing; two configurations failed it and were "
+     "A bar that never fails proves nothing; three configurations failed it and were "
      "published, which is what makes the passes meaningful."),
     ("Proxied inputs",
      "The current screen substitutes validated fast-publishing sources for inputs "
      "that publish one to two years late; the badge marks it wherever it applies.",
-     "It is why a 2025→2028 forecast can exist at all, and the substitution kept "
-     "96.6% of the finalized model's signal in testing."),
+     "It is why a validated 2025→2028 screen can exist at all, and the substitution "
+     "kept 96.6% of the finalized model's signal in testing."),
 ]
 gl_html = ""
 for term, what, why in GLOSSARY:

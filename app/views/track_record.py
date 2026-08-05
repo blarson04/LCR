@@ -32,6 +32,31 @@ theme.caption("How the screen has performed against what actually happened, plus
               "frozen record of every published run.")
 st.write("")
 
+# ---- How to read these numbers (defined before any table uses them) ---------
+_GUIDE = [
+    ("Tau (rank agreement)",
+     "How well the ranking agreed with the rent growth that followed, from −1 to "
+     "+1; 0 means no relationship, and random guessing scores about 0."),
+    ("Precision@10 (P@10)",
+     "Of the screen's ten highest-ranked markets, the share that landed in the top "
+     "quarter by actual rent growth."),
+    ("Top-10 edge (points)",
+     "How many percentage points more rent growth the top ten delivered than the "
+     "median market over the window."),
+    ("Rank range and tier",
+     "Where a rank lands 90% of the time once measurement noise is accounted for; "
+     "same-tier markets are peers, not an ordering."),
+]
+_rows = "".join(
+    f"<div style='margin-top:.35rem'><span style='font-weight:600'>{t}.</span> "
+    f"<span style='font-size:13.5px'>{x}</span></div>" for t, x in _GUIDE)
+st.markdown(
+    f"<div style='background:{theme.SURFACE};border:1px solid {theme.LINE};"
+    f"border-radius:8px;padding:.8rem 1.1rem;margin-bottom:1rem'>"
+    f"<div style='font-family:{theme.FONT_HEAD};font-size:16px;font-weight:600'>"
+    f"How to read these numbers</div>{_rows}</div>",
+    unsafe_allow_html=True)
+
 # ---- 1. The edge, in plain units --------------------------------------------
 st.markdown("## The edge, in points of rent growth")
 st.markdown(diagrams.walkforward_timeline(2019), unsafe_allow_html=True)
@@ -70,7 +95,7 @@ if es_path.exists():
     cm, mm = piv["Composite (model)"], piv["Momentum (trailing rent)"]
     theme.caption(
         f"Pooled: this screen's top-10 beat the median market by {cm.mean():+.1f} "
-        f"points of 3-year rent growth (momentum {mm.mean():+.1f}); in the 2021–22 "
+        f"points of 3-year rent growth (momentum {mm.mean():+.1f}); in the 2020–22 "
         f"shock rows momentum flipped firmly negative while the screen held near "
         f"flat. Validation reflects normal conditions; the site flags shock periods.")
 
@@ -80,15 +105,16 @@ st.markdown(
     "Every fresher-than-finalized configuration faced the same pre-registered gate "
     "(keep 85% of the model's signal, match the top-10 on 7 of 10 names), one "
     "attempt each, outcome published either way:\n\n"
-    "1. **Five estimated inputs** kept 74.8%. **Failed;** not published.\n"
+    "1. **Five estimated inputs** kept 74.8%. **Failed;** never shipped.\n"
     "2. **Fresher jobs data** kept 84.66%. **Failed by a third of a point**; pulled, "
     "not rounded up.\n"
     "3. **The 2024-vintage screen** (one estimated input) kept **95.5%**. **Passed.**\n"
     "4. **Income chained by state growth** (the fix for failure #2's diagnosed cause) "
     "kept **96.6%**. **Passed**; it is the current 2025→2028 screen.\n"
     "5. **The mid-year 2026 screen** (five months of data; income not observable) "
-    "kept **82.7%** and matched **4.8 of 10**. **Failed both bars**; it ships only "
-    "as a labeled speculative outlook, never as a validated screen.")
+    "kept **82.7%** and matched **4.8 of 10** (averaged across the test windows). "
+    "**Failed both bars**; it ships only as a labeled speculative outlook, never as "
+    "a validated screen.")
 theme.caption("A validation bar that never fails anything proves nothing; ours failed "
               "three of five attempts. Separately, nine candidate measures and model "
               "variants have been gated one-shot; zero were adopted, every negative "
@@ -216,7 +242,7 @@ with st.expander("Full statistics: rank agreement, real-time vs finalized"):
         f"Agreement is weighted Kendall's tau, a rank-agreement score from −1 to +1 "
         f"where 0 means no relationship. In calm (pre-COVID) windows the finalized "
         f"model scores {d['pc_tau']:.2f} with {pc_prec:.0%} of top-10 picks landing "
-        f"in the top quarter of markets; in the 2021–22 shock windows agreement falls "
+        f"in the top quarter of markets; in the 2020–22 shock windows agreement falls "
         f"to {sh_tau:.2f}. Real-time uses only proxies and carried-forward values a "
         f"user could have held at the time; finalized uses revised data that arrives "
         f"about two years later, a ceiling no live user ever had.")
@@ -285,8 +311,8 @@ with st.expander("How sure are we? The uncertainty behind the averages"):
   {"**survives**" if bool(tu['eq_edge_survives_state_cluster']) else "**does not survive**"}
   that stricter test.
 - Narrow pooled intervals reported elsewhere capture **ranking uncertainty only**:
-  they say which metros, conditional on the six windows history happened to provide,
-  and are silent about what the next regime does.""")
+  they say which metros rank where, conditional on the six windows history happened
+  to provide, and are silent about what the next regime does.""")
 
 st.markdown("Next: [back to the key findings](home).")
 

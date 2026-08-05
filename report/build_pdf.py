@@ -96,6 +96,17 @@ if not m3_path.exists():
 m3 = pd.read_csv(m3_path) if m3_path.exists() else pd.DataFrame()
 bl = pd.read_csv(config.PROCESSED_DIR / "baseline_comparison.csv")
 
+# A-11: the report may not build if any headline number drifts from the
+# canonical-figures YAML (tests/canonical_figures.yaml).
+sys.path.insert(0, str(ROOT / "tests"))
+import copy_qa                     # noqa: E402
+_canon_problems = copy_qa.canonical_figure_mismatches(
+    rank, d["backtest"], config.PROCESSED_DIR, config.INDICATORS)
+if _canon_problems:
+    raise SystemExit("canonical figures out of sync:\n  "
+                     + "\n  ".join(_canon_problems))
+print("canonical figures: OK")
+
 TODAY = date.today().strftime("%B %Y")
 
 
@@ -609,7 +620,9 @@ t.setStyle(TableStyle([
 story += [t,
           Paragraph("Rank (90% range), score vs the average market (0), and the themes "
                     "that lift each score most. The spread between markets matters more "
-                    "than any single value.", S["cap"]),
+                    "than any single value. A market can hold a high single-edition rank "
+                    "while its range sits lower; the tier, not the rank, is the durable "
+                    "claim.", S["cap"]),
           PageBreak()]
 
 # ---- Chart 1: every market ------------------------------------------------------
@@ -676,7 +689,7 @@ THEMES = [
      "when buying is far pricier than renting, households stay renters longer)."),
     ("Momentum", "a deliberately small 10%", "What rents have done lately",
      "Recent rent growth, deliberately held to a small weight: informative, but it "
-     "decays with time and inverted badly in the 2021-22 shock. A supporting witness, "
+     "decays with time and inverted badly in the 2020-22 shock. A supporting witness, "
      "not the verdict."),
     ("Resilience", "5% of the score", "How diversified the local economy is",
      "Employment spread across industries: a market leaning on one sector carries more "
@@ -771,7 +784,7 @@ story += [eyebrow("Has it worked?"),
           Paragraph(f"Calm windows came in between "
                     f"{comp[comp.pred_year <= 2019]['top10_pp_vs_median'].min():+.1f} and "
                     f"{comp[comp.pred_year <= 2019]['top10_pp_vs_median'].max():+.1f} points. "
-                    f"The 2021-22 shock windows were roughly flat; picking on rent momentum "
+                    f"The shock (2020-22) windows were roughly flat; picking on rent momentum "
                     f"alone turned firmly negative in those same windows. The screen earns "
                     f"its edge in normal conditions and loses most of it in shocks.",
                     S["cap"])]
@@ -848,7 +861,7 @@ story += [KeepTogether([
                     "signal and match its top 10 on at least 7 of 10 names) in a single "
                     "attempt, with the outcome published either way:", S["body"]),
           Paragraph("<b>2025 screen, five estimated inputs</b> kept 74.8% of the signal. "
-                    "<b>Failed;</b> not published.", S["bullet"], bulletText="1."),
+                    "<b>Failed;</b> never shipped.", S["bullet"], bulletText="1."),
           Paragraph("<b>2025 screen, fresher jobs data</b> kept 84.66%. <b>Failed by a "
                     "third of a point</b>; not rounded up; the edition was pulled.",
                     S["bullet"], bulletText="2."),
@@ -859,9 +872,10 @@ story += [KeepTogether([
                     "matched the top-10 on 7.4/10. <b>Passed</b>, and is this report's "
                     "current 2025-2028 forecast.", S["bullet"], bulletText="4."),
           Paragraph("<b>Mid-year 2026 screen, five months of data</b> kept 82.7% and "
-                    "matched 4.8 of 10. <b>Failed both bars</b>; it appears in this report "
-                    "only as a clearly-labeled speculative outlook, never as a validated "
-                    "screen.", S["bullet"], bulletText="5."),
+                    "matched 4.8 of 10 (averaged across the test windows). <b>Failed "
+                    "both bars</b>; it appears in this report only as a clearly-labeled "
+                    "speculative outlook, never as a validated screen.",
+                    S["bullet"], bulletText="5."),
           Paragraph("A validation bar that never fails anything proves nothing. Ours failed "
                     "three of five attempts, which is exactly why the two that passed mean "
                     "something.", S["cap"])]),

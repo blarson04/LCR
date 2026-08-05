@@ -169,7 +169,10 @@ def why_sentence(row) -> str:
     contribs = {b: row.get(f"bucket_{b}", 0.0) for b in BUCKETS}
     pos = max(contribs, key=contribs.get)
     neg = min(contribs, key=contribs.get)
-    txt = (f"Ranks <b>#{int(row['rank'])}</b> chiefly on strong "
+    # "limited new supply" carries its own qualifier; "strong limited new
+    # supply" is a template collision (A-8).
+    qual = "" if pos == "Supply" else "strong "
+    txt = (f"Ranks <b>#{int(row['rank'])}</b> chiefly on {qual}"
            f"<b>{BUCKET_LABEL[pos]}</b> ({contribs[pos]:+.2f})")
     if contribs[neg] < 0:
         txt += f", held back by weak <b>{BUCKET_LABEL[neg]}</b> ({contribs[neg]:+.2f})."

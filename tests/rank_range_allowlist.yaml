@@ -1,0 +1,16 @@
+# Rank-vs-range sanity check allowlist (A-11).
+#
+# A market whose point rank falls OUTSIDE its own 90% rank range can be
+# legitimate (the range comes from noise-perturbing the two fast-moving
+# inputs, and the point estimate need not sit inside the replicate band) but
+# must be INTENTIONAL: each such market needs an entry here with a one-line
+# reason, or the smoke test fails. Review this list at every edition freeze.
+#
+# Flat "cbsa_code: reason" only; parsed by tests/copy_qa.py.
+
+46520: Urban Honolulu · rank 4, range 12-76 · point rank above its noise band; tier (Mid) is the claim shown to readers (reviewed 2026-08-04)
+44700: Stockton-Lodi · rank 28, range 43-97 · point rank above its noise band; tier Weak (reviewed 2026-08-04)
+12540: Bakersfield-Delano · rank 40, range 45-98 · point rank above its noise band; tier Weak (reviewed 2026-08-04)
+22220: Fayetteville-Springdale-Rogers · rank 41, range 43-97 · point rank above its noise band; tier Weak (reviewed 2026-08-04)
+12580: Baltimore-Columbia-Towson · rank 87, range 19-82 · point rank below its noise band; tier Mid (reviewed 2026-08-04)
+47900: Washington-Arlington-Alexandria · rank 98, range 36-95 · point rank below its noise band; tier Weak (reviewed 2026-08-04)

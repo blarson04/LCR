@@ -49,7 +49,7 @@ flag_on = nat > config.REGIME_FLAG_THRESHOLD
 theme.caption(
     (f"Elevated-uncertainty flag: national rent growth in {ed['year']} is "
      f"{nat:+.1%}, above the published rule; in the two years this flag fired "
-     f"historically (2021–22), the screen's accuracy broke down."
+     f"historically (2021 and 2022), the screen's accuracy broke down."
      if flag_on else
      f"Conditions in the {ed['year']} scoring year look typical: national rent "
      f"growth {nat:+.1%}, under the published uncertainty-flag rule (it fires "

@@ -36,7 +36,7 @@ theme.eyebrow("Multifamily research · the report")
 st.markdown("# Key findings")
 theme.caption(f"What the screen says right now: the {len(rank)} largest US rental "
               "markets, ranked by fundamentals that have historically come before "
-              "strong rent growth. A research screen; not investment advice.")
+              "strong rent growth. A research screen, not investment advice.")
 st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 theme.caption("Built on preliminary 2025 inputs through validated substitutes; what "
               "\"validated\" means and how every number works: "
@@ -106,10 +106,16 @@ st.markdown(rows_html, unsafe_allow_html=True)
 cluster_note = ""
 if has_tiers:
     n_cluster = int((rank["tier"] == "Leading cluster").sum())
-    cluster_note = (f" These ten sit in a {n_cluster}-market leading cluster; "
-                    "ordering inside it is noise.")
+    n_in = int((rank.head(10)["tier"] == "Leading cluster").sum())
+    _words = {10: "All ten", 9: "Nine", 8: "Eight", 7: "Seven", 6: "Six",
+              5: "Five", 4: "Four", 3: "Three", 2: "Two", 1: "One"}
+    n_in_txt = _words.get(n_in, str(n_in))
+    cluster_note = (f" {n_in_txt} of these ten sit in a {n_cluster}-market "
+                    "leading cluster; ordering inside it is noise.")
 theme.caption("Rank (90% range) and the themes lifting each score most."
-              f"{cluster_note} Markets missing a measure take a neutral fill. "
+              f"{cluster_note} A market can hold a high single-edition rank while "
+              "its range sits lower; the tier, not the rank, is the durable claim. "
+              "Markets missing a measure take a neutral fill. "
               "Scores and all tiers: Full rankings.")
 
 # ---- The case for the leader (auto-derived, replaces the spotlight page) ----

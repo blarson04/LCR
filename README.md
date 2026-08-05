@@ -8,7 +8,7 @@ public data and served as a Streamlit site. It is a research screen, not investm
 - Top-10 edge: **+6.0 pp** of 3-yr rent growth vs the median market, pooled over six windows
 - Pre-COVID: weighted Kendall's τ **0.59**, precision@10 **85%**; real-time-achievable pooled
   τ **0.38** (85% of the finalized ceiling 0.44)
-- In the 2021–22 shock the edge largely disappears (τ ≈ 0.16) — reported, and flagged by a
+- In the 2020–22 shock the edge largely disappears (τ ≈ 0.16) — reported, and flagged by a
   validated ex-ante rule
 - Two provisional "nowcast" attempts **failed their pre-committed validation gate** (latest:
   84.7% signal retention vs ≥85% required) and are published as negative results

@@ -1,0 +1,25 @@
+# Project spelling allowlist (A-11): domain jargon, data-source names, and
+# defensible coinages that the en_US dictionary lacks. One word per line,
+# case-insensitive. Add here ONLY after confirming the word is intentional.
+analytics
+backtest
+backtests
+cbsa
+chandan
+covid
+dispositioned
+fhfa
+homebuilding
+jittered
+multi
+nowcast
+overfitting
+proxied
+qcew
+resampled
+sitewide
+skippable
+winsorized
+zhvi
+zillow
+zori

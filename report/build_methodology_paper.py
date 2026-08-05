@@ -292,8 +292,8 @@ story += [
         "The project is public by design. Every method is documented in a running "
         "decision log, every published ranking is frozen to an immutable registry "
         "before its outcome window closes, failed experiments are published "
-        "alongside successes, and the dates on which the outstanding forecasts "
-        "will be graded are pre-committed. The methodological posture borrows from "
+        "alongside successes, and the dates on which the outstanding frozen "
+        "screens will be graded are pre-committed. The methodological posture borrows from "
         "pre-registration practice: specifications are logged before computation, "
         "each gets one attempt, and first results are final.", S["body"]),
 
@@ -481,7 +481,7 @@ story += [tbl(bl_rows, [3.7 * inch, 1.2 * inch, 1.2 * inch]),
               f"strongest.", S["body"]),
           Paragraph("6.3 The regime caveat, stated as a result", S["h2"]),
           Paragraph(
-              f"In the 2021-22 shock windows the screen's agreement falls to "
+              f"In the shock (2020-22) windows the screen's agreement falls to "
               f"{tau_sh:.2f} and the top-ten edge to roughly zero, while pure "
               f"momentum flips firmly negative. Across the "
               f"{int(tu['win3_n'])} observed windows tau ranges from "
@@ -492,7 +492,7 @@ story += [tbl(bl_rows, [3.7 * inch, 1.2 * inch, 1.2 * inch]),
               f"widens to [{float(tu['state_tau_lo']):.2f}, "
               f"{float(tu['state_tau_hi']):.2f}]. A published ex-ante rule flags "
               f"elevated-uncertainty scoring years (national rent growth above a "
-              f"fixed threshold, the only two historical firings being 2021-22) "
+              f"fixed threshold, the only two historical firings being 2021 and 2022) "
               f"wherever rankings are shown.", S["body"]),
 
           # ==================== 7. governance ================================

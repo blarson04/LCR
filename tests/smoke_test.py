@@ -46,6 +46,35 @@ def main() -> None:
     assert latest["rank"].min() == 1 and latest["rank"].max() == 110
     print(f"scoring: OK (110 metros ranked for {score_mod.SCORE_YEAR})")
 
+    # 3b. A-11 QA gates: copy consistency, canonical figures, rank-vs-range,
+    #     spelling. All rendered copy in both artifacts must comply.
+    sys.path.insert(0, str(ROOT / "tests"))
+    sys.path.insert(0, str(ROOT / "app"))
+    import copy_qa
+    from ui import data as site_data
+    problems = copy_qa.consistency_violations()
+    assert not problems, "copy consistency:\n  " + "\n  ".join(problems)
+    print(f"copy consistency: OK ({len(copy_qa.COPY_FILES)} modules)")
+
+    d = site_data.load()
+    ed = site_data.edition(d)
+    problems = copy_qa.canonical_figure_mismatches(
+        ed["rank"], d["backtest"], config.PROCESSED_DIR, config.INDICATORS)
+    assert not problems, "canonical figures:\n  " + "\n  ".join(problems)
+    print("canonical figures: OK (YAML matches recomputed outputs + both artifacts)")
+
+    problems = copy_qa.rank_range_violations(ed["rank"])
+    assert not problems, "rank vs range:\n  " + "\n  ".join(problems)
+    print("rank vs range: OK (every outlier allowlisted with a reason)")
+
+    spelling = copy_qa.spelling_violations()
+    if spelling is None:
+        print("spelling: SKIPPED (pyspellchecker not installed; "
+              "pip install -r requirements-dev.txt)")
+    else:
+        assert not spelling, "spelling:\n  " + "\n  ".join(spelling)
+        print("spelling: OK")
+
     # 4. Every site page renders without exception, in both themes.
     from streamlit.testing.v1 import AppTest
     views = ["home", "rankings", "metro", "how_it_works", "outlook_2026",

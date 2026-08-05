@@ -1,0 +1,37 @@
+# Canonical published figures (A-11 cross-artifact number check).
+#
+# Single source of truth for every headline number the site and the PDF report
+# both state. The smoke test recomputes the "computed" block from the committed
+# model outputs and fails on any mismatch; the "copy" block figures have no
+# machine-readable source (they are gate records) and are asserted to appear
+# verbatim in BOTH artifacts' copy.
+#
+# When a figure legitimately changes at an edition freeze, update it here in
+# the same commit that regenerates the outputs. Never loosen an assertion to
+# make a build pass.
+#
+# Flat "key: value" only; parsed by tests/copy_qa.py (no YAML dependency).
+
+# -- computed: recomputed from data/processed at test time --------------------
+pooled_tau_3y: 0.43            # weighted Kendall's tau, finalized, pooled, 3-yr
+precovid_p10_3y: 0.88          # precision@10, pre-COVID, 3-yr, finalized
+top10_edge_pp: 6.0             # composite top-10 edge vs median, pooled, points
+momentum_edge_pp: 4.8          # momentum baseline's edge, pooled, points
+n_markets: 110                 # ranked metros in the current edition
+n_leading_cluster: 23          # markets in the Leading cluster tier
+n_top10_in_cluster: 9          # of the top 10, how many sit in the cluster (A-1)
+gate_retention_bar: 0.85       # pre-registered gate: signal retention floor
+gate_overlap_bar: 7            # pre-registered gate: top-10 name-match floor
+gate5_retention: 0.827         # mid-year 2026 screen, failed gate (82.7%)
+gate5_overlap: 4.8             # mid-year 2026 screen, failed gate (4.8 of 10)
+weight_demand: 40
+weight_supply: 25
+weight_affordability: 20
+weight_momentum: 10
+weight_resilience: 5
+
+# -- copy: gate-record figures asserted verbatim in both artifacts ------------
+copy_gate1_retention: 74.8%
+copy_gate2_retention: 84.66%
+copy_gate3_retention: 95.5%
+copy_gate4_retention: 96.6%
