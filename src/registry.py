@@ -74,6 +74,16 @@ def freeze_run(score_year: int = score_mod.SCORE_YEAR) -> Path:
     if bt.exists():
         shutil.copy(bt, run_dir / "backtest_summary.csv")
 
+    # Distributable one-pager (C-4): generated INTO the frozen run before the
+    # manifest hashes, so old one-pagers can't be quietly revised either.
+    try:
+        sys.path.insert(0, str(config.ROOT / "report"))
+        from build_onepager import generate as _onepager
+        _onepager(ranking, score_year, run_dir, frozen_stamp=stamp)
+    except Exception as exc:  # never block a freeze on rendering
+        print(f"  WARNING: one-pager generation failed ({exc}); "
+              f"freeze continues without it")
+
     files = sorted(p.name for p in run_dir.iterdir())
     top = ranking.iloc[0]
     manifest = {

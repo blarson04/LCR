@@ -112,6 +112,11 @@ RANDOM_SEED = 42               # set wherever randomness enters, for reproducibi
 # into every frozen prediction run so the track record is unambiguous.
 MODEL_VERSION = "2.0.0"
 
+# Public site URL, printed (with a QR code) on the distributable one-pager.
+# TODO(Ben): set to the live site URL (and update when the custom domain
+# lands); the one-pager omits the link block while this is empty.
+SITE_URL = ""
+
 # Whether the current-year (proxied-input) edition may be shown on the site.
 # Set by gate outcomes ONLY. History: 74.8% FAIL (2026-07-02), 84.66% FAIL and
 # pulled (2026-07-06), then the v0.4 state-chained-income configuration PASSED

@@ -117,8 +117,10 @@ def gate_ledger(gates, width):
                            leading=12, textColor=C_NEG, alignment=2)
     rows = []
     for i, (passed, desc, outcome) in enumerate(gates, 1):
+        # "×" (U+00D7), not "✕" (U+2715): Inter lacks the latter glyph and a
+        # silently missing fail mark would soften failures (house rule 4).
         rows.append([
-            Paragraph("✓" if passed else "✕",
+            Paragraph("✓" if passed else "×",
                       mark_s_pass if passed else mark_s_fail),
             Paragraph(f"{i}.", num_s),
             Paragraph(desc, desc_s),

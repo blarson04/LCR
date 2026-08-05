@@ -1054,22 +1054,23 @@ story += [KeepTogether([
                     "pre-registered test (keep at least 85% of the finalized model's "
                     "signal and match its top 10 on at least 7 of 10 names) in a single "
                     "attempt, with the outcome published either way:", S["body"]),
-          Paragraph("<b>2025 screen, five estimated inputs</b> kept 74.8% of the signal. "
-                    "<b>Failed;</b> never shipped.", S["bullet"], bulletText="1."),
-          Paragraph("<b>2025 screen, fresher jobs data</b> kept 84.66%. <b>Failed by a "
-                    "third of a point</b>; not rounded up; the edition was pulled.",
-                    S["bullet"], bulletText="2."),
-          Paragraph("<b>2024-vintage screen, one estimated input</b> kept <b>95.5%</b>, "
-                    "matched the top-10 on 8.3/10. <b>Passed</b> (a 2024-2027 forecast).",
-                    S["bullet"], bulletText="3."),
-          Paragraph("<b>2025 screen, income chained by state growth</b> kept <b>96.6%</b>, "
-                    "matched the top-10 on 7.4/10. <b>Passed</b>, and is this report's "
-                    "current 2025-2028 forecast.", S["bullet"], bulletText="4."),
-          Paragraph("<b>Mid-year 2026 screen, five months of data</b> kept 82.7% and "
-                    "matched 4.8 of 10 (averaged across the test windows). <b>Failed "
-                    "both bars</b>; it appears in this report only as a clearly-labeled "
-                    "speculative outlook, never as a validated screen.",
-                    S["bullet"], bulletText="5."),
+          rl_comp.gate_ledger([
+              (False, "2025 screen, five estimated inputs kept 74.8% of the "
+                      "signal; never shipped.", "Failed"),
+              (False, "2025 screen, fresher jobs data kept 84.66%; not rounded "
+                      "up; the edition was pulled.", "Failed by 0.34 pt"),
+              (True, "2024-vintage screen, one estimated input kept 95.5%, "
+                     "matched the top-10 on 8.3/10 (a 2024-2027 forecast).",
+                     "Passed"),
+              (True, "2025 screen, income chained by state growth kept 96.6%, "
+                     "matched the top-10 on 7.4/10; this report's current "
+                     "2025-2028 forecast.", "Passed"),
+              (False, "Mid-year 2026 screen, five months of data kept 82.7% and "
+                      "matched 4.8 of 10 (averaged across the test windows); it "
+                      "appears in this report only as a clearly-labeled "
+                      "speculative outlook, never as a validated screen.",
+                      "Failed both bars"),
+          ], CW),
           Paragraph("A validation bar that never fails anything proves nothing. Ours failed "
                     "three of five attempts, which is exactly why the two that passed mean "
                     "something.", S["cap"])]),

@@ -29,6 +29,7 @@ PIXEL_TOLERANCE = 24  # per-channel delta below this doesn't count as a diff
 PDFS = {
     "report": ROOT / "report" / "Larson_Capital_Research-Report.pdf",
     "methodology": ROOT / "report" / "Larson_Capital_Research_Methodology.pdf",
+    "onepager": ROOT / "report" / "LCR_screen_2025-2028.pdf",
 }
 
 
