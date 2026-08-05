@@ -53,6 +53,7 @@ config validates, the model scores, and every site page renders on each push.
 | `data/processed/` | Committed model outputs the site reads (no keys needed at runtime) |
 | `predictions/` | Frozen, timestamped registry runs (never edited) |
 | `paper/` | Auto-generated research briefs |
+| `.claude/skills/` | Project skills (house style, build pipeline, governance) — agent sessions and contributors should read these first |
 
 ## Data sources & licensing
 
