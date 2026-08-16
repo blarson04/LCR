@@ -172,7 +172,10 @@ if bl_path.exists():
 # ---- 4. Honest limits -------------------------------------------------------
 st.markdown("## Honest limits")
 st.markdown(
-    "- The rent data measures asking rents, not signed leases.\n"
+    "- The rent data measures asking rents, not signed leases; where free-month "
+    "move-in deals are common, asking rents understate the true decline (one "
+    "oversupplied market in mid-2026: asking rents down about 2.6% year over year, "
+    "rents net of those deals down about 7.2%).\n"
     "- No capital-markets or operating-cost data (sale prices, cap rates, insurance, "
     "taxes); rent growth stands in for profitability. Florida 2023–26 shows the gap: "
     "insurance-cost shocks moved multifamily economics in ways no rent-side measure "
