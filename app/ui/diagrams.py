@@ -36,7 +36,7 @@ def method_pipeline() -> str:
         ("Eight measures", "grouped in five themes"),
         ("Same-year comparison", "0 = the average market"),
         ("Fixed public weights", "summed into one score"),
-        ("Rank and tier", "with a 90% rank range"),
+        ("Rank and tier", "with a 90% confidence range"),
     ]
     bw, bh, gap, y = 188, 72, 24, 16
     parts = []

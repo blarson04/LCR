@@ -576,10 +576,13 @@ def on_cover(canvas, doc):
                       f"A validated {HORIZON} outlook and a speculative 2026→"
                       f"2029 view, built entirely on free public data.")
 
-    # ---- hero band: the dataset itself as cover art (B-2/B-7 Tier 1) ---------
-    # The full 110-market diverging chart, quiet and unlabeled, edge to edge.
-    canvas.drawImage(str(P_COVER_ART), 0, 3.05 * inch, width=W,
-                     height=2.35 * inch, mask="auto",
+    # ---- hero band: photography (author direction 2026-08-16) ----------------
+    # Aerial multifamily photo, edge to edge, pre-cropped to the band's aspect
+    # (Unsplash-licensed; credits in app/assets/photos/CREDITS.md). Falls back
+    # to the generative cover art if the photo is absent.
+    _photo = HERE / "assets" / "photos" / "cover_band.jpg"
+    canvas.drawImage(str(_photo if _photo.exists() else P_COVER_ART),
+                     0, 3.05 * inch, width=W, height=2.35 * inch, mask="auto",
                      preserveAspectRatio=False)
 
     # ---- the freeze-grade rail, large (the signature element, B-1) -----------
@@ -637,6 +640,23 @@ def on_cover(canvas, doc):
     canvas.setFillColor(C_MUTED)
     canvas.drawString(M, band_h - 1.50 * inch,
                       "Economics and applied mathematics, Indiana University")
+    # Contact line: email and LinkedIn, both live links in the PDF.
+    _contact_y = band_h - 1.66 * inch
+    canvas.setFillColor(C_ACCENT)
+    _email = "blarson5187@gmail.com"
+    _li_label = "linkedin.com/in/blarson1105"
+    canvas.drawString(M, _contact_y, _email)
+    _ew = canvas.stringWidth(_email, "Inter", 8)
+    canvas.setFillColor(C_MUTED)
+    canvas.drawString(M + _ew + 4, _contact_y, "·")
+    canvas.setFillColor(C_ACCENT)
+    _lx = M + _ew + 10
+    canvas.drawString(_lx, _contact_y, _li_label)
+    _lw = canvas.stringWidth(_li_label, "Inter", 8)
+    canvas.linkURL(f"mailto:{_email}", (M, _contact_y - 2, M + _ew, _contact_y + 9),
+                   relative=0)
+    canvas.linkURL("https://www.linkedin.com/in/blarson1105",
+                   (_lx, _contact_y - 2, _lx + _lw, _contact_y + 9), relative=0)
     canvas.drawRightString(W - M, band_h - 1.34 * inch,
                            f"Model v{config.MODEL_VERSION} · methods documented, "
                            f"failures published")
@@ -1319,16 +1339,22 @@ story += [at, PageBreak()]
 # ---- About + disclaimer ------------------------------------------------------------
 story += [eyebrow("About"),
           Paragraph("About this research", S["h1"]), *hr(),
-          Paragraph("I'm <b>Ben Larson</b>, a student at Indiana University majoring in "
-                    "economics and applied mathematics, with a strong interest in data "
-                    "analytics and real estate. I built this screen to answer a question I "
-                    "kept running into: how much of a rental market's future is already "
-                    "visible in free public data? I held the answer to a standard I'd be "
-                    "willing to defend: every method documented, every claim validated "
-                    "before it's published, failed experiments published alongside the "
-                    "successes, and a frozen track record anyone can check against what "
-                    "actually happens. Everything here, from the data pipeline and the "
-                    "backtests to the interactive site and this report, is my own work.",
+          Paragraph("My name is <b>Ben Larson</b>, and I am a junior at Indiana "
+                    "University studying economics and applied math. My research "
+                    "interests center on quantitative market selection: applying data "
+                    "to identify optimal real estate markets across the U.S. and to "
+                    "help inform investment decisions across commercial real estate "
+                    "asset classes, including multifamily, industrial, retail, office, "
+                    "and data centers.", S["body"]),
+          Paragraph("Everything here is held to a standard worth defending: every "
+                    "method documented, every claim validated before it is published, "
+                    "failed experiments published alongside the successes, and a frozen "
+                    "track record anyone can check against what actually happens.",
+                    S["body"]),
+          Paragraph(f'Contact: <link href="mailto:blarson5187@gmail.com">'
+                    f'<font color="{ACCENT}">blarson5187@gmail.com</font></link> · '
+                    f'<link href="https://www.linkedin.com/in/blarson1105">'
+                    f'<font color="{ACCENT}">linkedin.com/in/blarson1105</font></link>',
                     S["body"]),
           Paragraph("The interactive version of this report, with every market's detail "
                     "page, side-by-side comparisons, and the full validation record, is "

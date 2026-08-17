@@ -139,16 +139,29 @@ def speculative_frame(body_html: str, header_html: str | None = None) -> None:
 # ---- header art (B-7.3: site parity with the report's dividers) -------------
 
 def header_art(page: str, height: int = 72) -> None:
-    """The report divider art as a slim page-header band. Texture made of
-    truth: it carries no readable data and needs no caption. Silently does
-    nothing if the asset has not been generated yet."""
+    """The page-header band. Prefers the photography set (author direction
+    2026-08-16: multifamily and skyline photos, Unsplash-licensed, credits in
+    assets/photos/CREDITS.md) and falls back to the generative divider art.
+    Silently does nothing if neither asset exists."""
     import base64
     from pathlib import Path
 
-    path = Path(__file__).resolve().parents[1] / "assets" / "art" / f"{page}.png"
-    if not path.exists():
+    assets = Path(__file__).resolve().parents[1] / "assets"
+    photo = assets / "photos" / f"{page}.jpg"
+    art = assets / "art" / f"{page}.png"
+    if photo.exists():
+        b64 = base64.b64encode(photo.read_bytes()).decode()
+        st.markdown(
+            f"<div style='height:{max(height, 150)}px;overflow:hidden;"
+            f"border-radius:8px;margin-bottom:1rem'>"
+            f"<img src='data:image/jpeg;base64,{b64}' "
+            f"style='width:100%;height:100%;object-fit:cover;"
+            f"object-position:center 35%;display:block' alt=''/></div>",
+            unsafe_allow_html=True)
         return
-    b64 = base64.b64encode(path.read_bytes()).decode()
+    if not art.exists():
+        return
+    b64 = base64.b64encode(art.read_bytes()).decode()
     st.markdown(
         f"<div style='height:{height}px;overflow:hidden;border-radius:8px;"
         f"margin-bottom:1rem'><img src='data:image/png;base64,{b64}' "

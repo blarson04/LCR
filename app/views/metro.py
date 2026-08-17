@@ -21,13 +21,14 @@ for _p in (str(ROOT), str(APP)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from ui import data, theme  # noqa: E402
+from ui import components, data, theme  # noqa: E402
 
 theme.inject_css()
 d = data.load()
 ed = data.edition(d)
 rank = ed["rank"]
 
+components.header_art("metro")
 theme.eyebrow("Multifamily research · explore a market")
 st.markdown("# Explore a market")
 theme.caption("Why a market ranks where it does: its score, the themes driving it, and "

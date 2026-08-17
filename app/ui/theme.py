@@ -213,8 +213,41 @@ def style_fig(fig: go.Figure, height: int = 380,
     return fig
 
 
+AUTHOR_EMAIL = "blarson5187@gmail.com"
+AUTHOR_LINKEDIN = "https://www.linkedin.com/in/blarson1105"
+
+_ICON_MAIL = (
+    "<svg width='16' height='16' viewBox='0 0 24 24' fill='none' "
+    "stroke='currentColor' stroke-width='2' stroke-linecap='round' "
+    "stroke-linejoin='round' style='vertical-align:-3px'>"
+    "<rect x='2' y='4' width='20' height='16' rx='2'/>"
+    "<path d='m22 7-10 6L2 7'/></svg>")
+_ICON_LINKEDIN = (
+    "<svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' "
+    "style='vertical-align:-3px'>"
+    "<path d='M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 "
+    "1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 "
+    "0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 "
+    "0 0 1 0 4.12zM7.12 20.45H3.55V9h3.57v11.45z'/></svg>")
+
+
+def contact_links(size: str = "14px") -> str:
+    """The author's contact links as icon + label anchors (HTML). One source
+    for the site footer and the about section."""
+    style = (f"display:inline-flex;align-items:center;gap:.3rem;"
+             f"font-size:{size};color:{ACCENT};text-decoration:none")
+    return (
+        f"<a href='mailto:{AUTHOR_EMAIL}' style='{style}' "
+        f"title='Email Ben Larson'>{_ICON_MAIL} {AUTHOR_EMAIL}</a>"
+        f"<span class='cap'> · </span>"
+        f"<a href='{AUTHOR_LINKEDIN}' target='_blank' rel='noopener' "
+        f"style='{style}' title='Ben Larson on LinkedIn'>{_ICON_LINKEDIN} "
+        f"LinkedIn</a>")
+
+
 def page_footer() -> None:
-    """Report-style footer: brand line, the reading order, then the fine print."""
+    """Report-style footer: brand line, the reading order, contact, then the
+    fine print."""
     links = " · ".join(
         f"<a class='footlink' href='{href}'>{label}</a>"
         for label, href in [("How it works", "how_it_works"),
@@ -229,6 +262,7 @@ def page_footer() -> None:
         f"color:{INK}'>Larson Capital Research</span>"
         f"<span class='cap'> · the rent-growth screener</span></div>"
         f"<div class='cap'>{links}</div></div>"
+        f"<div style='margin-top:.5rem'>{contact_links('13px')}</div>"
         f"<div class='cap' style='margin-top:.7rem'>A screening framework built on free "
         f"public data (Census, IRS, BLS, BEA, Zillow, FRED). A research screen, not "
         f"investment advice.</div>", unsafe_allow_html=True)

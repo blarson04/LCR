@@ -32,13 +32,17 @@ proposed change conflicts with a rule here, the rule wins and the change is drop
 6. **Sentence case for all headings.**
 7. **Every technical term defined on first use per page/section** (tau,
    percentile, P@10, proxied inputs, uncertainty flag).
-8. **Imagery policy: data-as-art and geometric brand texture only.** No stock
-   photography, no skyline or building imagery, no decorative icons, no emoji.
-   Visual richness comes from (a) our own data rendered large and well, and
-   (b) an abstract geometric texture system derived from the project's visual
-   grammar (tier bands, freeze-grade rail, hairline grids). Informational marks
-   that encode real content (gate ✕/✓ marks, tier bands, timeline rails) are
-   encouraged; ornamental icons that encode nothing are not.
+8. **Imagery policy (amended by author direction 2026-08-16): photography is
+   IN.** Free-licensed photography of multifamily properties and city skylines
+   (Unsplash; credits in `app/assets/photos/CREDITS.md`) is used as page-header
+   bands on the site and cover art in the PDF, alongside the data-as-art and
+   geometric texture system (tier bands, freeze-grade rail, hairline grids).
+   Rules that survive the amendment: photos are anonymous texture, never
+   evidence — no photo may imply a specific ranked market, illustrate a claim,
+   or carry a caption tying it to data; no watermarked or unlicensed images;
+   no decorative icons that encode nothing, no emoji. Functional icons that DO
+   encode content (contact links, gate ✕/✓ marks) are fine. The earlier
+   blanket no-photography rule is superseded; do not "fix" photos back out.
 9. **Data vintages always shown** next to any accuracy or input figure.
 10. **Never hand-adjust any market anywhere**, including in examples, spotlights,
     or captions.
@@ -71,7 +75,8 @@ FORBIDDEN — a match means fix before shipping:
   advice.")
 - Self-praising adjectives adjacent to our accuracy numbers: excellent,
   impressive, remarkable, outstanding, strong performance
-- Stock-photo, skyline, building, or icon assets in any diff
+- Unlicensed or uncredited photo assets in any diff (licensed Unsplash photos
+  recorded in CREDITS.md are allowed per the 2026-08-16 amendment)
 
 ALLOWED (do not "fix" these):
 - "Validated 2025→2028 forecast · proxied inputs"
