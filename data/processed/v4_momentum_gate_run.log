@@ -1,0 +1,22 @@
+﻿=== V4-6 GATES — one pre-registered attempt per candidate (spec 2026-08-16) ===
+
+[coverage kill-rule]
+  permit_momentum_total        min 107/110 (7/7 pred years) -> ok
+  permit_momentum_total_rate   min 107/110 (6/7 pred years) -> ok
+  permit_momentum_mf           min 103/110 (7/7 pred years) -> ok
+  permit_momentum_mf_rate      min 107/110 (6/7 pred years) -> ok
+
+[augmentation gates — P6 rule 5, conjunctive at 5% and 10%]
+  permit_momentum_total        tau +0.142 (flipped)  |corr| 0.19 (net_migration)  d5 +0.009 [-0.009,+0.025]  d10 +0.003 [-0.027,+0.028]  -> fail
+  permit_momentum_total_rate   tau +0.212 (flipped)  |corr| 0.23 (trailing_rent_growth)  d5 +0.023 [-0.001,+0.044]  d10 +0.026 [-0.012,+0.060]  -> fail
+  permit_momentum_mf           tau +0.040 (flipped)  |corr| 0.07 (cost_to_own_vs_rent)  d5 -0.004 [-0.016,+0.014]  d10 -0.009 [-0.032,+0.021]  -> fail
+  permit_momentum_mf_rate      tau +0.025 (flipped)  |corr| 0.18 (trailing_rent_growth)  d5 +0.001 [-0.015,+0.017]  d10 -0.014 [-0.040,+0.010]  -> fail
+
+[replacement variant R — M1a at the 17/8 supply split]
+  Prong A: tau current 0.431 vs variant 0.401; gap -0.030, 95% CI [-0.077, +0.005] -> FAIL
+  Prong B: edition Spearman 0.471 (threshold >= 0.8; baseline 0.683; n=110) -> FAIL
+
+VERDICT: REJECT ALL
+
+Written: data\processed\v4_momentum_gate_summary.csv, data\processed\v4_momentum_gate_windows.csv
+First results are final. Log the outcome entry in decision-log.md.

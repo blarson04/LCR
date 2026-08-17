@@ -109,8 +109,9 @@ st.markdown(
     "**Failed both bars**; it ships only as a labeled speculative outlook, never as "
     "a validated screen.")
 theme.caption("A validation bar that never fails anything proves nothing; it failed "
-              "three of five attempts. Separately, nine candidate measures and model "
-              "variants have been gated one-shot; zero were adopted, every negative "
+              "three of five attempts. Separately, fourteen candidate measures and "
+              "model variants have been gated one-shot, most recently a permit-"
+              "momentum family (2026-08-17); zero were adopted, every negative "
               "result published.")
 with st.expander("Two disclosures about the gates"):
     theme.caption(

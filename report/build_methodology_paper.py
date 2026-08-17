@@ -552,13 +552,15 @@ story += [tbl(gate_rows, [0.35 * inch, 2.6 * inch, 1.0 * inch, 1.2 * inch,
                     "rather than rounded up; attempt 5 ships only as a labeled "
                     "speculative outlook (Section 8.2).", S["cap"]),
           Paragraph(
-              f"Separately, nine candidate measures and model variants have faced "
-              f"one-shot gates (five external signals including operating income "
-              f"and absorption indices; vacancy and unemployment changes; a "
+              f"Separately, fourteen candidate measures and model variants have "
+              f"faced one-shot gates (five external signals including operating "
+              f"income and absorption indices; vacancy and unemployment changes; a "
               f"three-year smoothing of the noisy growth inputs that proved "
               f"reliably calmer but reliably less accurate, retention "
               f"{float(p3g['tau_multi_year']) / float(p3g['tau_current']):.0%} "
-              f"with a loss CI entirely below zero). Zero were adopted; the model "
+              f"with a loss CI entirely below zero; and a four-measure permit-"
+              f"momentum family with a supply-split variant, whose pre-registered "
+              f"direction prior the data flipped). Zero were adopted; the model "
               f"has remained frozen at v2.0.0 throughout, and every rejection is "
               f"published with its numbers.", S["body"]),
           PageBreak(),
