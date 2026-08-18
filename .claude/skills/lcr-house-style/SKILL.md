@@ -23,10 +23,16 @@ proposed change conflicts with a rule here, the rule wins and the change is drop
    house style. "Excellent", "impressive", "strong performance" applied to our own
    numbers is a bug. (Adjectives inside fixed template strings like "Strong
    migration & jobs" describe markets, not our accuracy, and are fine.)
-4. **Negative results stay prominent.** No design change may reduce the visual
-   weight of failures, shock-period losses, or the speculative page's warnings.
-   The failed-gates list must remain at equal or greater visual prominence than
-   the passes.
+4. **Negative results stay prominent (amended 2026-08-18).** Wherever failures
+   or passes are shown, failures render at equal or greater visual weight; the
+   speculative page's failed-validation frame and measured accuracy stay, and
+   shock-period losses are never softened where accuracy is shown. Author
+   override 2026-08-18 (logged): the gate-arc LIST no longer appears on the
+   site's Track record page — the complete failure record lives in the
+   decision log, the methodology paper, and the paper brief, and may not be
+   removed from those. Do not re-add the site section without author
+   direction; do not remove the remaining failure disclosures anywhere
+   without a new logged override.
 5. **Disclaimers: once per page body, one clause, plus the standing footer.**
    Never stack.
 6. **Sentence case for all headings.**

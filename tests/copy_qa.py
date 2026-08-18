@@ -196,15 +196,21 @@ def canonical_figure_mismatches(scored_latest, backtest, processed_dir,
             problems.append(f"canonical figure {key!r}: YAML says {val}, "
                             f"computed {got[key]}")
 
-    # Gate-record figures: no machine source; must appear verbatim in BOTH
-    # the site's copy and the report builder's copy.
+    # Gate-record figures: no machine source; asserted verbatim in the
+    # artifacts that carry them. "copy_" keys must appear in BOTH the site's
+    # copy and the report builder's; "copy_report_" keys in the report only
+    # (the gate arc left the site's Track record page by author override,
+    # decision-log 2026-08-18 — the report and decision log are the record's
+    # load-bearing surfaces and these assertions keep them so).
     site_files = [p for p in COPY_FILES if "app" in p.parts]
     report_files = [p for p in COPY_FILES if "report" in p.parts]
     for key, val in want.items():
         if not key.startswith("copy_"):
             continue
         needle = val.rstrip("%")
-        for label, files in [("site", site_files), ("report", report_files)]:
+        targets = ([("report", report_files)] if key.startswith("copy_report_")
+                   else [("site", site_files), ("report", report_files)])
+        for label, files in targets:
             if not any(needle in text for f in files
                        for _, text in _copy_strings(f)):
                 problems.append(f"canonical figure {key!r} ({val}) missing "

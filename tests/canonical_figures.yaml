@@ -30,8 +30,11 @@ weight_affordability: 20
 weight_momentum: 10
 weight_resilience: 5
 
-# -- copy: gate-record figures asserted verbatim in both artifacts ------------
-copy_gate1_retention: 74.8%
-copy_gate2_retention: 84.66%
-copy_gate3_retention: 95.5%
+# -- copy: gate-record figures. "copy_" = asserted in BOTH artifacts;
+# "copy_report_" = report only (the gate arc left the site's Track record
+# page by author override, decision-log 2026-08-18; the report keeps the
+# full record and these assertions keep it there) ----------------------------
+copy_report_gate1_retention: 74.8%
+copy_report_gate2_retention: 84.66%
+copy_report_gate3_retention: 95.5%
 copy_gate4_retention: 96.6%
