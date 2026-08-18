@@ -187,9 +187,9 @@ st.markdown(
     "Everything comes from free public sources (Census, IRS, BLS, BEA, Zillow, FRED), "
     "and no accuracy number is shown without its data vintage. A 2023 federal "
     "boundary redraw silently corrupted job and population data for over thirty "
-    "metros, twice putting an artifact at #1. Every affected series was rebuilt on "
-    "consistent boundaries, and an automated quality review now cross-checks every "
-    "input before anything publishes.")
+    "metros. Every affected series was rebuilt on consistent boundaries, and an "
+    "automated quality review now cross-checks every input before anything "
+    "publishes.")
 
 with st.expander("Data sources and vintages, measure by measure"):
     vrows = []
