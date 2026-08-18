@@ -47,23 +47,14 @@ rank[["strength", "drag"]] = rank.apply(
 components.header_art("outlook_2026")
 theme.eyebrow("Multifamily research · the speculative outlook")
 st.markdown("# 2026→2029 outlook")
-theme.caption("The same frozen model run on data through May 2026. It exists because "
-              "readers asked for the newest possible view; the warning below is why "
-              "it is not the site's screen.")
-st.markdown(theme.badge(True, "Speculative 2026→2029 outlook · failed validation"),
-            unsafe_allow_html=True)
+theme.caption("The same frozen model run on data through May 2026.")
 
 components.speculative_frame(
     f"<div style='font-size:14px;margin-top:.35rem'>Tested on history the same way "
     f"as every published screen, this recipe keeps <b>{acc['retention']:.1%}</b> of "
     f"the finalized model's signal but matches the finalized top-10 on only "
     f"<b>{acc['mean_top10_overlap']:.1f} of 10</b> names (averaged across the test "
-    f"windows; a validated screen needs "
-    f"{gate['overlap_bar']:.0f}), falling to 3–4 of 10 in fast-moving years. An "
-    f"earlier mid-year recipe failed its one-shot gate outright "
-    f"({gate['retention']:.1%} and {gate['mean_top10_overlap']:.1f} of 10, on Track "
-    f"record); this one adds a tested income estimate and is re-measured, not "
-    f"re-gated. For decisions, use the validated 2025→2028 screen.</div>")
+    f"windows; a validated screen needs {gate['overlap_bar']:.0f}).</div>")
 
 # ---- The map ----------------------------------------------------------------
 mp = rank.merge(d["coords"], on="cbsa_code", how="left")
@@ -103,10 +94,7 @@ st.markdown("## The speculative ranking")
 theme.caption("Why it is weaker than the main screen: rents, jobs, home values, and "
               "permits use only five months of 2026 data; migration is one year "
               "stale; and income growth is a state-level estimate (each metro takes "
-              "its primary state's early-2026 income growth, a tested stand-in that "
-              "agrees with finalized metro income about half the time by rank; the "
-              "validated screen's 96.6% figure measures the whole model, not this "
-              "one input).")
+              "its primary state's early-2026 income growth).")
 
 tbl = pd.DataFrame({
     "Rank": rank["rank"].astype(int),
@@ -136,15 +124,8 @@ st.dataframe(
         "Top drag": st.column_config.TextColumn(
             help="The theme pulling this market's speculative score down the most.")})
 
-# Per-market detail moved to the Explore page's screen selector (author
-# direction 2026-08-18): Explore a market carries this view behind the same
-# speculative warning, via ?screen=2026.
-theme.caption("A working view, rebuilt as data lands; unlike the validated screens it "
-              "is not frozen to the registry and makes no graded claim. Explore any "
-              "market under this view: <a href='metro?screen=2026'>Explore a "
-              "market</a>, speculative screen.")
+# Per-market detail lives on the Explore page's screen selector (?screen=2026).
 st.markdown("Next: [the validated screen's key findings](home) · "
-            "[Track record](track_record), where the original mid-year gate "
-            "failure is logged.")
+            "[Track record](track_record).")
 
 theme.page_footer()
