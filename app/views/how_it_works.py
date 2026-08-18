@@ -171,17 +171,6 @@ GLOSSARY = [
      f"market: {pp_pooled:+.1f} points averaged across six completed windows.",
      "It states the result in the units an investment decision uses: points of "
      "rent growth."),
-    ("Validated",
-     "Two separately logged checks passed: a one-shot, pre-registered accuracy gate "
-     "on history, and an automated data-quality review with every flag signed off "
-     "in the public decision log.",
-     "Three configurations failed this bar and were published, which is what makes "
-     "a pass meaningful."),
-    ("Proxied inputs",
-     "The current screen substitutes validated fast-publishing sources for inputs "
-     "that publish one to two years late; the badge marks it wherever it applies.",
-     "It is what makes a current-year screen possible; the substitutions kept 96.6% "
-     "of the finalized model's signal in testing."),
 ]
 gl_html = ""
 for term, what, why in GLOSSARY:
