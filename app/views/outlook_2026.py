@@ -67,15 +67,18 @@ components.speculative_frame(
 
 # ---- The map ----------------------------------------------------------------
 mp = rank.merge(d["coords"], on="cbsa_code", how="left")
+# Pre-format the hover score: mixed-type customdata serializes as text, so a
+# d3 format spec in the template is silently ignored and the raw float shows.
+mp["score_txt"] = mp["score"].map("{:+.2f}".format)
 fig = px.scatter_geo(
     mp, lat="lat", lon="lon", color="score", scope="usa",
     hover_name="cbsa_title", size=[8] * len(mp), size_max=12,
     color_continuous_scale=theme.DIV_SCALE, color_continuous_midpoint=0,
-    custom_data=["rank", "score", "strength"])
+    custom_data=["rank", "score_txt", "strength"])
 fig.update_traces(
     marker=dict(line=dict(width=0.6, color=theme.MAP_BORDER)),
     hovertemplate="<b>%{hovertext}</b><br>Speculative rank %{customdata[0]} · score "
-                  "%{customdata[1]:+.2f}<br>%{customdata[2]}<extra></extra>")
+                  "%{customdata[1]}<br>%{customdata[2]}<extra></extra>")
 fig.update_geos(showland=True, landcolor=theme.MAP_LAND, showlakes=False,
                 subunitcolor=theme.MAP_BORDER, countrycolor=theme.MAP_BORDER,
                 coastlinecolor=theme.MAP_BORDER, bgcolor="rgba(0,0,0,0)",
