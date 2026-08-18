@@ -199,21 +199,9 @@ with st.expander("Data sources and vintages, measure by measure"):
                       "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
                       "Source": src_txt, "Data through": through,
                       "Link": data.SOURCE_LINKS.get(k, "")})
-    st.dataframe(
-        pd.DataFrame(vrows).style
-          .set_properties(subset=["Measure"], **{"font-weight": "500"})
-          .set_properties(subset=["Data through"],
-                          **{"font-variant-numeric": "tabular-nums",
-                             "text-align": "right"}),
-        hide_index=True, use_container_width=True,
-        column_config={
-            "Data through": st.column_config.TextColumn(
-                help="The most recent FINALIZED year behind this measure. The current "
-                     "screen layers validated fast-publishing substitutes on top, as "
-                     "described below."),
-            "Link": st.column_config.LinkColumn(
-                "Source page", display_text="source page",
-                help="The primary source's public data page.")})
+    vdf = pd.DataFrame(vrows).rename(columns={"Link": "Source page"})
+    components.text_table(vdf, right=("Weight", "Data through"),
+                          links={"Source page": "source page"})
     theme.caption("The finalized sources each measure is built from. * Connecticut "
                   "redrew its geography between 2023 and 2024, so the three "
                   "Connecticut metros' job and income growth are chained using "
@@ -256,10 +244,7 @@ with st.expander("The substitute for each measure"):
         prows.append({"Measure": data.PRETTY[k],
                       "Finalized source": pm.get("finalized", ""),
                       "Current-screen approach": pm.get("proxy", "")})
-    st.dataframe(
-        pd.DataFrame(prows).style.set_properties(subset=["Measure"],
-                                                 **{"font-weight": "500"}),
-        hide_index=True, use_container_width=True)
+    components.text_table(pd.DataFrame(prows))
     theme.caption("The ranking is reconciled against finalized data as it lands "
                   "each year.")
 

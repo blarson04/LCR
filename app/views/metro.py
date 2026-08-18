@@ -259,20 +259,13 @@ else:
             crows = []
             for colname, (label, note) in data.CTX.items():
                 v = d["ctx_year"][colname].get(code, float("nan"))
+                p = d["ctx_pct"][colname].get(code, float("nan"))
                 crows.append({"Measure": label,
                               "Value": "–" if pd.isna(v) else f"{v*100:.1f}%",
-                              "Percentile": d["ctx_pct"][colname].get(code, float("nan")),
+                              "Percentile": "–" if pd.isna(p) else f"{p:.0f}",
                               "Note": note})
-            st.dataframe(pd.DataFrame(crows).style.format({"Percentile": "{:.0f}"}),
-                         hide_index=True, use_container_width=True,
-                         column_config={
-                             "Value": st.column_config.TextColumn(
-                                 help="The measure in real-world units; shown for "
-                                      "context only, it does not affect the score."),
-                             "Percentile": st.column_config.NumberColumn(
-                                 help="Where this market stands among all markets "
-                                      "(100 = highest raw value; see the note for "
-                                      "which direction is healthier).")})
+            components.text_table(pd.DataFrame(crows),
+                                  right=("Value", "Percentile"))
 
     # ---- History charts ----------------------------------------------------
     st.markdown("## History")

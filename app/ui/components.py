@@ -117,6 +117,55 @@ def tier_border_styles(tiers: list[str]) -> list[dict]:
     return styles
 
 
+# ---- 4b. wrapping text table ------------------------------------------------
+
+def text_table(df, *, right: tuple[str, ...] = (),
+               links: dict[str, str] | None = None) -> None:
+    """Prose-friendly table: every cell WRAPS, so long text is always fully
+    readable with no column resizing (st.dataframe clips long strings — the
+    reason this exists; use it for any table whose cells carry sentences).
+
+    `right` names columns to right-align with tabular figures. `links` maps a
+    column name to its anchor label; that column's cell values are treated as
+    URLs and rendered as links (empty cell = no link).
+    """
+    links = links or {}
+    cols = list(df.columns)
+
+    def th(c):
+        align = "right" if c in right else "left"
+        return (f"<th style='text-align:{align};font-family:{theme.FONT_BODY};"
+                f"font-size:11px;font-weight:600;letter-spacing:.05em;"
+                f"text-transform:uppercase;color:{theme.MUTED};"
+                f"padding:.35rem .6rem .35rem 0;border-bottom:1px solid "
+                f"{theme.LINE}'>{_html.escape(str(c))}</th>")
+
+    def td(c, v):
+        v = "" if v is None or (isinstance(v, float) and v != v) else v
+        if c in links:
+            cell = (f"<a href='{_html.escape(str(v), quote=True)}' "
+                    f"style='color:{theme.ACCENT};text-decoration:none' "
+                    f"target='_blank' rel='noopener'>{_html.escape(links[c])}</a>"
+                    if str(v) else "")
+        else:
+            cell = _html.escape(str(v))
+        align = "right" if c in right else "left"
+        num = "font-variant-numeric:tabular-nums;" if c in right else ""
+        weight = "font-weight:500;" if c == cols[0] else ""
+        return (f"<td style='text-align:{align};{num}{weight}font-size:13.5px;"
+                f"color:{theme.INK};padding:.45rem .6rem .45rem 0;"
+                f"border-bottom:1px solid {theme.LINE};vertical-align:top;"
+                f"line-height:1.45'>{cell}</td>")
+
+    body = "".join("<tr>" + "".join(td(c, r[c]) for c in cols) + "</tr>"
+                   for _, r in df.iterrows())
+    st.markdown(
+        f"<table style='width:100%;border-collapse:collapse;margin:.3rem 0'>"
+        f"<thead><tr>{''.join(th(c) for c in cols)}</tr></thead>"
+        f"<tbody>{body}</tbody></table>",
+        unsafe_allow_html=True)
+
+
 # ---- 5. speculative frame ---------------------------------------------------
 
 SPEC_WARNING = "This screen has not passed validation. Read every rank loosely."
