@@ -22,6 +22,7 @@ for _p in (str(ROOT), str(APP)):
         sys.path.insert(0, _p)
 
 from ui import components, data, theme  # noqa: E402
+import config               # noqa: E402
 
 theme.inject_css()
 d = data.load()
@@ -38,6 +39,50 @@ if ed.get("vintage"):
                   "substitute. Everything else is finalized, apart from a disclosed "
                   "geography fix for the three Connecticut metros (see How it works).")
 st.write("")
+
+# ---- Screen selector (author direction 2026-08-18) --------------------------
+# Explore either the validated 2025→2028 screen or the speculative 2026→2029
+# outlook. The speculative view MUST carry its failed-validation warning: with
+# the nav group gone, the on-page disclosure is the required separation
+# (decision-log 2026-08-18); it may not be removed while this mode exists.
+_VAL_LABEL = f"{data.SPEC_YEAR}→{data.SPEC_YEAR+3} (validated)"
+_SPEC_LABEL = "2026→2029 (speculative)"
+_nc_dir = config.PROCESSED_DIR / "nowcast"
+_have26 = all((_nc_dir / f"midyear_2026_{s}.csv").exists()
+              for s in ("ranking", "raw", "norm"))
+screen_opts = [_VAL_LABEL] + ([_SPEC_LABEL] if _have26 else [])
+screen = st.radio(
+    "Screen", screen_opts, horizontal=True,
+    index=1 if (st.query_params.get("screen") == "2026" and _have26) else 0,
+    help="The validated screen passed its pre-registered accuracy gate; the "
+         "speculative outlook failed validation and is shown with its measured "
+         "accuracy as a warning.")
+spec26 = screen == _SPEC_LABEL
+if spec26:
+    st.query_params["screen"] = "2026"
+    _r26 = (pd.read_csv(_nc_dir / "midyear_2026_ranking.csv",
+                        dtype={"cbsa_code": str})
+            .sort_values("rank").reset_index(drop=True))
+    _raw26 = (pd.read_csv(_nc_dir / "midyear_2026_raw.csv",
+                          dtype={"cbsa_code": str}).set_index("cbsa_code"))
+    _norm26 = (pd.read_csv(_nc_dir / "midyear_2026_norm.csv",
+                           dtype={"cbsa_code": str}).set_index("cbsa_code"))
+    ed = dict(rank=_r26, raw=_raw26,
+              pct=_norm26[list(data.INDICATORS)].rank(pct=True) * 100,
+              year=2026, provisional=True, vintage=False, horizon="2026→2029")
+    rank = ed["rank"]
+    _acc = pd.read_csv(_nc_dir / "midyear_v06_accuracy.csv").iloc[0]
+    components.speculative_frame(
+        f"<div style='font-size:14px;margin-top:.35rem'>This 2026→2029 view "
+        f"failed its validation gate and is speculative. Tested on history, its "
+        f"recipe keeps <b>{_acc['retention']:.1%}</b> of the finalized model's "
+        f"signal but matches the finalized top-10 on only "
+        f"<b>{_acc['mean_top10_overlap']:.1f} of 10</b> names (averaged across "
+        f"the test windows). No confidence ranges or tiers are computed for it. "
+        f"For decisions, use the validated {data.SPEC_YEAR}→{data.SPEC_YEAR+3} "
+        f"screen.</div>")
+elif "screen" in st.query_params:
+    del st.query_params["screen"]
 
 # Selections live in the URL (?metro=, ?vs=) so a view is shareable.
 opts = rank.sort_values("cbsa_title")
@@ -69,14 +114,26 @@ else:
         del st.query_params["vs"]
 
 
+def _rank_text(r) -> str:
+    """Rank plus its 90% range where one is computed (validated editions
+    only; the speculative view has no interval)."""
+    lo, hi = r.get("rank_lo"), r.get("rank_hi")
+    if pd.notna(lo) and pd.notna(hi):
+        return f"{int(r['rank'])} ({int(lo)}–{int(hi)})"
+    return f"{int(r['rank'])}"
+
+
 def _rank_metric(col, r, label=None):
-    col.metric(label or r["cbsa_title"].split(",")[0],
-               f"{int(r['rank'])} ({int(r['rank_lo'])}–{int(r['rank_hi'])})",
+    has_range = pd.notna(r.get("rank_lo"))
+    col.metric(label or r["cbsa_title"].split(",")[0], _rank_text(r),
                help=f"This market's rank (1 = best); its composite score is "
-                    f"{r['score']:+.2f}, where 0 is the average market. The range in "
-                    f"parentheses is the 90% range once measurement noise in the two "
-                    f"fast-moving inputs (job and income growth) is accounted for; "
-                    f"markets with overlapping ranges are roughly tied.")
+                    f"{r['score']:+.2f}, where 0 is the average market. "
+                    + ("The range in parentheses is the 90% range once measurement "
+                       "noise in the two fast-moving inputs (job and income growth) "
+                       "is accounted for; markets with overlapping ranges are "
+                       "roughly tied." if has_range else
+                       "No confidence range is computed for the speculative view; "
+                       "read the rank loosely."))
 
 
 # ============================ SIDE-BY-SIDE MODE ==============================
@@ -126,12 +183,16 @@ if compare:
 else:
     tier_txt = str(row.get("tier", "") or "")
     has_tier = tier_txt not in ("", "nan")
+    _has_range = pd.notna(row.get("rank_lo"))
     c1, c2, c3 = st.columns(3)
-    c1.metric("Rank", f"{int(row['rank'])} ({int(row['rank_lo'])}–{int(row['rank_hi'])})",
-              help="This market's rank (1 = best). The range in parentheses is the 90% "
-                   "range once measurement noise in the two fast-moving inputs (job and "
-                   "income growth) is accounted for; the single rank is a point inside "
-                   "that range, not a precise fact.")
+    c1.metric("Rank", _rank_text(row),
+              help=("This market's rank (1 = best). The range in parentheses is the "
+                    "90% range once measurement noise in the two fast-moving inputs "
+                    "(job and income growth) is accounted for; the single rank is a "
+                    "point inside that range, not a precise fact." if _has_range else
+                    "This market's rank (1 = best) in the speculative view. No "
+                    "confidence range is computed for a screen that has not passed "
+                    "validation; read the rank loosely."))
     if has_tier:
         c2.metric("Tier", tier_txt,
                   help="The tier is the honest headline: "
