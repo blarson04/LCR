@@ -57,9 +57,6 @@ theme.caption("How every window is graded, shown for 2019: the call is frozen at
               "publication and scored three years later.")
 es_path = config.PROCESSED_DIR / "effect_size_windows.csv"
 if es_path.exists():
-    st.markdown(
-        "Each completed three-year window asks: how much more rent growth did each "
-        "strategy's top-10 markets deliver than the median market?")
     ew = pd.read_csv(es_path)
     piv = ew.pivot_table(index="pred_year", columns="strategy",
                          values="top10_pp_vs_median")
@@ -126,49 +123,52 @@ with st.expander("Two disclosures about the gates"):
         "but reliably less accurate, so it was rejected; the tiers and rank ranges "
         "shown sitewide are the honest answer to that noise instead.")
 
-# ---- 3. Against simple alternatives -----------------------------------------
-st.markdown("## Against simple alternatives")
+# ---- 3. Against simple alternatives (collapsed: secondary evidence) ----------
 bl_path = config.PROCESSED_DIR / "baseline_comparison.csv"
 if bl_path.exists():
-    bl = pd.read_csv(bl_path)[["model", "tau_3y", "prec_3y"]].rename(columns={
-        "model": "Strategy (finalized data)", "tau_3y": "3-yr tau",
-        "prec_3y": "Precision@10"})
-    st.dataframe(
-        bl.style.format({"3-yr tau": "{:.2f}", "Precision@10": "{:.0%}"})
-          .set_properties(subset=["3-yr tau", "Precision@10"],
-                          **{"font-variant-numeric": "tabular-nums",
-                             "text-align": "right"}),
-        hide_index=True, use_container_width=True,
-        column_config={
-            "3-yr tau": st.column_config.TextColumn(
-                help="How well each strategy's ranking agreed with the 3-year rent "
-                     "growth that followed, on a −1 to +1 scale where 0 means no "
-                     "relationship and random guessing scores about 0."),
-            "Precision@10": st.column_config.TextColumn(
-                help="Of the 10 markets each strategy ranked highest, the share that "
-                     "landed in the top quarter of markets by actual rent growth.")})
-    theme.caption("All rows use finalized data, apples-to-apples. The industry-style "
-                  "row rebuilds a common equal-weight scorecard from the six of its "
-                  "ten categories free data can populate; it scores industry practice "
-                  "at this task, not any vendor's product at theirs.")
+    with st.expander("Against simple alternatives and industry practice"):
+        bl = pd.read_csv(bl_path)[["model", "tau_3y", "prec_3y"]].rename(columns={
+            "model": "Strategy (finalized data)", "tau_3y": "3-yr tau",
+            "prec_3y": "Precision@10"})
+        st.dataframe(
+            bl.style.format({"3-yr tau": "{:.2f}", "Precision@10": "{:.0%}"})
+              .set_properties(subset=["3-yr tau", "Precision@10"],
+                              **{"font-variant-numeric": "tabular-nums",
+                                 "text-align": "right"}),
+            hide_index=True, use_container_width=True,
+            column_config={
+                "3-yr tau": st.column_config.TextColumn(
+                    help="How well each strategy's ranking agreed with the 3-year rent "
+                         "growth that followed, on a −1 to +1 scale where 0 means no "
+                         "relationship and random guessing scores about 0."),
+                "Precision@10": st.column_config.TextColumn(
+                    help="Of the 10 markets each strategy ranked highest, the share "
+                         "that landed in the top quarter of markets by actual rent "
+                         "growth.")})
+        theme.caption("All rows use finalized data, apples-to-apples. The "
+                      "industry-style row rebuilds a common equal-weight scorecard "
+                      "from the six of its ten categories free data can populate; it "
+                      "scores industry practice at this task, not any vendor's "
+                      "product at theirs.")
 
-    # C-2: methods comparison, no vendors named.
-    st.markdown(
-        f"<div style='background:{theme.SURFACE};border:1px solid {theme.LINE};"
-        f"border-radius:8px;padding:.9rem 1.1rem;margin-top:.8rem'>"
-        f"<div style='font-family:{theme.FONT_HEAD};font-size:16px;font-weight:600'>"
-        "Against an industry ranking</div>"
-        "<div style='font-size:14px;margin-top:.35rem'>Prominent 2026 industry "
-        "opportunity rankings are built the way the benchmark scorecard above is: "
-        "equal weights across categories, chosen without validation, published as "
-        "point ranks with no uncertainty attached. Within six months, roughly half "
-        "of one such ranking's markets moved by double-digit ranks, churn of the "
-        "kind this screen's rank ranges are built to absorb. Rebuilt from the same "
-        "free public data, that scorecard style agrees with realized 3-year rent "
-        "growth at 0.14 on the −1 to +1 tau scale; this screen's finalized-data "
-        "figure is 0.43. A comparison of methods, not of any vendor's product at "
-        "its own task.</div></div>",
-        unsafe_allow_html=True)
+        # C-2: methods comparison, no vendors named.
+        st.markdown(
+            f"<div style='background:{theme.SURFACE};border:1px solid {theme.LINE};"
+            f"border-radius:8px;padding:.9rem 1.1rem;margin-top:.8rem'>"
+            f"<div style='font-family:{theme.FONT_HEAD};font-size:16px;"
+            f"font-weight:600'>"
+            "Against an industry ranking</div>"
+            "<div style='font-size:14px;margin-top:.35rem'>Prominent 2026 industry "
+            "opportunity rankings are built the way the benchmark scorecard above is: "
+            "equal weights across categories, chosen without validation, published as "
+            "point ranks with no uncertainty attached. Within six months, roughly half "
+            "of one such ranking's markets moved by double-digit ranks, churn of the "
+            "kind this screen's rank ranges are built to absorb. Rebuilt from the same "
+            "free public data, that scorecard style agrees with realized 3-year rent "
+            "growth at 0.14 on the −1 to +1 tau scale; this screen's finalized-data "
+            "figure is 0.43. A comparison of methods, not of any vendor's product at "
+            "its own task.</div></div>",
+            unsafe_allow_html=True)
 
 # ---- 4. Honest limits -------------------------------------------------------
 st.markdown("## Honest limits")
@@ -197,21 +197,23 @@ st.markdown(
     "data closes (early 2029), whatever it shows**; the 2023-vintage calls are "
     "graded first, in mid-2027.")
 if len(d["registry"]):
-    rt = d["registry"].rename(columns={
-        "timestamp_utc": "Run (UTC)", "model_version": "Version", "score_year": "Year",
-        "n_metros": "Markets", "top_metro": "Top-ranked market"})
-    rt = rt[["Run (UTC)", "Version", "Year", "Markets", "Top-ranked market"]]
-    st.dataframe(rt, hide_index=True, use_container_width=True)
-theme.caption("Frozen live predictions, distinct from the backtest; each passed a "
-              "pre-registered gate to publish.")
+    with st.expander("Every frozen run"):
+        rt = d["registry"].rename(columns={
+            "timestamp_utc": "Run (UTC)", "model_version": "Version",
+            "score_year": "Year", "n_metros": "Markets",
+            "top_metro": "Top-ranked market"})
+        rt = rt[["Run (UTC)", "Version", "Year", "Markets", "Top-ranked market"]]
+        st.dataframe(rt, hide_index=True, use_container_width=True)
+        theme.caption("Frozen live predictions, distinct from the backtest; each "
+                      "passed a pre-registered gate to publish.")
 
 isc_path = config.PROCESSED_DIR / "interim_scorecard.csv"
 if isc_path.exists():
-    st.markdown(
-        "**How the outstanding calls are tracking so far.** Early reads on the "
-        "frozen screens are positive but modest, which is what the design expects "
-        "at short horizons; the details and caveats are below.")
-    with st.expander("The interim scorecard (not the final grades)"):
+    with st.expander("How the outstanding calls are tracking (interim, not the "
+                     "final grades)"):
+        st.markdown(
+            "Early reads on the frozen screens are positive but modest, which is "
+            "what the design expects at short horizons.")
         isc = pd.read_csv(isc_path)
         tbl_i = isc.rename(columns={
             "screen": "Screen", "window": "Window", "read": "Read",
