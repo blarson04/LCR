@@ -110,7 +110,7 @@ theme.caption("Rank (90% range) and the themes lifting each score most."
               f"{cluster_note} A market can hold a high single-edition rank while "
               "its range sits lower; the tier, not the rank, is the durable claim. "
               "Markets missing a measure take a neutral fill. "
-              "Scores and all tiers: Full rankings.")
+              "Scores and all tiers: the 2025→2028 outlook.")
 
 # ---- The case for the leader (auto-derived, replaces the spotlight page) ----
 case_bits = []
@@ -186,6 +186,6 @@ st.markdown(
     "**Has it worked?** Every screen is ranked before the fact and graded against "
     "what actually happened. The full record: [Track record](track_record).")
 
-st.markdown("Next: [Full rankings](rankings), the map and every market's tier.")
+st.markdown("Next: [the 2025→2028 outlook](rankings), the map and every market's tier.")
 
 theme.page_footer()

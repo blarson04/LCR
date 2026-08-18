@@ -41,7 +41,7 @@ if show_change:
 # ---- Header -----------------------------------------------------------------
 components.header_art("rankings")
 theme.eyebrow("Multifamily research · the report")
-st.markdown("# Full rankings")
+st.markdown("# 2025→2028 outlook")
 theme.caption(
     f"All {len(rank)} markets in the {ed['horizon']} screen, with a tier and a rank "
     "range for each: a screen, not a precise ordering.")

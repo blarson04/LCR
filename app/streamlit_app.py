@@ -50,15 +50,20 @@ with st.sidebar:
     # Sync Streamlit's native theme AFTER the widget renders (may rerun once).
     theme.sync_native_theme()
 
-# ---- Pages: methodology-first reading order (author direction 2026-07-20) ----
+# ---- Pages: methodology-first reading order (author direction 2026-07-20;
+# nav rename + outlook adjacency 2026-08-18). The speculative group keeps its
+# own labeled section: the v0.5 gate's FAIL consequence (decision-log
+# 2026-07-21) pre-committed the 2026→2029 view to a clearly-separated
+# speculative surface, so it may sit directly under the validated outlook but
+# not inside the same group.
 report = [
     st.Page("views/how_it_works.py", title="How it works", default=True),
     st.Page("views/home.py", title="Key findings"),
-    st.Page("views/rankings.py", title="Full rankings"),
-    st.Page("views/metro.py", title="Explore a market"),
+    st.Page("views/rankings.py", title="2025→2028 outlook"),
 ]
 speculative = [st.Page("views/outlook_2026.py", title="2026→2029 outlook")]
+explore = [st.Page("views/metro.py", title="Explore a market")]
 fine_print = [st.Page("views/track_record.py", title="Track record")]
 
 st.navigation({"The report": report, "Speculative": speculative,
-               "The fine print": fine_print}).run()
+               "Go deeper": explore, "The fine print": fine_print}).run()

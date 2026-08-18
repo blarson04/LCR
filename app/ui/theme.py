@@ -252,7 +252,7 @@ def page_footer() -> None:
         f"<a class='footlink' href='{href}'>{label}</a>"
         for label, href in [("How it works", "how_it_works"),
                             ("Key findings", "home"),
-                            ("Full rankings", "rankings"),
+                            ("2025→2028 outlook", "rankings"),
                             ("Track record", "track_record")])
     st.markdown(
         f"<hr style='margin-top:48px'>"
