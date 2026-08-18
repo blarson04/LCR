@@ -238,27 +238,6 @@ with st.expander("Full statistics: rank agreement, real-time vs finalized"):
                   "simplification). One-year results are a contrast, not the target: "
                   "the screen is built for the three-year horizon.")
 
-with st.expander("How sure are we? The uncertainty behind the averages"):
-    tu_path = config.PROCESSED_DIR / "temporal_uncertainty.csv"
-    if tu_path.exists():
-        tu = pd.read_csv(tu_path).iloc[0]
-        st.markdown(f"""
-- **The primary uncertainty is which market regime a window lands in.** Across the
-  {int(tu['win3_n'])} observed 3-year windows, tau ranged from **{tu['win3_min']:+.2f}
-  to {tu['win3_max']:+.2f}**; calm windows sat near the top of that range, shock
-  windows near the bottom. No pooled average conveys that spread.
-- **No single window drives the pooled result**: removing any one window moves the
-  pooled 3-year tau only between **{tu['jk3_min']:.2f} and {tu['jk3_max']:.2f}**.
-- **Neighboring markets move together**, so the analysis was re-run treating whole
-  states as the unit of chance ({int(tu['n_states'])} states): the pooled tau's 95%
-  interval widens to **[{tu['state_tau_lo']:.2f}, {tu['state_tau_hi']:.2f}]**, and the
-  edge over equal weighting
-  {"**survives**" if bool(tu['eq_edge_survives_state_cluster']) else "**does not survive**"}
-  that stricter test.
-- Narrow pooled intervals reported elsewhere capture **ranking uncertainty only**:
-  they say which metros rank where, conditional on the six windows history happened
-  to provide, and are silent about what the next regime does.""")
-
 st.markdown("Next: [back to the key findings](home).")
 
 theme.page_footer()
