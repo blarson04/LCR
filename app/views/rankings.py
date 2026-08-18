@@ -45,18 +45,16 @@ st.markdown("# Full rankings")
 theme.caption(
     f"All {len(rank)} markets in the {ed['horizon']} screen, with a tier and a rank "
     "range for each: a screen, not a precise ordering.")
-# Scoring-year uncertainty flag (ex-ante rule, v3-P6): computed for the active
-# edition's scoring year so the disclosure stays on-surface (2026-07-20).
+# Scoring-year uncertainty flag (ex-ante rule, v3-P6): the warning MUST show
+# when the flag fires (pre-committed shock disclosure); quiet years show
+# nothing (author direction 2026-08-17).
 nat = data.national_rent_growth(d["panel"], ed["year"])
 flag_on = nat > config.REGIME_FLAG_THRESHOLD
-theme.caption(
-    (f"Elevated-uncertainty flag: national rent growth in {ed['year']} is "
-     f"{nat:+.1%}, above the published rule; in the two years this flag fired "
-     f"historically (2021 and 2022), the screen's accuracy broke down."
-     if flag_on else
-     f"Conditions in the {ed['year']} scoring year look typical (national rent "
-     f"growth {nat:+.1%}). The published uncertainty flag, which fires only in "
-     f"shock years like 2020–22 when the screen's accuracy broke, is off."))
+if flag_on:
+    theme.caption(
+        f"Elevated-uncertainty flag: national rent growth in {ed['year']} is "
+        f"{nat:+.1%}, above the published rule; in the two years this flag fired "
+        f"historically (2021 and 2022), the screen's accuracy broke down.")
 st.write("")
 
 # ---- The map ----------------------------------------------------------------
@@ -90,19 +88,6 @@ theme.caption(f"Green = above the average market (score 0), clay = below; the ti
 # ---- The table --------------------------------------------------------------
 st.markdown("## Every market")
 has_tiers = ("tier" in rank.columns) and (rank["tier"].fillna("") != "").any()
-if has_tiers:
-    n_lead = int((rank["tier"] == "Leading cluster").sum())
-    theme.caption(
-        f"Markets in the same tier are peers, not an ordering; {n_lead} sit in the "
-        "leading cluster. How the tiers, ranges, and edition-to-edition moves work: "
-        "the notes below the table.")
-
-if show_change:
-    theme.caption(
-        "Rank moves mix one real year of market change with measurement noise; "
-        "a move inside a market's own 90% range is expected, not a signal. "
-        "Historically even two fully finalized years share only 1 to 6 of the "
-        "same top-10 names.")
 
 n_total = data.N_IND
 cols = {
@@ -198,26 +183,16 @@ theme.caption(f"Column headers explain each field on hover. "
 
 with st.expander("How the tiers and rank ranges are built"):
     theme.caption(
-        "Single ranks overstate precision. The two fastest-moving inputs (job growth "
-        "and income growth) agree only weakly between editions, so each market's rank "
-        "is re-computed 1,000 times with those two inputs jittered by their measured "
-        "noise; the range is where the rank lands 90% of the time, and the tier bands "
-        "the typical rank. The tier rule is fixed across editions: a market joins the "
-        "Leading cluster when its range reaches the top 10 and its typical rank sits "
-        "in the top quarter; Strong, Mid, Weak, and Lagging band the rest.")
+        "The two fastest-moving inputs (job growth and income growth) carry "
+        "measurement noise, so the full ranking is re-run 1,000 times with that "
+        "noise added. A market's range is where its rank lands in 90% of those "
+        "runs; its tier comes from a fixed rule on that range. Read it simply: "
+        "markets in the same tier are peers, and overlapping ranges are ties.")
     theme.caption(
-        "This interval captures input-measurement noise only, not model error; the "
-        "accuracy statement is the walk-forward record on Track record. A separate "
-        "weight-sensitivity range (how far ranks move under alternative reasonable "
-        "weightings) tells the same story: exact ranks are soft, tiers are stable.")
-
-with st.expander("Why ranks move between editions"):
-    theme.caption(
-        "Most movement is compression in the crowded middle of the table, where a "
-        "tiny score change moves a market many places. A tested smoothing fix "
-        "(averaging three years of the noisy inputs) cut the churn but reliably "
-        "cost accuracy, so it was rejected and published as a negative result; "
-        "the ranges above are the honest answer.")
+        "Moves between editions work the same way: a move inside a market's own "
+        "range is expected noise, not a signal (even two fully finalized years "
+        "share only 1 to 6 of the same top-10 names). The range reflects "
+        "measurement noise, not accuracy; accuracy lives on Track record.")
 
 with st.expander("Advanced view: how each score breaks down"):
     theme.caption("Contribution of each theme to the composite score, in standardized "
