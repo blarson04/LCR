@@ -129,10 +129,6 @@ st.dataframe(
 # ---- What the numbers mean --------------------------------------------------
 st.markdown("## What the numbers mean")
 
-bt = d["backtest"]
-_p3 = bt[(bt.horizon == 3) & (bt.regime == "POOLED")]
-pooled_tau = float(_p3["mean_tau"].iloc[0]) if len(_p3) else float("nan")
-pooled_p10 = float(_p3["mean_precision@10"].iloc[0]) if len(_p3) else float("nan")
 pp_pooled = float("nan")
 _es = config.PROCESSED_DIR / "effect_size_windows.csv"
 if _es.exists():
@@ -143,42 +139,30 @@ if _es.exists():
 GLOSSARY = [
     ("The composite score",
      "All eight weighted measures summed; 0 is the average market that year, positive "
-     "is stronger, negative weaker.",
-     "Read the distance from zero, not the exact decimals."),
+     "is stronger, negative weaker."),
     ("Rank and the 90% confidence range",
      "The market's position (1 = best) plus the range its rank lands in 90% of the "
-     "time once measured noise in the two fast-moving inputs is accounted for.",
-     "A single rank overstates precision; markets with overlapping ranges are "
-     "statistically tied."),
+     "time once measured noise in the two fast-moving inputs is accounted for; "
+     "markets with overlapping ranges are statistically tied."),
     ("Tiers (Leading cluster to Lagging)",
      "Bands built from the confidence ranges under a fixed rule; same-tier markets "
-     "are peers, not an ordering.",
-     "The tier is the level of precision the data can actually support."),
+     "are peers, not an ordering."),
     ("Weighted Kendall's tau",
      "A rank-agreement score from −1 to +1 between the screen's ranking and the rent "
      "growth that actually followed; 0 means no relationship, and extra weight goes "
-     "to getting the top markets right.",
-     "The main accuracy test: whether the whole ranking pointed the right way. "
-     f"This screen scores {pooled_tau:.2f} pooled on finalized data; random guessing "
-     "scores about 0."),
+     "to getting the top markets right."),
     ("Precision@10",
      "Of the screen's top 10 markets, the share that landed in the top quarter of "
-     "all markets by actual rent growth.",
-     f"It grades the ten-market short list: {pooled_p10:.0%} pooled. One miss moves "
-     "it by 10 points, so read it alongside tau."),
+     "all markets by actual rent growth."),
     ("The top-10 edge, in points",
      "How much more 3-year rent growth the screen's top 10 delivered than the median "
-     f"market: {pp_pooled:+.1f} points averaged across six completed windows.",
-     "It states the result in the units an investment decision uses: points of "
-     "rent growth."),
+     f"market: {pp_pooled:+.1f} points averaged across six completed windows."),
 ]
 gl_html = ""
-for term, what, why in GLOSSARY:
+for term, what in GLOSSARY:
     gl_html += (
         f"<div class='rowline'><span style='font-weight:600'>{term}.</span> "
-        f"<span style='font-size:14px'>{what}</span>"
-        f"<div class='cap' style='margin-top:.15rem'><b>Why it matters:</b> "
-        f"{why}</div></div>")
+        f"<span style='font-size:14px'>{what}</span></div>")
 st.markdown(gl_html, unsafe_allow_html=True)
 
 # ---- The data ---------------------------------------------------------------
