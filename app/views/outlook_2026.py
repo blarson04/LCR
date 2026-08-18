@@ -136,111 +136,13 @@ st.dataframe(
         "Top drag": st.column_config.TextColumn(
             help="The theme pulling this market's speculative score down the most.")})
 
-# ---- Explore a market, speculatively ----------------------------------------
-st.markdown("## Explore a market, speculatively")
-theme.caption("The same anatomy as the validated Explore page, on mid-year data. "
-              "Every number below inherits the warning at the top of this page.")
-
-opts = rank.sort_values("cbsa_title")
-titles = list(opts["cbsa_title"])
-codes_sorted = [str(c) for c in opts["cbsa_code"]]
-qp = st.query_params.get("metro")
-metro = st.selectbox("Choose a market", titles,
-                     index=codes_sorted.index(qp) if qp in codes_sorted else 0)
-row = rank[rank["cbsa_title"] == metro].iloc[0]
-code = row["cbsa_code"]
-st.query_params["metro"] = str(code)
-
-c1, c2 = st.columns(2)
-c1.metric("Speculative rank", f"{int(row['rank'])}",
-          help="This market's rank under the failed mid-year configuration "
-               "(1 = best). No 90% range is computed for a configuration that "
-               "failed validation; read the rank as indicative at best.")
-c2.metric("Score", f"{row['score']:+.2f}",
-          help="All eight measures combined on mid-year data (income is a "
-               "state-level estimate). 0 is the average market; the distance from 0 "
-               "matters more than the decimals.")
-st.markdown(f"<div class='cap' style='margin:.6rem 0 0'>{data.why_sentence(row)}</div>",
-            unsafe_allow_html=True)
-
-pros, cons = [], []
-for k in data.INDICATORS:
-    p = pct[k].get(code, float("nan"))
-    if pd.isna(p):
-        continue
-    if p >= 65:
-        pros.append((data.OUTLOOK[k][0], p))
-    elif p <= 35:
-        cons.append((data.OUTLOOK[k][1], p))
-pros = [t for t, _ in sorted(pros, key=lambda x: -x[1])][:5]
-cons = [t for t, _ in sorted(cons, key=lambda x: x[1])][:5]
-
-oc1, oc2 = st.columns(2)
-
-
-def _list(col, title, items, color, empty):
-    html = (f"<div style='background:{theme.SURFACE};border:1px solid {theme.LINE};"
-            f"border-radius:8px;padding:.9rem 1.1rem;height:100%'>"
-            f"<div style='font-weight:600;color:{color};margin-bottom:.4rem'>"
-            f"{title}</div>")
-    if items:
-        html += "".join(f"<div style='font-size:14px;margin:.3rem 0'>{i}</div>"
-                        for i in items)
-    else:
-        html += f"<div class='cap'>{empty}</div>"
-    col.markdown(html + "</div>", unsafe_allow_html=True)
-
-
-_list(oc1, "Strengths (mid-year read)", pros, theme.POS,
-      "No standout strengths on mid-year data.")
-_list(oc2, "Watch-outs (mid-year read)", cons, theme.NEG,
-      "No major red flags on mid-year data.")
-
-st.markdown("### The measures, mid-year")
-rows_t, missing = [], []
-for k in data.INDICATORS:
-    val = raw[k].get(code, float("nan"))
-    if k == "income_growth":
-        rows_t.append({"Measure": data.PRETTY[k],
-                       "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
-                       "Value": ("–" if pd.isna(val)
-                                 else data.FMT[k](val) + " (state estimate)"),
-                       "Percentile": pct[k].get(code, float("nan"))})
-        continue
-    if pd.isna(val):
-        missing.append(data.PRETTY[k].lower())
-    rows_t.append({"Measure": data.PRETTY[k],
-                   "Weight": f"{data.INDICATORS[k]['weight']*100:.0f}%",
-                   "Value": "–" if pd.isna(val) else data.FMT[k](val),
-                   "Percentile": pct[k].get(code, float("nan"))})
-st.dataframe(
-    pd.DataFrame(rows_t).style
-      .set_properties(subset=["Measure"], **{"font-weight": "500"})
-      .set_properties(subset=["Weight"], **{"font-variant-numeric": "tabular-nums",
-                                            "text-align": "right"}),
-    hide_index=True, use_container_width=True,
-    column_config={
-        "Weight": st.column_config.TextColumn(
-            help="This measure's fixed share of the composite score, identical for "
-                 "every market."),
-        "Value": st.column_config.TextColumn(
-            help="The measure in real-world units on data through May 2026 (permits "
-                 "annualized from the year-to-date count; migration from the latest "
-                 "Census estimate year)."),
-        "Percentile": st.column_config.ProgressColumn(
-            min_value=0, max_value=100, format="%.0f",
-            help="Where this market stands among all markets on that measure, "
-                 "direction already applied so higher is always better. Income is "
-                 "a state-level estimate, so metros in the same state tie on it.")})
-if missing:
-    theme.caption(f"Data note: {', '.join(missing)} is unavailable for this market "
-                  "and takes a neutral (average) fill, which can flatter or "
-                  "understate it.")
-theme.caption("Rent history and the finalized measures for this market: "
-              f"<a href='metro?metro={code}'>the validated Explore page</a>.")
-
+# Per-market detail moved to the Explore page's screen selector (author
+# direction 2026-08-18): Explore a market carries this view behind the same
+# speculative warning, via ?screen=2026.
 theme.caption("A working view, rebuilt as data lands; unlike the validated screens it "
-              "is not frozen to the registry and makes no graded claim.")
+              "is not frozen to the registry and makes no graded claim. Explore any "
+              "market under this view: <a href='metro?screen=2026'>Explore a "
+              "market</a>, speculative screen.")
 st.markdown("Next: [the validated screen's key findings](home) · "
             "[Track record](track_record), where the original mid-year gate "
             "failure is logged.")
