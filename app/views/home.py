@@ -38,10 +38,6 @@ st.markdown("# Key findings")
 theme.caption(f"What the screen says right now: the {len(rank)} largest US rental "
               "markets, ranked by fundamentals that have historically come before "
               "strong rent growth. A research screen, not investment advice.")
-st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
-theme.caption("Built on preliminary 2025 inputs through validated substitutes; what "
-              "\"validated\" means and how every number works: "
-              "<a href='how_it_works'>How it works</a>.")
 st.write("")
 
 # ---- Key findings -----------------------------------------------------------
@@ -80,9 +76,6 @@ st.markdown(f"""
 - **The screen's top-10 markets out-grew the median market by {pp_pooled:+.1f} points
   of rent growth** across six completed windows; picking on recent rent growth alone
   earned {pp_mom:+.1f}.
-- **Every measure earned its place by test.** An industry-style scorecard rebuilt from
-  the same free data barely beats chance ({ind_tau:.2f} vs {full_tau:.2f} on a −1 to
-  +1 rank-agreement scale), and this project's own failed configurations are published.
 """)
 
 # ---- The top 10 -------------------------------------------------------------
