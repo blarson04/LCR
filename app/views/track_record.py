@@ -158,15 +158,23 @@ st.markdown(
     "data closes (early 2029), whatever it shows**; the 2023-vintage calls are "
     "graded first, in mid-2027.")
 if len(d["registry"]):
-    with st.expander("Every frozen run"):
-        rt = d["registry"].rename(columns={
+    with st.expander("The frozen runs"):
+        # Display the OPERATIVE run per edition (the latest freeze; data
+        # corrections supersede by re-freezing, never by editing). The full
+        # audit trail, including every superseded run, stays immutable in the
+        # public registry (author display direction 2026-08-18).
+        reg = (d["registry"].sort_values("timestamp_utc")
+               .groupby("score_year").tail(1)
+               .sort_values("score_year", ascending=False))
+        rt = reg.rename(columns={
             "timestamp_utc": "Run (UTC)", "model_version": "Version",
             "score_year": "Year", "n_metros": "Markets",
             "top_metro": "Top-ranked market"})
         rt = rt[["Run (UTC)", "Version", "Year", "Markets", "Top-ranked market"]]
         st.dataframe(rt, hide_index=True, use_container_width=True)
-        theme.caption("Frozen live predictions, distinct from the backtest; each "
-                      "passed a pre-registered gate to publish.")
+        theme.caption("The operative frozen run for each edition; superseded "
+                      "re-freezes from data corrections remain in the public "
+                      "registry, annotated in the decision log, never deleted.")
 
 # ---- 6. Full statistics (expanders) -----------------------------------------
 with st.expander("Full statistics: rank agreement, real-time vs finalized"):
