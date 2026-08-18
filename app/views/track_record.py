@@ -196,8 +196,9 @@ with st.expander("Full statistics: rank agreement, real-time vs finalized"):
         m3_path = config.PROCESSED_DIR / "nowcast" / "m3_summary.csv"
     if m3_path.exists():
         m3 = pd.read_csv(m3_path)
+        m3 = m3[m3["horizon"] == 3]     # the design target (author trim 2026-08-18)
         tv = m3.rename(columns={
-            "horizon": "Horizon (yrs)", "regime": "Period",
+            "regime": "Period",
             "mean_tau_ps": "Tau (real-time)", "mean_tau_fin": "Tau (finalized ceiling)",
             "mean_precision@10_ps": "P@10 (real-time)",
             "mean_precision@10_fin": "P@10 (finalized)"})
@@ -206,21 +207,17 @@ with st.expander("Full statistics: rank agreement, real-time vs finalized"):
                         .str.replace("shock", "Shock (2020–22)")
                         .str.replace("normalization", "Normalization")
                         .str.replace("POOLED", "All periods"))
-        tv = tv[["Horizon (yrs)", "Period", "Tau (real-time)",
-                 "Tau (finalized ceiling)", "P@10 (real-time)", "P@10 (finalized)"]]
+        tv = tv[["Period", "Tau (real-time)", "Tau (finalized ceiling)",
+                 "P@10 (real-time)", "P@10 (finalized)"]]
         st.dataframe(
             tv.style.format({"Tau (real-time)": "{:.2f}",
                              "Tau (finalized ceiling)": "{:.2f}",
-                             "P@10 (real-time)": "{:.0%}", "P@10 (finalized)": "{:.0%}",
-                             "Horizon (yrs)": "{:.0f}"})
+                             "P@10 (real-time)": "{:.0%}", "P@10 (finalized)": "{:.0%}"})
               .set_properties(subset=["Tau (real-time)", "Tau (finalized ceiling)"],
                               **{"font-variant-numeric": "tabular-nums",
                                  "text-align": "right"}),
             hide_index=True, use_container_width=True,
             column_config={
-                "Horizon (yrs)": st.column_config.NumberColumn(
-                    help="How many years ahead the prediction looks. 3 years is the "
-                         "real target; 1 year is shown as a contrast."),
                 "Tau (real-time)": st.column_config.TextColumn(
                     help="Agreement with the rent growth that followed, using only "
                          "data a user could actually have had at the time."),
@@ -233,10 +230,9 @@ with st.expander("Full statistics: rank agreement, real-time vs finalized"):
                          "real-time data."),
                 "P@10 (finalized)": st.column_config.TextColumn(
                     help="The same top-10 hit rate using finalized data.")})
-    theme.caption("Real-time numbers come from the pseudo-nowcast test (current data "
-                  "vintages stand in for true unrevised prints, a disclosed "
-                  "simplification). One-year results are a contrast, not the target: "
-                  "the screen is built for the three-year horizon.")
+    theme.caption("3-year horizon, the design target. Real-time numbers come from the "
+                  "pseudo-nowcast test (current data vintages stand in for true "
+                  "unrevised prints, a disclosed simplification).")
 
 st.markdown("Next: [back to the key findings](home).")
 
