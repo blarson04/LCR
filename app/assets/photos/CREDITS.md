@@ -8,7 +8,7 @@ no-photography imagery rule).
 
 | File | Unsplash photo | Subject |
 | --- | --- | --- |
-| app/assets/photos/how_it_works.jpg | unsplash.com/photos/xBAc9-vOqUs | apartment building facade |
+| app/assets/photos/how_it_works.jpg | unsplash.com/photos/4453DIQWtsQ | modern apartment building, glass balconies at dusk |
 | app/assets/photos/home.jpg | unsplash.com/photos/kZokA2VTKn4 | New York skyline at golden hour |
 | app/assets/photos/rankings.jpg | unsplash.com/photos/czK2Yj1LUbI | aerial city, many buildings |
 | app/assets/photos/metro.jpg | unsplash.com/photos/rnqr9On0wpw | aerial apartment blocks and streets |
