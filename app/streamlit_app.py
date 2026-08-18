@@ -36,13 +36,6 @@ with st.sidebar:
         f"color:{theme.INK};line-height:1.25'>Larson Capital Research</div>"
         f"<div class='cap' style='margin-bottom:.8rem'>The rent-growth screener · v{config.MODEL_VERSION}</div>",
         unsafe_allow_html=True)
-    if d["has_spec"]:
-        st.markdown(
-            "<div class='cap' style='margin-top:.4rem'>The frozen model on "
-            "preliminary 2025 inputs. This configuration <b>passed its "
-            "pre-registered validation gate</b>, keeping 96.6% of the finalized "
-            "model's signal. Details: How it works.</div>",
-            unsafe_allow_html=True)
     st.markdown("<div class='cap' style='margin-top:.8rem'>Appearance</div>",
                 unsafe_allow_html=True)
     st.radio("Appearance", ["Light", "Dark"], key=theme.MODE_KEY,
