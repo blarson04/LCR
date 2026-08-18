@@ -25,6 +25,10 @@ Each indicator is normalized **across all metros** (percentile / z-score) *befor
 
 ## Decision log
 
+### 2026-08-17 — Author decision: the "Validated 2025→2028 forecast · proxied inputs" badge is removed sitewide
+
+The author directed the gold edition badge deleted from every site surface (sidebar, Full rankings, Explore a market; the Key findings and How-it-works copies were removed earlier the same day at his direction). The alternative of a quieter one-line replacement was offered and declined; the trade-off (ranked views no longer carry an adjacent gold marker for the substituted 2025 inputs) was stated before the decision. Where the disclosure still lives, for the record: the sidebar's standing caption ("The frozen model on preliminary 2025 inputs... passed its pre-registered validation gate, keeping 96.6%..."), the How-it-works fresh-data section with the per-measure substitute table, the metro-page vintage note, and the fine print. The speculative outlook page's gold "failed validation" labeling is untouched (a different, mandatory marker). No score, rank, gate outcome, or accuracy number changed; `theme.badge()` remains for the speculative surface.
+
 ### 2026-08-17 — V4-6 OUTCOME: **REJECT ALL** — the direction prior was falsified (permit momentum reads as demand, not supply relief), and no variant reliably improves the model; v2.0.0 stands
 
 The one-shot run (spec 2026-08-16; cooling-off satisfied; machinery verified against the published record beforehand with no candidate accuracy computed; runner `src/v4_momentum_gate.py`, B=800, seed 42). All four measures cleared the coverage kill-rule (103–107/110 in the usable prediction years).

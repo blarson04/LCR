@@ -37,8 +37,6 @@ with st.sidebar:
         f"<div class='cap' style='margin-bottom:.8rem'>The rent-growth screener · v{config.MODEL_VERSION}</div>",
         unsafe_allow_html=True)
     if d["has_spec"]:
-        st.markdown(theme.badge(True, "Validated 2025→2028 forecast · proxied inputs"),
-                    unsafe_allow_html=True)
         st.markdown(
             "<div class='cap' style='margin-top:.4rem'>The frozen model on "
             "preliminary 2025 inputs. This configuration <b>passed its "

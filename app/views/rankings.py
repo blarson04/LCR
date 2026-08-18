@@ -45,7 +45,6 @@ st.markdown("# Full rankings")
 theme.caption(
     f"All {len(rank)} markets in the {ed['horizon']} screen, with a tier and a rank "
     "range for each: a screen, not a precise ordering.")
-st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 # Scoring-year uncertainty flag (ex-ante rule, v3-P6): computed for the active
 # edition's scoring year so the disclosure stays on-surface (2026-07-20).
 nat = data.national_rent_growth(d["panel"], ed["year"])

@@ -33,7 +33,6 @@ theme.eyebrow("Multifamily research · explore a market")
 st.markdown("# Explore a market")
 theme.caption("Why a market ranks where it does: its score, the themes driving it, and "
               "each measure in plain terms. Add a second market to compare side by side.")
-st.markdown(theme.badge(ed["provisional"], ed.get("badge_label")), unsafe_allow_html=True)
 if ed.get("vintage"):
     theme.caption("One measure is an early estimate: migration uses a validated Census "
                   "substitute. Everything else is finalized, apart from a disclosed "
