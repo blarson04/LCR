@@ -181,19 +181,6 @@ theme.caption(f"Column headers explain each field on hover. "
                  f"({ed['year']}→{ed['year']+4}); beyond that the data cannot validate."
                  if ed.get("vintage") else ""))
 
-with st.expander("How the tiers and rank ranges are built"):
-    theme.caption(
-        "The two fastest-moving inputs (job growth and income growth) carry "
-        "measurement noise, so the full ranking is re-run 1,000 times with that "
-        "noise added. A market's range is where its rank lands in 90% of those "
-        "runs; its tier comes from a fixed rule on that range. Read it simply: "
-        "markets in the same tier are peers, and overlapping ranges are ties.")
-    theme.caption(
-        "Moves between editions work the same way: a move inside a market's own "
-        "range is expected noise, not a signal (even two fully finalized years "
-        "share only 1 to 6 of the same top-10 names). The range reflects "
-        "measurement noise, not accuracy; accuracy lives on Track record.")
-
 with st.expander("Advanced view: how each score breaks down"):
     theme.caption("Contribution of each theme to the composite score, in standardized "
                   "units (0 = the average market that year; positive helps, negative "
