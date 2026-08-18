@@ -82,10 +82,16 @@ def main() -> None:
     if run25 is not None:
         from src.nowcast.midyear_qa import monthly_zori_by_cbsa, same_months_yoy
         pred = pd.read_csv(run25 / "ranking.csv", dtype={"cbsa_code": str})
-        g_my = same_months_yoy(monthly_zori_by_cbsa(), "zori", 2026)
+        monthly = monthly_zori_by_cbsa()
+        # Same-months read over every 2026 month the vintage carries (the spec's
+        # per-vintage re-run: Jan-May at the first vintage, longer as data lands).
+        m_latest = int(monthly.loc[monthly["date"].dt.year == 2026,
+                                   "date"].dt.month.max())
+        g_my = same_months_yoy(monthly, "zori", 2026, upto_month=m_latest)
         g = _grade(pred[["cbsa_code", "score"]], backtest._winsorize(g_my))
+        m_name = pd.Timestamp(2026, m_latest, 1).strftime("%b")
         rows.append({"run": run25.name, "screen": "2025 current",
-                     "window": "2025->May 2026",
+                     "window": f"2025->{m_name} 2026",
                      "read": "partial first year (of 3)", **g})
 
     out = pd.DataFrame(rows)

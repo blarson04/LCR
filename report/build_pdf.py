@@ -1017,7 +1017,7 @@ if len(m3):
     ]))
     story += [tt, Paragraph("3-year horizon. Real-time numbers come from the pseudo-nowcast "
                             "test, a disclosed simplification. Data vintage: finalized "
-                            "panel through 2024; rent index through May 2026.", S["cap"])]
+                            "panel through 2024; rent index through July 2026.", S["cap"])]
     _g_cell = ParagraphStyle("gcell", fontName="Inter", fontSize=8, leading=10.8,
                              textColor=C_INK)
     _g_term = ParagraphStyle("gterm", fontName="Inter-SB", fontSize=8, leading=10.8,

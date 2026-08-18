@@ -5,13 +5,14 @@ fundamentals that historically precede **3-year forward rent growth** — built 
 public data and served as a Streamlit site. It is a research screen, not investment advice.
 
 **Headline results** (finalized-data vintage unless noted; details in `paper/`):
-- Top-10 edge: **+6.0 pp** of 3-yr rent growth vs the median market, pooled over six windows
-- Pre-COVID: weighted Kendall's τ **0.59**, precision@10 **85%**; real-time-achievable pooled
-  τ **0.38** (85% of the finalized ceiling 0.44)
-- In the 2020–22 shock the edge largely disappears (τ ≈ 0.16) — reported, and flagged by a
+- Top-10 edge: **+6.0 points** of 3-yr rent growth vs the median market, pooled over six windows
+- Pooled 3-yr weighted Kendall's τ **0.43** (random guessing ≈ 0); pre-COVID windows τ **0.59**
+  with precision@10 **88%**
+- In the 2020–22 shock the edge largely disappears (τ ≈ 0.12) — reported, and flagged by a
   validated ex-ante rule
-- Two provisional "nowcast" attempts **failed their pre-committed validation gate** (latest:
-  84.7% signal retention vs ≥85% required) and are published as negative results
+- Five pre-registered validation gates: **two passes, three failures, every outcome published**.
+  The current 2025→2028 screen passed at **96.6%** signal retention; fourteen candidate measures
+  and model variants were gated one-shot and none were adopted
 
 **The documents** — `decision-log.md` (every decision + why) · `v1-build-spec.md`, `v2-plan.md`,
 `v3-plan.md` (build spec + two external critique rounds) · `paper/paper-brief.md` (all citable
@@ -48,7 +49,7 @@ config validates, the model scores, and every site page renders on each push.
 | `config.py` | Universe rules, indicator weights, regimes, gate constants — the knobs |
 | `src/ingest/` | One module per data source; raw downloads cached (gitignored) |
 | `src/` | Panel build, indicators, normalization, scoring, backtest, analyses |
-| `src/nowcast/` | The provisional-screen experiment (gated; currently unpublished) |
+| `src/nowcast/` | The current-screen (proxied-inputs) pipeline — gate-passed and published |
 | `app/` | Streamlit site — `ui/` tokens+data, `views/` one file per page |
 | `data/processed/` | Committed model outputs the site reads (no keys needed at runtime) |
 | `predictions/` | Frozen, timestamped registry runs (never edited) |

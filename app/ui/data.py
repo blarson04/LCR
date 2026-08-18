@@ -98,12 +98,12 @@ VINTAGE_SOURCES = {
                       "substitute for the slower IRS data)", "2024"),
     "job_growth": ("BLS employment census (QCEW)", "2024 *"),
     "income_growth": ("BEA county personal income, rolled up to metros", "2024 *"),
-    "permits_to_stock": ("Census building permits over ACS housing stock", "2024"),
-    "rent_to_income": ("Zillow rent index vs BEA income", "2024"),
+    "permits_to_stock": ("Census building permits over ACS housing stock", "2025"),
+    "rent_to_income": ("Zillow rent index vs BEA income", "2025 rents, 2024 income"),
     "cost_to_own_vs_rent": ("Zillow home values vs rents, with mortgage rates (FRED); "
                             "built from county home values for Dayton and Poughkeepsie, "
-                            "which Zillow does not publish at the metro level", "2024"),
-    "trailing_rent_growth": ("Zillow rent index (ZORI)", "2024"),
+                            "which Zillow does not publish at the metro level", "2025"),
+    "trailing_rent_growth": ("Zillow rent index (ZORI)", "2025"),
     "employment_diversity": ("BLS employment census (QCEW), industry mix", "2024"),
 }
 

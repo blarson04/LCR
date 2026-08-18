@@ -129,7 +129,7 @@ if isc_path.exists():
         "Interim tracking, not the final grades: short horizons favor recent "
         "momentum and are not this model's design target, so nothing here "
         "validates or invalidates a screen; the full-window resolutions below "
-        "are the real grades. Rent data through May 2026.")
+        "are the real grades. Rent data through July 2026.")
 
 # ---- 4. Honest limits -------------------------------------------------------
 st.markdown("## Honest limits")
