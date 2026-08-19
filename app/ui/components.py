@@ -32,10 +32,6 @@ except ImportError:  # pragma: no cover
     from theme import lcr_theme
 
 
-def _mode() -> str:
-    return "dark" if theme.current_mode() == "Dark" else "light"
-
-
 # ---- 1. scorecard row -------------------------------------------------------
 
 def scorecard_row(stats: list[tuple[str, str, str]]) -> None:
@@ -96,7 +92,7 @@ def gate_ledger(gates: list[tuple[bool, str, str]]) -> None:
 
 def tier_color(tier: str) -> str:
     """The 5-step pine→tint tier scale from the tokens file."""
-    scale = lcr_theme.tier_scale(_mode())
+    scale = lcr_theme.tier_scale("light")
     order = ["Leading cluster", "Strong", "Mid", "Weak", "Lagging"]
     try:
         return scale[order.index(tier)]
@@ -107,7 +103,7 @@ def tier_color(tier: str) -> str:
 def tier_border_styles(tiers: list[str]) -> list[dict]:
     """Per-row style dicts (pandas Styler.apply-compatible): a thin tier-
     colored left border plus zebra tint striping."""
-    t = lcr_theme.tokens(_mode())
+    t = lcr_theme.tokens("light")
     styles = []
     for i, tier in enumerate(tiers):
         css = f"border-left: 3px solid {tier_color(tier)};"

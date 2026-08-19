@@ -561,9 +561,9 @@ def on_cover(canvas, doc):
     canvas.setFont("Serif-SB", 14)
     canvas.setFillColor(C_ACCENT)
     canvas.drawString(M, H - 3.5 * inch,
-                      "Private companies pay heavily for market data.")
+                      "A quantified prediction of America’s emerging rental")
     canvas.drawString(M, H - 3.76 * inch,
-                      "Can you still find an edge with free, public data?")
+                      "markets, built by synthesizing public data.")
     canvas.setFont("Inter", 11)
     canvas.setFillColor(C_INK)
     canvas.drawString(M, H - 4.22 * inch,

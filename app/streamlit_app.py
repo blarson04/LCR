@@ -26,22 +26,16 @@ import config               # noqa: E402
 st.set_page_config(page_title="Larson Capital Research", layout="wide",
                    initial_sidebar_state="expanded")
 
-theme.inject_css()   # applies the saved light/dark preference before anything renders
+theme.inject_css()
 d = data.load()
 
-# ---- Sidebar: brand + the global controls ----------------------------------
+# ---- Sidebar: brand ---------------------------------------------------------
 with st.sidebar:
     st.markdown(
         f"<div style='font-family:{theme.FONT_HEAD};font-size:19px;font-weight:600;"
         f"color:{theme.INK};line-height:1.25'>Larson Capital Research</div>"
         f"<div class='cap' style='margin-bottom:.8rem'>The rent-growth screener · v{config.MODEL_VERSION}</div>",
         unsafe_allow_html=True)
-    st.markdown("<div class='cap' style='margin-top:.8rem'>Appearance</div>",
-                unsafe_allow_html=True)
-    st.radio("Appearance", ["Light", "Dark"], key=theme.MODE_KEY,
-             horizontal=True, label_visibility="collapsed")
-    # Sync Streamlit's native theme AFTER the widget renders (may rerun once).
-    theme.sync_native_theme()
 
 # ---- Pages: methodology-first reading order (author direction 2026-07-20).
 # The Speculative nav group was removed by author override (decision-log

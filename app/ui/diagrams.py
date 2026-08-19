@@ -1,9 +1,8 @@
 """
 diagrams.py: explanatory inline-SVG diagrams (author request 2026-07-20).
 
-Each function returns an HTML string built from the ACTIVE theme tokens at
-call time, so the diagrams restyle with light/dark like everything else.
-They must be called after theme.inject_css(). Purposeful diagrams only, per
+Each function returns an HTML string built from the theme tokens at call
+time. They must be called after theme.inject_css(). Purposeful diagrams only, per
 the design skill: they explain the method, never decorate.
 
 Wide diagrams scroll inside their own container on small screens.

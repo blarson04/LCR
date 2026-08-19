@@ -36,8 +36,8 @@ components.header_art("how_it_works")
 st.markdown(
     f'<div style="font-family:{theme.FONT_HEAD};font-size:40px;font-weight:600;'
     f'line-height:1.2;color:{theme.INK};margin-bottom:.9rem;text-wrap:balance">'
-    "Private companies pay heavily for market data. Can you still find an edge "
-    "with free, public data?</div>",
+    "A quantified prediction of America’s emerging rental markets, built by "
+    "synthesizing public data.</div>",
     unsafe_allow_html=True)
 st.write("")
 

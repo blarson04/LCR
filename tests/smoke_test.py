@@ -79,17 +79,15 @@ def main() -> None:
         assert not spelling, "spelling:\n  " + "\n  ".join(spelling)
         print("spelling: OK")
 
-    # 4. Every site page renders without exception, in both themes.
+    # 4. Every site page renders without exception.
     from streamlit.testing.v1 import AppTest
     views = ["home", "rankings", "metro", "how_it_works", "outlook_2026",
              "track_record"]
     for view in views:
-        for mode in ("Light", "Dark"):
-            at = AppTest.from_file(str(ROOT / "app" / "views" / f"{view}.py"),
-                                   default_timeout=180)
-            at.session_state["ui_mode"] = mode
-            at.run()
-            assert not at.exception, f"{view} [{mode}]: {at.exception[0].value}"
+        at = AppTest.from_file(str(ROOT / "app" / "views" / f"{view}.py"),
+                               default_timeout=180)
+        at.run()
+        assert not at.exception, f"{view}: {at.exception[0].value}"
         print(f"page {view}: OK")
 
     # 5. The router boots.

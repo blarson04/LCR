@@ -6,9 +6,8 @@ tokens file governs the PDF report and the site alike); this module maps
 them to the site's role names and applies the global CSS. Page code must
 never hardcode a hex value; import tokens from here.
 
-Light is the default; a dark palette is available as a user preference via
-the sidebar toggle (session key MODE_KEY). Tokens are applied per run by
-inject_css(), so every page reads the active palette.
+The site ships in the light palette only (author direction 2026-08-18: dark
+mode removed). Tokens are applied per run by inject_css().
 """
 
 from __future__ import annotations
@@ -25,13 +24,9 @@ if str(_ROOT) not in sys.path:
 
 from theme import lcr_theme  # noqa: E402
 
-MODE_KEY = "ui_mode"
-
-# ---- Palettes (theme/tokens.json; dark = same system on dark surfaces) -----
+# ---- Palette (theme/tokens.json, light set) --------------------------------
 _LIGHT = lcr_theme.roles("light")
-_DARK = lcr_theme.roles("dark")
 
-# Module-level tokens default to light; _apply() swaps them per run.
 globals().update(_LIGHT)
 SEQ_SCALE = [[0.0, _LIGHT["SEQ_LOW"]], [1.0, _LIGHT["ACCENT"]]]
 # Diverging pine↔clay for SIGNED values (composite score, rent growth):
@@ -44,53 +39,14 @@ FONT_BODY = "Inter, sans-serif"
 FONT_HEAD = "'Source Serif 4', Georgia, serif"
 
 
-def current_mode() -> str:
-    return st.session_state.get(MODE_KEY, "Light")
-
-
-def _apply_tokens(mode: str) -> None:
-    """Swap the module-level tokens to the active palette (no side effects)."""
-    t = _DARK if mode == "Dark" else _LIGHT
-    globals().update(t)
-    global SEQ_SCALE, DIV_SCALE
-    SEQ_SCALE = [[0.0, t["SEQ_LOW"]], [1.0, t["ACCENT"]]]
-    DIV_SCALE = [[0.0, t["NEG"]], [0.5, t["SEQ_LOW"]], [1.0, t["POS"]]]
-
-
-def sync_native_theme() -> None:
-    """Point Streamlit's own theme (native widgets, dataframes) at the active
-    palette. Must be called AFTER the Appearance widget has rendered: it may
-    trigger a rerun, and a rerun before the widget renders would drop the
-    widget's state and snap the mode back."""
-    mode = current_mode()
-    if st.session_state.get("_applied_mode") == mode:
-        return
-    t = _DARK if mode == "Dark" else _LIGHT
-    try:
-        from streamlit import config as _cfg
-        _cfg.set_option("theme.base", "dark" if mode == "Dark" else "light")
-        _cfg.set_option("theme.backgroundColor", t["PAPER"])
-        _cfg.set_option("theme.secondaryBackgroundColor", t["SURFACE"])
-        _cfg.set_option("theme.textColor", t["INK"])
-        _cfg.set_option("theme.primaryColor", t["ACCENT"])
-    except Exception:
-        pass
-    first = "_applied_mode" not in st.session_state
-    st.session_state["_applied_mode"] = mode
-    if not first:
-        st.rerun()
-
-
 def inject_css(reading: bool = False) -> None:
-    """Apply the active palette + global CSS. `reading=True` narrows the
+    """Apply the palette + global CSS. `reading=True` narrows the
     column for text-heavy pages."""
-    _apply_tokens(current_mode())
     maxw = "860px" if reading else "1100px"
-    scheme = "dark" if current_mode() == "Dark" else "light"
     st.markdown(f"""<style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap');
 
-      html {{ color-scheme: {scheme}; }}
+      html {{ color-scheme: light; }}
       html, body, [class*="css"], .stApp {{
           font-family: {FONT_BODY}; color: {INK}; font-size: 15px; }}
       .stApp {{ background: {PAPER}; }}

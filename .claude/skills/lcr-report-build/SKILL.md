@@ -58,7 +58,7 @@ Chart rules (apply to every figure):
 ## Verification
 
 - Smoke test: `python tests/smoke_test.py` — config invariants, data-QA gate,
-  scoring reproduces 110 ranked metros, every site page renders in both themes,
+  scoring reproduces 110 ranked metros, every site page renders,
   consistency greps (forbidden phrases), canonical-figures assertions.
 - Canonical figures live in a YAML the report builder and site test both assert
   against (see tests/ once PR 1 lands) — when a headline number legitimately

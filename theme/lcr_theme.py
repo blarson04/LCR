@@ -4,7 +4,7 @@ lcr_theme.py: the one chart/brand theme for every LCR deliverable (B-3).
 Loads theme/tokens.json (the single source of truth for color and type) and
 exposes:
 
-  - tokens(mode)        the raw palette dict for "light" or "dark"
+  - tokens(mode)        the raw palette dict ("light" is the only palette)
   - roles(mode)         role-named tokens (INK, PAPER, ACCENT, POS, NEG, ...)
                         matching the site's historical API
   - rgba(hex, alpha)    CSS rgba() string from a token hex
@@ -57,7 +57,7 @@ def roles(mode: str = "light") -> dict:
         MUTED=t["slate"], ACCENT=t["pine"], POS=t["pine"], NEG=t["clay"],
         PROVISIONAL=t["flag"], SEQ_LOW=t["seq_low"], MAP_LAND=t["map_land"],
         MAP_BORDER=t["map_border"], GRAY_SERIES=list(t["grays"]),
-        ROW_HOVER=rgba(t["ink"], 0.045 if mode == "dark" else 0.035),
+        ROW_HOVER=rgba(t["ink"], 0.035),
     )
 
 

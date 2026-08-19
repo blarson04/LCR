@@ -23,7 +23,7 @@ handoff B-1). `app/ui/theme.py` maps them to the site's role names via
 anywhere (the smoke test greps for strays, and `.streamlit/config.toml` must mirror
 the light palette).
 
-**Roles** (values in tokens.json; light + dark sets)
+**Roles** (values in tokens.json; light palette only — dark mode removed by author direction 2026-08-18)
 
 | Role | Token | Use |
 | --- | --- | --- |
