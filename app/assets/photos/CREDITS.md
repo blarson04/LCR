@@ -16,3 +16,7 @@ no-photography imagery rule).
 | app/assets/photos/track_record.jpg | unsplash.com/photos/Vtl6cOhO87Y | city buildings at sunset |
 | report/assets/photos/cover.jpg | unsplash.com/photos/BsAC9oVsVwM | aerial apartment buildings, trees |
 | report/assets/photos/back.jpg | unsplash.com/photos/SV4b7GAxmCo | multifamily facade with balconies |
+
+app/assets/author.jpg is the author's own headshot (supplied by Ben Larson,
+2026-08-19; not an Unsplash asset), used on the site's About-the-author block
+and the PDF's closing page.

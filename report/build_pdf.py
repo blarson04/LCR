@@ -2,9 +2,14 @@
 build_pdf.py: the report as a PDF, built from the same frozen outputs as the
 site (app/ui/data.py in bare mode), for sharing off-platform (LinkedIn).
 
-Arbor-style spine: cover, key findings, overview + top 10, the full ranked
-chart, map + tiers, the five themes, spotlight, track record, methodology,
-appendix table, about + disclaimer. Brand tokens match app/ui/theme.py.
+Teaser rebuild (author request 2026-08-19): the PDF is a six-page snapshot of
+the site, in the site's reading order — cover, the method, Key findings with
+the map, the top 10, Track record, and a closing page that routes the reader
+to the companion site (config.SITE_URL links when set). Each section opens
+with the photo header band its site page uses; brand tokens match
+app/ui/theme.py. The depth the teaser omits (the full 110-market table, the
+speculative outlook, Explore a market, data sourcing, full statistics) lives
+on the site and in the methodology paper.
 
 Run:  .venv/Scripts/python.exe report/build_pdf.py
 Out:  report/Larson_Capital_Research-Report.pdf
@@ -12,6 +17,7 @@ Out:  report/Larson_Capital_Research-Report.pdf
 
 from __future__ import annotations
 
+import shutil
 import sys
 from datetime import date
 from pathlib import Path
@@ -33,6 +39,7 @@ import config                      # noqa: E402
 from ui import data                # noqa: E402  (bare mode: no Streamlit runtime)
 from theme import lcr_theme        # noqa: E402
 from theme import hero_art         # noqa: E402
+from src.nowcast import proxy_map as pmap  # noqa: E402
 
 # ---- Brand tokens (theme/tokens.json, the single source of truth) -----------
 _T = lcr_theme.roles("light")
@@ -78,23 +85,40 @@ comp = ew[ew.strategy == "Composite (model)"].sort_values("pred_year")
 mom = ew[ew.strategy == "Momentum (trailing rent)"].sort_values("pred_year")
 pp_pooled = float(comp["top10_pp_vs_median"].mean())
 pp_mom = float(mom["top10_pp_vs_median"].mean())
-ib = pd.read_csv(config.PROCESSED_DIR / "industry_baseline.csv")
-ind_tau, full_tau = float(ib["tau_3y"].iloc[0]), float(ib["full_tau_3y"].iloc[0])
 
 has_tiers = ("tier" in rank.columns) and (rank["tier"].fillna("") != "").any()
 n_cluster = int((rank["tier"] == "Leading cluster").sum()) if has_tiers else 0
 n_in = int((rank.head(10)["tier"] == "Leading cluster").sum()) if has_tiers else 0
 
 # Prior edition (C-1): frozen ranks + that edition's 90% ranges, for the
-# change column and the spotlight's edition-over-edition line.
+# change column.
 prior_df, prior_label = data.prior_edition(d)
 show_change = len(prior_df) > 0
+
+# Scoring-year uncertainty flag (ex-ante rule, v3-P6): must show when it
+# fires; quiet years show nothing (author direction 2026-08-17).
+nat = data.national_rent_growth(d["panel"], YEAR)
+flag_on = nat > config.REGIME_FLAG_THRESHOLD
 
 m3_path = config.PROCESSED_DIR / "nowcast" / "gate2025_summary.csv"
 if not m3_path.exists():
     m3_path = config.PROCESSED_DIR / "nowcast" / "m3_summary.csv"
 m3 = pd.read_csv(m3_path) if m3_path.exists() else pd.DataFrame()
 bl = pd.read_csv(config.PROCESSED_DIR / "baseline_comparison.csv")
+
+# Speculative 2026→2029 outlook (v0.6; decision-log 2026-07-21).
+_nc = config.PROCESSED_DIR / "nowcast"
+_spec_rank_p = _nc / "midyear_2026_ranking.csv"
+_spec_acc_p = _nc / "midyear_v06_accuracy.csv"
+_spec_gate_p = _nc / "gate2026_summary.csv"
+have_spec26 = _spec_rank_p.exists() and _spec_acc_p.exists()
+if have_spec26:
+    spec_rank = pd.read_csv(_spec_rank_p, dtype={"cbsa_code": str}).sort_values("rank")
+    spec_rank[["s_strength", "s_drag"]] = spec_rank.apply(
+        lambda r: pd.Series(data.strength_drag(r)), axis=1)
+    spec_acc = pd.read_csv(_spec_acc_p).iloc[0]
+    spec_gate = (pd.read_csv(_spec_gate_p).iloc[0]
+                 if _spec_gate_p.exists() else None)
 
 # A-11: the report may not build if any headline number drifts from the
 # canonical-figures YAML (tests/canonical_figures.yaml).
@@ -116,37 +140,37 @@ def short(title: str, n: int = 26) -> str:
     return f"{place.split('-')[0][:n]},{state[:3]}"
 
 
-def chart_all_markets() -> Path:
-    """Every market against the average, two columns (Arbor's Chart 1)."""
-    fig, axes = plt.subplots(1, 2, figsize=(7.6, 8.9))
-    halves = (rank.iloc[:(N + 1) // 2], rank.iloc[(N + 1) // 2:])
-    for ax, half in zip(axes, halves):
-        vals = half["score"].tolist()
-        labels = [f"{int(r['rank'])}  {short(r['cbsa_title'], 20)}" for _, r in half.iterrows()]
-        colors = [POS if v >= 0 else NEG for v in vals]
-        y = range(len(half))
-        ax.barh(y, vals, color=colors, height=0.62)
-        ax.set_yticks(list(y), labels)
-        ax.invert_yaxis()
-        ax.axvline(0, color=MUTED, linewidth=0.8)
-        style_ax(ax)
-        ax.tick_params(axis="y", labelsize=6.3)
-        ax.tick_params(axis="x", labelsize=7)
-        lim = max(abs(rank["score"].min()), abs(rank["score"].max())) * 1.12
-        ax.set_xlim(-lim, lim)
-    fig.suptitle("")
-    fig.tight_layout(pad=0.4)
-    p = BUILD / "all_markets.png"
+def chart_spread() -> Path:
+    """The site's spread chart: top 10 and bottom 10 against the average."""
+    head, tail = rank.head(10), rank.tail(10)
+    labels = ([f"{int(r['rank'])}  {short(r['cbsa_title'], 24)}"
+               for _, r in head.iterrows()]
+              + [f"(…{N - 20} markets…)"]
+              + [f"{int(r['rank'])}  {short(r['cbsa_title'], 24)}"
+                 for _, r in tail.iterrows()])
+    vals = head["score"].tolist() + [float("nan")] + tail["score"].tolist()
+    fig, ax = plt.subplots(figsize=(6.6, 4.4))
+    colors_ = [POS if (v or 0) >= 0 else NEG for v in vals]
+    ax.barh(range(len(vals)), vals, color=colors_, height=0.62)
+    ax.set_yticks(range(len(vals)), labels)
+    ax.invert_yaxis()
+    ax.axvline(0, color=MUTED, linewidth=0.8)
+    style_ax(ax)
+    ax.tick_params(axis="y", labelsize=7)
+    ax.tick_params(axis="x", labelsize=7.5)
+    ax.set_xlabel("Composite score (0 = the average market)", fontsize=8)
+    fig.tight_layout(pad=0.3)
+    p = BUILD / "spread.png"
     fig.savefig(p, dpi=300)
     plt.close(fig)
     return p
 
 
-def chart_map() -> Path:
-    """The site's score map, exported via plotly + kaleido."""
+def chart_map(df: pd.DataFrame, fname: str, speculative: bool = False) -> Path:
+    """The site's score map, exported via plotly + playwright."""
     import plotly.express as px
     import plotly.graph_objects as go
-    mp = rank.merge(d["coords"], on="cbsa_code", how="left")
+    mp = df.merge(d["coords"], on="cbsa_code", how="left")
     fig = px.scatter_geo(mp, lat="lat", lon="lon", color="score", scope="usa",
                          size=[8] * len(mp), size_max=12,
                          color_continuous_scale=[[0.0, NEG], [0.5, SEQ_LOW],
@@ -168,10 +192,18 @@ def chart_map() -> Path:
                       margin=dict(l=0, r=0, t=0, b=0),
                       coloraxis_colorbar=dict(title="Score", thickness=10, len=0.6,
                                               tickfont=dict(color=MUTED)))
-    p = BUILD / "map.png"
+    if speculative:
+        # The gold tag is baked into the image (governance feature: a
+        # screenshot must not be able to shed the warning).
+        fig.add_annotation(
+            xref="paper", yref="paper", x=0.99, y=0.99, xanchor="right",
+            yanchor="top", showarrow=False,
+            text="<b>speculative · failed validation</b>",
+            font=dict(family="Inter", size=12, color=FLAG))
+    p = BUILD / f"{fname}.png"
     # kaleido's subprocess is unreliable on this machine; render via playwright
     # (the project's proven screenshot path) instead.
-    html = BUILD / "map.html"
+    html = BUILD / f"{fname}.html"
     fig.update_layout(width=980, height=560)
     fig.write_html(str(html), include_plotlyjs=True, full_html=True,
                    config={"staticPlot": True})
@@ -203,36 +235,9 @@ def chart_theme(bucket: str) -> Path:
     ax.axvline(0, color=MUTED, linewidth=0.8)
     style_ax(ax)
     ax.tick_params(axis="y", labelsize=7)
+    ax.set_xlabel(f"{bucket}: contribution to the composite score", fontsize=7.5)
     fig.tight_layout(pad=0.3)
     p = BUILD / f"theme_{bucket}.png"
-    fig.savefig(p, dpi=300)
-    plt.close(fig)
-    return p
-
-
-def chart_effect() -> Path:
-    fig, ax = plt.subplots(figsize=(6.6, 2.3))
-    vals = comp["top10_pp_vs_median"].tolist()
-    years = comp["pred_year"].astype(int).tolist()
-    ax.bar(range(len(vals)), vals, color=[POS if v >= 0 else NEG for v in vals], width=0.62)
-    ax.set_xticks(range(len(vals)), [str(y) for y in years])
-    ax.axhline(0, color=MUTED, linewidth=0.8)
-    for s in ("top", "right"):
-        ax.spines[s].set_visible(False)
-    ax.spines["bottom"].set_color(LINE)
-    ax.spines["left"].set_visible(False)
-    ax.yaxis.grid(True, color=LINE, linewidth=0.7)
-    ax.set_axisbelow(True)
-    ax.tick_params(length=0, labelsize=8)
-    for i, v in enumerate(vals):
-        # negative bars get their label above the zero line, clear of the
-        # year labels beneath the axis
-        ax.annotate(f"{v:+.1f}", (i, max(v, 0)), textcoords="offset points",
-                    xytext=(0, 4), ha="center", fontsize=7.5, color=INK)
-    ax.set_ylabel("Top-10 edge (pp of rent growth)", fontsize=8)
-    ax.set_xlabel("3-year window, by start year", fontsize=8)
-    fig.tight_layout(pad=0.3)
-    p = BUILD / "effect.png"
     fig.savefig(p, dpi=300)
     plt.close(fig)
     return p
@@ -358,16 +363,19 @@ def chart_timeline(start: int = 2019, horizon: int = 3) -> Path:
 
 
 print("rendering charts...")
-P_ALL = chart_all_markets()
-P_MAP = chart_map()
+P_SPREAD = chart_spread()
+P_MAP = chart_map(rank, "map")
+P_MAP_SPEC = chart_map(spec_rank, "map_spec", speculative=True) if have_spec26 else None
 P_THEMES = {b: chart_theme(b) for b in data.BUCKETS}
-P_EFFECT = chart_effect()
 P_TREND = chart_trend()
 P_PIPE = chart_pipeline()
 P_WBAR = chart_weights_bar()
 P_TLINE = chart_timeline()
 
 # ---- Hero art (B-7 Tier 1: generated from this edition's frozen data) -------
+# Still generated: the same assets serve as the site's page-header fallback
+# art (B-7.3), and the cover keeps its generative backdrop as the photo
+# fallback.
 print("rendering hero art...")
 _top10 = rank.head(10)
 P_COVER_ART = hero_art.save(
@@ -390,16 +398,38 @@ P_DIV_APPX = hero_art.save(
 P_DIV_SPEC = hero_art.save(
     hero_art.divider_speculative(), BUILD / "art_div_spec.png")
 
-# Site parity (B-7.3): the same generated assets serve as page-header art on
-# the corresponding site pages; committed so the deployed site has them.
+# Site parity (B-7.3): committed so the deployed site has the fallback art.
 _SITE_ART = APP / "assets" / "art"
 _SITE_ART.mkdir(parents=True, exist_ok=True)
-import shutil                       # noqa: E402
 for _src, _dst in [(P_DIV_KEY, "home.png"), (P_DIV_APPX, "rankings.png"),
                    (P_DIV_TRACK, "track_record.png"),
                    (P_DIV_THEMES, "how_it_works.png"),
                    (P_DIV_SPEC, "outlook_2026.png")]:
     shutil.copyfile(_src, _SITE_ART / _dst)
+
+
+# ---- Photo header bands (site parity: the same photos, cropped to a band) ---
+def photo_band(page: str, height_in: float = 1.05) -> Path | None:
+    """Crop the site page's header photo to the print band's aspect, matching
+    the site's object-fit: cover / object-position: center 35%."""
+    from PIL import Image as PILImage
+    src = APP / "assets" / "photos" / f"{page}.jpg"
+    if not src.exists():
+        return None
+    im = PILImage.open(src)
+    w, h = im.size
+    aspect = 7.0 / height_in            # CW is 7.0in wide
+    crop_h = int(w / aspect)
+    if crop_h <= h:
+        top_px = int((h - crop_h) * 0.35)
+        im = im.crop((0, top_px, w, top_px + crop_h))
+    else:
+        crop_w = int(h * aspect)
+        left = (w - crop_w) // 2
+        im = im.crop((left, 0, left + crop_w, h))
+    p = BUILD / f"band_{page}.jpg"
+    im.save(p, quality=88)
+    return p
 
 
 # ============================ document =======================================
@@ -419,7 +449,10 @@ import components as rl_comp        # noqa: E402  (report/components.py, B-4)
 
 
 def Paragraph(text, style, **kw):
-    """Every paragraph passes through the typographic-hygiene filter."""
+    """Every paragraph passes through the typographic-hygiene filter. <b> is
+    mapped to the semibold face directly: reportlab's family mapping does not
+    resolve it for these TTF registrations."""
+    text = text.replace("<b>", "<font name='Inter-SB'>").replace("</b>", "</font>")
     return _Paragraph(smart(text), style, **kw)
 
 pdfmetrics.registerFont(TTFont("Inter", FONTS / "Inter-400.ttf"))
@@ -432,6 +465,7 @@ pdfmetrics.registerFontFamily("Inter", normal="Inter", bold="Inter-SB", italic="
 C_INK, C_MUTED, C_ACCENT = colors.HexColor(INK), colors.HexColor(MUTED), colors.HexColor(ACCENT)
 C_LINE, C_PAPER = colors.HexColor(LINE), colors.HexColor(PAPER)
 C_POS, C_NEG = colors.HexColor(POS), colors.HexColor(NEG)
+C_SURFACE = colors.HexColor(SURFACE)
 
 W, H = letter
 M = 0.75 * inch
@@ -440,32 +474,37 @@ CW = W - 2 * M
 # B-1 type scale: 30/20/14/10.5/9, eyebrow 8.5 letterspaced.
 _TS = lcr_theme.type_scale_pdf()
 S = dict(
-    h1=ParagraphStyle("h1", fontName="Serif-SB", fontSize=_TS["h1"],
-                      leading=_TS["h1"] * 1.12, textColor=C_INK, spaceAfter=7),
+    h1=ParagraphStyle("h1", fontName="Serif-SB", fontSize=_TS["h1"] - 4,
+                      leading=(_TS["h1"] - 4) * 1.12, textColor=C_INK, spaceAfter=5),
     h2=ParagraphStyle("h2", fontName="Serif-SB", fontSize=_TS["h2"],
-                      leading=_TS["h2"] * 1.2, textColor=C_INK, spaceBefore=16,
-                      spaceAfter=5, keepWithNext=1),
+                      leading=_TS["h2"] * 1.2, textColor=C_INK, spaceBefore=20,
+                      spaceAfter=7, keepWithNext=1),
     h3=ParagraphStyle("h3", fontName="Inter-SB", fontSize=_TS["h3"],
-                      leading=_TS["h3"] * 1.25, textColor=C_INK, spaceBefore=10,
-                      spaceAfter=3, keepWithNext=1),
+                      leading=_TS["h3"] * 1.25, textColor=C_INK, spaceBefore=13,
+                      spaceAfter=4, keepWithNext=1),
     body=ParagraphStyle("body", fontName="Inter", fontSize=_TS["body"],
-                        leading=_TS["body"] * 1.42, textColor=C_INK, spaceAfter=6),
+                        leading=_TS["body"] * 1.52, textColor=C_INK, spaceAfter=8),
     bullet=ParagraphStyle("bullet", fontName="Inter", fontSize=_TS["body"],
-                          leading=_TS["body"] * 1.42, textColor=C_INK,
-                          leftIndent=12, bulletIndent=2, spaceAfter=5),
+                          leading=_TS["body"] * 1.52, textColor=C_INK,
+                          leftIndent=12, bulletIndent=2, spaceAfter=7),
     cap=ParagraphStyle("cap", fontName="Inter", fontSize=_TS["caption"],
-                       leading=_TS["caption"] * 1.35, textColor=C_MUTED,
-                       spaceAfter=8),
+                       leading=_TS["caption"] * 1.45, textColor=C_MUTED,
+                       spaceAfter=10),
     eyebrow=ParagraphStyle("eyebrow", fontName="Inter-SB",
                            fontSize=_TS["eyebrow"], leading=_TS["eyebrow"] * 1.3,
                            textColor=C_MUTED, spaceAfter=2),
+    thesis=ParagraphStyle("thesis", fontName="Serif-SB", fontSize=21,
+                          leading=26, textColor=C_INK, spaceAfter=8),
 )
 
 
 def eyebrow(txt):
-    return Paragraph(f"<font name='Inter-SB'>{txt.upper()}</font>",
-                     ParagraphStyle("eb", parent=S["eyebrow"],
-                                    textColor=C_MUTED, tracking=1.4))
+    # Letterspaced via NBSPs (reportlab collapses runs of ASCII spaces):
+    # one per letter gap, so word gaps (three ASCII spaces after the join)
+    # come out triple-width.
+    spaced = " ".join(txt.upper()).replace(" ", " ")
+    return Paragraph(f"<font name='Inter-SB'>{spaced}</font>",
+                     ParagraphStyle("eb", parent=S["eyebrow"], textColor=C_MUTED))
 
 
 def hr(width=CW, space_before=4, space_after=8):
@@ -474,42 +513,46 @@ def hr(width=CW, space_before=4, space_after=8):
     return [Spacer(1, space_before), t, Spacer(1, space_after)]
 
 
-# ---- Section divider band (B-1/B-7): pine field, paper-color serif title,
-# this section's own data as linework art. Structure is information: every
-# divider carries a real graphic from the frozen edition.
-C_PINE = colors.HexColor(_T["ACCENT"])
-_DIV_KICK = ParagraphStyle("div_kick", fontName="Inter-SB", fontSize=8.5,
-                           leading=11, textColor=C_PAPER)
-_DIV_TITLE = ParagraphStyle("div_title", fontName="Serif-SB", fontSize=26,
-                            leading=30, textColor=C_PAPER)
-_DIV_SUB = ParagraphStyle("div_sub", fontName="Inter", fontSize=9,
-                          leading=12.2, textColor=C_PAPER)
+def section_header(page: str, kicker: str, title: str,
+                   caption_txt: str | None = None, title_style: str = "h1"):
+    """A site page header, in print: the page's photo band, the eyebrow, the
+    serif title, and the page's one-line opening caption."""
+    flow = []
+    band = photo_band(page)
+    if band:
+        flow += [Image(str(band), width=CW, height=1.05 * inch), Spacer(1, 12)]
+    flow.append(eyebrow(kicker))
+    flow.append(Paragraph(title, S[title_style]))
+    if caption_txt:
+        flow.append(Paragraph(caption_txt, S["cap"]))
+    flow.append(Spacer(1, 8))
+    return flow
 
 
-def divider(kicker: str, title: str, art_path, art_ratio: float = 2.1 / 8.5,
-            subtitle: str | None = None):
-    """A half-page section divider: pine band with kicker, serif title, and
-    the section's data rendered as paper-color linework."""
-    # Letterspaced eyebrow: NBSPs, because reportlab collapses runs of
-    # ASCII spaces and Inter lacks the em-space glyph.
-    spaced = " ".join(kicker.upper()).replace(" ", "  ")
-    rows = [[Paragraph(spaced, _DIV_KICK)],
-            [Paragraph(title, _DIV_TITLE)]]
-    if subtitle:
-        rows.append([Paragraph(subtitle, _DIV_SUB)])
-    rows.append([Image(str(art_path), width=CW - 0.5 * inch,
-                       height=(CW - 0.5 * inch) * art_ratio)])
-    t = Table(rows, colWidths=[CW])
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), C_PINE),
-        ("LEFTPADDING", (0, 0), (-1, -1), 18),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 18),
-        ("TOPPADDING", (0, 0), (0, 0), 18),
-        ("TOPPADDING", (0, 1), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, -1), (-1, -1), 18),
-        ("ALIGN", (0, -1), (0, -1), "CENTER"),
-    ]))
-    return [t, Spacer(1, 16)]
+# The house data-table look, shared by every ruled table in the report.
+def ruled_table(rows, col_widths, body_size=8.6, align_right=(), md_col=None,
+                extra=None, repeat_header=False):
+    t = Table(rows, colWidths=col_widths, repeatRows=1 if repeat_header else 0)
+    cmds = [
+        ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
+        ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
+        ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
+        ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
+        ("FONTNAME", (0, 1), (-1, -1), "Inter"),
+        ("FONTSIZE", (0, 1), (-1, -1), body_size),
+        ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
+        ("LINEBELOW", (0, 1), (-1, -2), 0.4, C_LINE),
+        ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+    ]
+    for c in align_right:
+        cmds.append(("ALIGN", (c, 0), (c, -1), "RIGHT"))
+    if md_col is not None:
+        cmds.append(("FONTNAME", (md_col, 1), (md_col, -1), "Inter-Md"))
+    if extra:
+        cmds += extra
+    t.setStyle(TableStyle(cmds))
+    return t
 
 
 def draw_rail_mark(canvas, x, y, width=0.24 * inch, r=1.7):
@@ -554,25 +597,22 @@ def on_cover(canvas, doc):
     canvas.setFillColor(C_MUTED)
     canvas.drawString(M, H - 1.78 * inch,
                       f"LARSON CAPITAL RESEARCH  ·  {TODAY.upper()}")
-    canvas.setFont("Serif-SB", 34)
-    canvas.setFillColor(C_INK)
-    canvas.drawString(M, H - 2.45 * inch, "The Rent-Growth")
-    canvas.drawString(M, H - 2.95 * inch, "Screen")
-    canvas.setFont("Serif-SB", 14)
+    # The thesis IS the title (author request 2026-08-19): the accent line,
+    # promoted to display size; no separate product name above it.
+    canvas.setFont("Serif-SB", 25)
     canvas.setFillColor(C_ACCENT)
-    canvas.drawString(M, H - 3.5 * inch,
-                      "A quantified prediction of America’s emerging rental")
-    canvas.drawString(M, H - 3.76 * inch,
-                      "markets, built by synthesizing public data.")
+    canvas.drawString(M, H - 2.35 * inch, "A quantified prediction of America’s")
+    canvas.drawString(M, H - 2.74 * inch, "emerging rental markets, built by")
+    canvas.drawString(M, H - 3.13 * inch, "synthesizing public data.")
     canvas.setFont("Inter", 11)
     canvas.setFillColor(C_INK)
-    canvas.drawString(M, H - 4.22 * inch,
+    canvas.drawString(M, H - 3.62 * inch,
                       f"The {N} largest US rental markets, ranked by the fundamentals")
-    canvas.drawString(M, H - 4.42 * inch,
+    canvas.drawString(M, H - 3.82 * inch,
                       "that historically precede rent growth.")
     canvas.setFont("Inter", 10)
     canvas.setFillColor(C_MUTED)
-    canvas.drawString(M, H - 4.78 * inch,
+    canvas.drawString(M, H - 4.18 * inch,
                       f"A validated {HORIZON} outlook and a speculative 2026→"
                       f"2029 view, built entirely on free public data.")
 
@@ -601,10 +641,8 @@ def on_cover(canvas, doc):
     canvas.drawRightString(rx1, rail_y - 0.19 * inch, "Graded · early 2029")
     canvas.setFont("Inter", 6.6)
     canvas.setFillColor(C_MUTED)
-    canvas.drawString(rx0, rail_y - 0.33 * inch,
-                      "every ranking published before its outcome")
     canvas.drawRightString(rx1, rail_y - 0.33 * inch,
-                           "scored against realized rent growth, whatever it shows")
+                           "scored against realized rent growth")
 
     # ---- anchored stat row: each number carries its caveat inline (B-2) ------
     full_tau_row = bl.loc[bl["tau_3y"].idxmax()]
@@ -612,13 +650,14 @@ def on_cover(canvas, doc):
     canvas.setStrokeColor(C_INK)
     canvas.setLineWidth(1.1)
     canvas.line(M, band_h, W - M, band_h)
+    # Cover caveat sublines removed by author override 2026-08-19 (logged in
+    # decision-log.md); the shock-period and frozen-before-outcome disclosures
+    # remain on the Track record page.
     stats = [
         (f"{float(full_tau_row['tau_3y']):.2f}", "POOLED TAU ON FINALIZED DATA",
          "RANDOM GUESSING SCORES ABOUT 0"),
-        (f"{pp_pooled:+.1f} pp", "TOP-10 EDGE PER COMPLETED WINDOW",
-         "NEAR ZERO IN THE 2020–22 SHOCK"),
-        (f"{N}", "MARKETS RANKED, EVERY RANKING",
-         "FROZEN BEFORE ITS OUTCOME"),
+        (f"{pp_pooled:+.1f} pp", "TOP-10 EDGE PER COMPLETED WINDOW", ""),
+        (f"{N}", "MARKETS RANKED", ""),
     ]
     col_w = (W - 2 * M) / 3.0
     for i, (num, l1, l2) in enumerate(stats):
@@ -629,7 +668,8 @@ def on_cover(canvas, doc):
         canvas.setFont("Inter-SB", 6.4)
         canvas.setFillColor(C_MUTED)
         canvas.drawString(x, band_h - 0.74 * inch, l1)
-        canvas.drawString(x, band_h - 0.87 * inch, l2)
+        if l2:
+            canvas.drawString(x, band_h - 0.87 * inch, l2)
     canvas.setStrokeColor(C_LINE)
     canvas.setLineWidth(0.6)
     canvas.line(M, band_h - 1.08 * inch, W - M, band_h - 1.08 * inch)
@@ -658,8 +698,7 @@ def on_cover(canvas, doc):
     canvas.linkURL("https://www.linkedin.com/in/blarson1105",
                    (_lx, _contact_y - 2, _lx + _lw, _contact_y + 9), relative=0)
     canvas.drawRightString(W - M, band_h - 1.34 * inch,
-                           f"Model v{config.MODEL_VERSION} · methods documented, "
-                           f"failures published")
+                           f"Model v{config.MODEL_VERSION}")
     canvas.drawRightString(W - M, band_h - 1.50 * inch,
                            "A research screen, not investment advice")
     canvas.restoreState()
@@ -677,698 +716,276 @@ doc.addPageTemplates([
 
 story = [NextPageTemplate("page"), PageBreak()]
 
-# ---- Contents (B-5: the pre-commitment is a feature; grade dates surface) ----
-_toc_items = [
-    ("Key findings and the top 10", ""),
-    ("Every market against the average", ""),
-    ("The map and the tiers", ""),
-    ("The five themes", ""),
-    (f"Market spotlight: {top_city}", ""),
-    ("The track record",
-     "2023 calls graded mid-2027 · 2025→2028 graded early 2029"),
-    ("How the score is built", ""),
-    ("The speculative 2026–2029 outlook", "failed validation; labeled throughout"),
-    (f"Appendix: all {N} markets", ""),
-]
-_toc_title = ParagraphStyle("toc_t", fontName="Serif", fontSize=11.5,
-                            leading=15, textColor=C_INK)
-_toc_note = ParagraphStyle("toc_n", fontName="Inter", fontSize=8,
-                           leading=11, textColor=C_MUTED)
-_toc_rows = []
-for _t, _note in _toc_items:
-    _cell = [Paragraph(_t, _toc_title)]
-    if _note:
-        _cell.append(Paragraph(_note, _toc_note))
-    _toc_rows.append(["", _cell])
-_toc_tab = Table(_toc_rows, colWidths=[0.28 * inch, CW - 0.28 * inch])
-_toc_tab.setStyle(TableStyle([
-    ("LINEBEFORE", (0, 0), (0, -1), 2.2, C_ACCENT),
-    ("LINEBELOW", (0, 0), (-1, -2), 0.4, C_LINE),
-    ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
-    ("LEFTPADDING", (1, 0), (1, -1), 4),
-    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-]))
-story += [eyebrow("Contents"),
-          Paragraph("In this report", S["h1"]), *hr(),
-          _toc_tab,
-          Spacer(1, 10),
-          Paragraph("Grading dates are pre-committed: each frozen screen is scored "
-                    "against realized rent growth when its window closes, whatever "
-                    "the result shows.", S["cap"]),
-          PageBreak()]
+# The teaser keeps the site's reading order but states each section once,
+# briefly: the cover hooks, four inside pages carry the method, the current
+# ranking, and the graded record, and the closing page routes the reader to
+# the site. Cut sections (the full 110-market table, the speculative outlook,
+# Explore a market, data sourcing, full statistics) live on the site and in
+# the methodology paper.
 
-# ---- Key findings ------------------------------------------------------------
-s1, s2 = data.top_strengths(top)
-lift = " and ".join(s.lower() for s in (s1, s2) if s) or "balanced fundamentals"
-lead_range = (f"; its 90% rank range is {int(top['rank_lo'])}-{int(top['rank_hi'])}"
-              if pd.notna(top.get("rank_lo")) else "")
-story += [*divider("Key findings", "What the screen says", P_DIV_KEY,
-                   subtitle="The top ten's rank ranges, drawn to scale: the "
-                            "interval, not the point, is the claim."),
-          Paragraph(f"<b>{top_city} leads the current screen</b> (a {HORIZON} outlook), "
-                    f"lifted most by {lift}{lead_range}.", S["bullet"], bulletText="•"),
-          Paragraph(f"<b>The screen's top-10 markets out-grew the median market by "
-                    f"{pp_pooled:+.1f} points of rent growth</b> over three years, averaged "
-                    f"across six completed backtest windows. Picking on recent rent growth "
-                    f"alone earned {pp_mom:+.1f}.", S["bullet"], bulletText="•"),
-          Paragraph(f"<b>Every measure had to earn its place by test.</b> An industry-style "
-                    f"scorecard rebuilt from the same free data barely beats chance "
-                    f"({ind_tau:.2f} on a −1 to +1 rank-agreement scale, vs {full_tau:.2f} "
-                    f"here), and three of this project's own failed configurations were "
-                    f"published as negative results.", S["bullet"], bulletText="•")]
+# ============================ 1. The method ==================================
+story += [*section_header(
+              "how_it_works", "Multifamily research · the method",
+              "How it works")]
 
-# ---- Overview + top 10 ---------------------------------------------------------
-story += [Paragraph("Overview", S["h2"]),
-          Paragraph(f"Some rental markets grow rents for years; others stall. This report "
-                    f"asks a simple question: <b>can public data tell them apart in "
-                    f"advance?</b> The screen ranks the {N} largest US metro areas on "
-                    f"fundamentals that historically come <i>before</i> strong rent growth: "
-                    f"who is moving in, whether jobs and incomes are growing, how much new "
-                    f"housing is being built, and whether rents still have room to rise. "
-                    f"Everything is built from free public data (Census, IRS, BLS, BEA, "
-                    f"Zillow, FRED), every method is documented, and every published ranking "
-                    f"is frozen so its calls can be checked against what actually happens.",
-                    S["body"]),
+story += [Paragraph(f"The screen ranks every US metro area over 500,000 people with "
+                    f"continuous rent data on eight measures of fundamentals that "
+                    f"historically come before strong rent growth. Each measure is "
+                    f"compared across markets within the same year (so nationwide "
+                    f"swings cancel out), weighted by a fixed published share, and "
+                    f"summed into one score. The same formula runs for every market; "
+                    f"no market is ever hand-adjusted; the weights are set by "
+                    f"judgment.", S["body"]),
           Image(str(P_PIPE), width=CW, height=CW * (0.9 / 7.0)),
-          Paragraph("How the score is built, in five steps; the full method is in the "
-                    "back of this report.", S["cap"]),
-          Paragraph("The top 10", S["h2"])]
-if has_tiers:
-    story.append(Paragraph(
-        f"{n_in} of these ten sit in a {n_cluster}-market leading cluster; any market "
-        f"in that cluster could plausibly hold a top-10 seat, so treat the exact "
-        f"ordering loosely.", S["cap"]))
-rows = [["Rank", "Metro", "Score", "What lifts it most"]]
-for _, r in rank.head(10).iterrows():
-    strengths = " · ".join(s for s in (r["strength_1"], r["strength_2"]) if s) \
-        or "Broadly average"
-    rng = (f"{int(r['rank'])}  ({int(r['rank_lo'])}-{int(r['rank_hi'])})"
-           if pd.notna(r.get("rank_lo")) else f"{int(r['rank'])}")
-    rows.append([rng, r["cbsa_title"], f"{r['score']:+.2f}", strengths])
-t = Table(rows, colWidths=[0.9 * inch, 2.6 * inch, 0.7 * inch, 2.8 * inch])
-t.setStyle(TableStyle([
-    ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-    ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
-    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
-    ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
-    ("FONTNAME", (1, 1), (1, -1), "Inter-Md"),
-    ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
-    ("TEXTCOLOR", (2, 1), (2, -1), C_POS),
-    ("ALIGN", (2, 0), (2, -1), "RIGHT"),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.6, C_LINE),
-    ("LINEBELOW", (0, 1), (-1, -2), 0.4, C_LINE),
-    # 3.0 (not 3.5) so the reading-guide caption fits under the table on the
-    # same page instead of widowing onto the next.
-    ("TOPPADDING", (0, 0), (-1, -1), 3.0), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.0),
-]))
-story += [t,
-          Paragraph("Rank (90% range), score vs the average market (0), and the themes "
-                    "that lift each score most. The spread between markets matters more "
-                    "than any single value. A market can hold a high single-edition rank "
-                    "while its range sits lower; the tier, not the rank, is the durable "
-                    "claim.", S["cap"]),
-          PageBreak()]
+          Paragraph("How the score is built, in five steps.", S["cap"])]
 
-# ---- Chart 1: every market ------------------------------------------------------
-story += [eyebrow("Chart 1"),
-          Paragraph("Every market against the average", S["h1"]), *hr(),
-          Paragraph(f"Composite score for all {N} markets in the {YEAR} scoring year, "
-                    f"relative to the average market (0). Green helps, red hurts.",
-                    S["cap"]),
-          Image(str(P_ALL), width=6.7 * inch, height=6.7 * inch * (8.9 / 7.6)),
-          PageBreak()]
-
-# ---- Map + tiers ---------------------------------------------------------------
-story += [eyebrow("The map"),
-          Paragraph("Where the strongest markets are", S["h1"]), *hr(),
-          Image(str(P_MAP), width=CW, height=CW * (560 / 980)),
-          Paragraph(f"Green = above the average market (score 0), clay = below; the "
-                    f"tiers below group markets the data cannot separate. "
-                    f"{rank.iloc[0]['cbsa_title'].split(',')[0].split('-')[0]} leads; "
-                    f"{rank.iloc[1]['cbsa_title'].split(',')[0].split('-')[0]} and "
-                    f"{rank.iloc[2]['cbsa_title'].split(',')[0].split('-')[0]} round out "
-                    f"the top three.", S["cap"])]
-if has_tiers:
-    story += [Paragraph("The tiers", S["h2"]),
-              Paragraph("Single ranks overstate precision, so each market gets a 90% rank "
-                        "range and a tier. Markets in the same tier are peers, not an "
-                        "ordering.", S["body"])]
-    trows = [["Tier", "Markets", "Reading"]]
-    for tname in data.TIER_ORDER:
-        members = rank[rank["tier"] == tname]
-        if not len(members):
-            continue
-        trows.append([tname, str(len(members)), data.TIER_BLURB.get(tname, "")])
-    tt = Table(trows, colWidths=[1.4 * inch, 0.7 * inch, 4.9 * inch])
-    tt.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-        ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
-    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
-        ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
-        ("FONTNAME", (0, 1), (0, -1), "Inter-Md"),
-        ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
-        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-        ("LINEBELOW", (0, 0), (-1, 0), 0.6, C_LINE),
-        ("LINEBELOW", (0, 1), (-1, -2), 0.4, C_LINE),
-        ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5),
-    ]))
-    story += [tt]
-story += [PageBreak()]
-
-# ---- The five themes -------------------------------------------------------------
-THEMES = [
-    ("Demand", "40% of the score", "Who is moving in, hiring, and earning",
-     "Net domestic migration, job growth, and income growth. Markets that people and "
-     "paychecks are moving into fill apartments first and support rent increases later. "
-     "Migration is the heaviest single measure: the screen's biggest bet, and the one "
-     "the backtests reward most."),
-    ("Supply", "25% of the score", "How much new housing is being built",
-     "Building permits relative to the housing that already exists, counted the opposite "
-     "way: the less a market is building, the better it scores. Today's construction "
-     "is tomorrow's competition, the contrarian edge that pushes several fast-growing "
-     "but over-built Sun Belt markets near the bottom."),
-    ("Affordability", "20% of the score", "Whether rents have room to grow",
-     "Two measures: rent as a share of local income (lower is better; stretched rents "
-     "have nowhere to go), and the cost of owning versus renting (higher is better; "
-     "when buying is far pricier than renting, households stay renters longer)."),
-    ("Momentum", "a deliberately small 10%", "What rents have done lately",
-     "Recent rent growth, deliberately held to a small weight: informative, but it "
-     "decays with time and inverted badly in the 2020-22 shock. A supporting witness, "
-     "not the verdict."),
-    ("Resilience", "5% of the score", "How diversified the local economy is",
-     "Employment spread across industries: a market leaning on one sector carries more "
-     "downside risk to rents, so diversity earns a small, steady credit."),
-]
-story += [*divider("What drives the rankings", "Five themes, eight measures",
-                   P_DIV_THEMES,
-                   subtitle="The five published weights, drawn to scale: "
-                            "40 · 25 · 20 · 10 · 5."),
-          Paragraph("Every market is scored on the same eight measures, grouped into the "
-                    "five themes below (heaviest first). Each measure compares markets "
-                    "within the same year, each theme carries a fixed published weight, and "
-                    "no market is ever hand-adjusted.", S["body"])]
-for bucket, wt, subtitle, body in THEMES:
-    col = f"bucket_{bucket}"
-    sub = rank[["cbsa_title", col]].dropna()
-    best = sub.loc[sub[col].idxmax()]
-    worst = sub.loc[sub[col].idxmin()]
-    story.append(KeepTogether([
-        Paragraph(f"{bucket}: {subtitle.lower()}", S["h2"]),
-        Paragraph(f"Share of the score: {wt}.", S["cap"]),
-        Paragraph(body, S["body"]),
-        Image(str(P_THEMES[bucket]), width=5.4 * inch, height=2.0 * inch),
-        Paragraph(f"The five markets this theme helps and hurts most. "
-                  f"{best['cbsa_title'].split(',')[0]} gains the most "
-                  f"({best[col]:+.2f}); {worst['cbsa_title'].split(',')[0]} gives up "
-                  f"the most ({worst[col]:+.2f}).", S["cap"])]))
-story += [PageBreak()]
-
-# ---- Spotlight -----------------------------------------------------------------
-contribs = {b: top.get(f"bucket_{b}", 0.0) for b in data.BUCKETS}
-top_buckets = [b for b in sorted(contribs, key=contribs.get, reverse=True)
-               if contribs[b] > 0.02][:2]
-_, drag = data.strength_drag(top)
-BUCKET_INDS = {b: [k for k in data.INDICATORS if data.INDICATORS[k]["bucket"] == b]
-               for b in data.BUCKETS}
-
-
-def _ordinal(x):
-    n = int(round(x))
-    sfx = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
-    return f"{n}{sfx}"
-
-
-_spot_tier = (f" and sits in the {str(top['tier']).lower()} tier"
-              if has_tiers and str(top.get("tier", "")) else "")
-_spot_move = ""
-_prior_for_spot = (prior_df[prior_df.cbsa_code == top["cbsa_code"]]
-                   if show_change else pd.DataFrame())
-if len(_prior_for_spot):
-    _pr = _prior_for_spot.iloc[0]
-    _delta = int(_pr["prior_rank"]) - int(top["rank"])
-    _inside = (pd.notna(_pr.get("prior_lo"))
-               and int(_pr["prior_lo"]) <= int(top["rank"]) <= int(_pr["prior_hi"]))
-    _moved = ("held the same rank" if _delta == 0 else
-              f"moved {_delta:+d} rank{'s' if abs(_delta) != 1 else ''}")
-    _spot_move = (f" Vs the frozen {prior_label} edition it {_moved}, "
-                  + ("inside its own 90% range, expected churn rather than a "
-                     "signal." if _inside else
-                     "outside its prior 90% range, one of the few moves the "
-                     "noise model flags as notable."))
-story += [eyebrow("Market spotlight"),
-          Paragraph(f"The case for {top_city}", S["h1"]), *hr(),
-          Paragraph(f"{top['cbsa_title']} ranks <b>#1 of {N}</b> markets, with a rank range "
-                    f"of {int(top['rank_lo'])}-{int(top['rank_hi'])}{_spot_tier}."
-                    f"{_spot_move} Its score is built the "
-                    f"same way as every other market's; what sets it apart:", S["body"])]
-label_map = {"Demand": "Demand", "Supply": "Limited new supply",
-             "Affordability": "Affordability", "Momentum": "Rent momentum",
-             "Resilience": "Economic resilience"}
-raw, pct = ed["raw"], ed["pct"]
-code = top["cbsa_code"]
-for b in top_buckets:
-    parts = []
-    for k in BUCKET_INDS[b]:
-        if code in raw.index and pd.notna(raw.loc[code].get(k)):
-            v = data.FMT[k](raw.loc[code][k])
-            p = pct.loc[code][k] if code in pct.index else float("nan")
-            parts.append(f"{data.PRETTY[k].lower()}: {v}"
-                         + (f" ({_ordinal(p)} percentile)" if pd.notna(p) else ""))
-    if parts:
-        story.append(Paragraph(f"<b>{label_map[b]}</b> ({contribs[b]:+.2f} to the score): "
-                               + "; ".join(parts) + ".", S["bullet"], bulletText="•"))
-if drag != data.NO_DRAG:
-    neg_b = min(contribs, key=contribs.get)
-    story.append(Paragraph(f"<b>The drag: {drag.lower()}</b> ({contribs[neg_b]:+.2f}); no "
-                           f"market in the top ten is strong everywhere.",
-                           S["bullet"], bulletText="•"))
-if P_TREND:
-    story += [Paragraph("Rents against the national median", S["h2"]),
-              Image(str(P_TREND), width=6.6 * inch, height=2.4 * inch),
-              Paragraph(f"Zillow rent index, year over year; the national line is the "
-                        f"median of the screened markets. History describes the past; the "
-                        f"rank comes from the fundamentals above.", S["cap"])]
-# The standing closer (C-5), always present.
-_closer = "A #1 rank is a screening result, not a verdict"
-if int(top["rank_hi"]) > 1:
-    _closer += (f": under alternative weightings this market ranks as low as "
-                f"#{int(top['rank_hi'])}. Read the top of the table as a group "
-                f"of strong candidates.")
-else:
-    _closer += "."
-story.append(Paragraph(_closer, S["cap"]))
-story += [PageBreak()]
-
-# ---- Track record ---------------------------------------------------------------
-story += [*divider("Has it worked?", "The track record", P_DIV_TRACK,
-                   subtitle="Six completed windows' top-10 edge, with the "
-                            "freeze-then-grade rail beneath: frozen at "
-                            "publication, graded three years on."),
-          Image(str(P_TLINE), width=CW, height=CW * (1.05 / 7.0)),
-          Paragraph("How every window is graded, shown for 2019: the call is frozen at "
-                    "publication and scored three years later.", S["cap"]),
-          Paragraph("Each completed three-year window is graded the same way: how much "
-                    "more rent growth did the screen's top-10 markets deliver than the "
-                    "median market?", S["body"]),
-          Image(str(P_EFFECT), width=6.6 * inch, height=2.3 * inch),
-          Paragraph(f"Calm windows came in between "
-                    f"{comp[comp.pred_year <= 2019]['top10_pp_vs_median'].min():+.1f} and "
-                    f"{comp[comp.pred_year <= 2019]['top10_pp_vs_median'].max():+.1f} points. "
-                    f"The shock (2020-22) windows were roughly flat; picking on rent momentum "
-                    f"alone turned firmly negative in those same windows. The screen earns "
-                    f"its edge in normal conditions and loses most of it in shocks.",
-                    S["cap"])]
-if len(m3):
-    story += [Paragraph("What was achievable in real time", S["h2"]),
-              Paragraph("The same backtest, two ways: <i>real-time</i> uses only data a "
-                        "user could have had at the time; <i>finalized</i> uses the "
-                        "complete revised data that arrives about two years later, a "
-                        "ceiling no live user ever had. Agreement is weighted Kendall's "
-                        "tau, a rank-agreement score from -1 to +1 where 0 means no "
-                        "relationship.", S["body"])]
-    tv = m3.rename(columns={
-        "horizon": "Horizon", "regime": "Period",
-        "mean_tau_ps": "Tau (real-time)", "mean_tau_fin": "Tau (finalized)",
-        "mean_precision@10_ps": "P@10 (real-time)",
-        "mean_precision@10_fin": "P@10 (finalized)"})
-    tv["Period"] = (tv["Period"].str.replace("_", " ").str.replace("pre covid", "Pre-COVID")
-                    .str.replace("shock", "Shock (2020-22)")
-                    .str.replace("normalization", "Normalization")
-                    .str.replace("POOLED", "All periods"))
-    tv = tv[tv["Horizon"] == 3]
-    rows = [["Period", "Tau (real-time)", "Tau (finalized)", "P@10 (real-time)", "P@10 (finalized)"]]
-    for _, r in tv.iterrows():
-        rows.append([r["Period"], f"{r['Tau (real-time)']:.2f}", f"{r['Tau (finalized)']:.2f}",
-                     f"{r['P@10 (real-time)']:.0%}", f"{r['P@10 (finalized)']:.0%}"])
-    tt = Table(rows, colWidths=[1.9 * inch, 1.3 * inch, 1.3 * inch, 1.3 * inch, 1.2 * inch])
-    tt.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-        ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
-    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
-        ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
-        ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
-        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-        ("LINEBELOW", (0, 0), (-1, 0), 0.6, C_LINE),
-        ("LINEBELOW", (0, 1), (-1, -2), 0.4, C_LINE),
-        ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5),
-    ]))
-    story += [tt, Paragraph("3-year horizon. Real-time numbers come from the pseudo-nowcast "
-                            "test, a disclosed simplification. Data vintage: finalized "
-                            "panel through 2024; rent index through July 2026.", S["cap"])]
-    _g_cell = ParagraphStyle("gcell", fontName="Inter", fontSize=8, leading=10.8,
-                             textColor=C_INK)
-    _g_term = ParagraphStyle("gterm", fontName="Inter-SB", fontSize=8, leading=10.8,
-                             textColor=C_INK)
-    guide_rows = [
-        ["Tau (rank agreement)", "How well the ranking agreed with the rent growth "
-         "that followed, from -1 to +1; 0 means no relationship, and random guessing "
-         "scores about 0."],
-        ["Precision@10 (P@10)", "Of the screen's ten highest-ranked markets, the "
-         "share that landed in the top quarter by actual rent growth."],
-        ["Top-10 edge (points)", "How many percentage points more rent growth the top "
-         "ten delivered than the median market over the window."],
-        ["Rank range and tier", "Where a rank lands 90% of the time once measurement "
-         "noise is accounted for; same-tier markets are peers, not an ordering."],
-    ]
-    gt = Table([[Paragraph(t, _g_term), Paragraph(x, _g_cell)]
-                for t, x in guide_rows],
-               colWidths=[1.55 * inch, 5.45 * inch])
-    gt.setStyle(TableStyle([
-        ("LINEABOVE", (0, 0), (-1, 0), 0.7, C_INK),
-        ("LINEBELOW", (0, 0), (-1, -2), 0.4, C_LINE),
-        ("LINEBELOW", (0, -1), (-1, -1), 0.7, C_INK),
-        ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-    ]))
-    story += [KeepTogether([Paragraph("How to read these numbers", S["h3"]), gt]),
-              Spacer(1, 4)]
-
-# C-2 sidebar: methods comparison, no vendors named.
-_ind_txt = Paragraph(
-    f"Prominent 2026 industry opportunity rankings are built the way this "
-    f"project's benchmark scorecard is: equal weights across categories, chosen "
-    f"without validation, published as point ranks with no uncertainty attached. "
-    f"Within six months, roughly half of one such ranking's markets moved by "
-    f"double-digit ranks, churn of the kind this screen's rank ranges are built "
-    f"to absorb. Rebuilt from the same free public data, that scorecard style "
-    f"agrees with realized 3-year rent growth at {ind_tau:.2f} on the -1 to +1 "
-    f"tau scale; this screen's finalized-data figure is {full_tau:.2f}. A "
-    f"comparison of methods, not of any vendor's product at its own task.",
-    S["body"])
-_ind_panel = Table([[Paragraph("Against an industry ranking", S["h3"])],
-                    [_ind_txt]], colWidths=[CW])
-_ind_panel.setStyle(TableStyle([
-    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(_TOKENS_TINT)),
-    ("TOPPADDING", (0, 0), (0, 0), 8), ("BOTTOMPADDING", (0, -1), (-1, -1), 8),
-    ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-]))
-story += [KeepTogether([_ind_panel]), Spacer(1, 6)]
-
-story += [KeepTogether([
-          Paragraph("Five gates, three failures, two passes", S["h2"]),
-          Paragraph("Every screen built on early or estimated data had to pass the same "
-                    "pre-registered test (keep at least 85% of the finalized model's "
-                    "signal and match its top 10 on at least 7 of 10 names) in a single "
-                    "attempt, with the outcome published either way:", S["body"]),
-          rl_comp.gate_ledger([
-              (False, "2025 screen, five estimated inputs kept 74.8% of the "
-                      "signal; never shipped.", "Failed"),
-              (False, "2025 screen, fresher jobs data kept 84.66%; not rounded "
-                      "up; the edition was pulled.", "Failed by 0.34 pt"),
-              (True, "2024-vintage screen, one estimated input kept 95.5%, "
-                     "matched the top-10 on 8.3/10 (a 2024-2027 forecast).",
-                     "Passed"),
-              (True, "2025 screen, income chained by state growth kept 96.6%, "
-                     "matched the top-10 on 7.4/10; this report's current "
-                     "2025-2028 forecast.", "Passed"),
-              (False, "Mid-year 2026 screen, five months of data kept 82.7% and "
-                      "matched 4.8 of 10 (averaged across the test windows); it "
-                      "appears in this report only as a clearly-labeled "
-                      "speculative outlook, never as a validated screen.",
-                      "Failed both bars"),
-          ], CW),
-          Paragraph("A validation bar that never fails anything proves nothing. Ours failed "
-                    "three of five attempts, which is exactly why the two that passed mean "
-                    "something.", S["cap"])]),
-          Paragraph("Honest limits", S["h2"]),
-          Paragraph("The rent data measures asking rents, not signed leases.",
-                    S["bullet"], bulletText="•"),
-          Paragraph("No capital-markets or operating-cost data (sale prices, cap rates, "
-                    "insurance, taxes); rent growth stands in for profitability.",
-                    S["bullet"], bulletText="•"),
-          Paragraph("Measure weights are set by judgment and tested, not statistically "
-                    "fitted.", S["bullet"], bulletText="•"),
-          Paragraph("The supply measure reads permit levels in the scoring year; a "
-                    "sharp turn in construction starts shows up only as it enters the "
-                    "permit data, so supply inflections can lag.",
-                    S["bullet"], bulletText="•"),
-          Paragraph("In shock periods like 2020-22 the screen loses most of its edge; "
-                    "treat it as a screen, not a forecast.", S["bullet"], bulletText="•"),
-          PageBreak()]
-
-# ---- Methodology ------------------------------------------------------------------
-story += [eyebrow("Methodology"),
-          Paragraph("How the score is built", S["h1"]), *hr(),
-          Paragraph(f"The screen scores every market on {data.N_IND} measures, grouped into "
-                    f"five themes. Each measure compares a market against all the others in "
-                    f"the same year, so a nationwide swing cancels out and only relative "
-                    f"standing counts. Measures where more is worse (heavy homebuilding, "
-                    f"rents that already stretch incomes) are flipped, so higher always "
-                    f"means better. Each measure is multiplied by a fixed weight and summed "
-                    f"into one composite score; markets are ranked by it. The same formula "
-                    f"runs for every market; no market is ever hand-adjusted.", S["body"])]
-story += [Image(str(P_WBAR), width=CW, height=CW * (0.72 / 7.0)),
-          Spacer(1, 4)]
-wrows = [["Theme", "Weight", "Measures (weight)"]]
-_totals = {b: sum(data.INDICATORS[k]["weight"] for k in data.INDICATORS
-                  if data.INDICATORS[k]["bucket"] == b) for b in data.BUCKETS}
-for b in data.BUCKETS:
-    ks = [k for k in data.INDICATORS if data.INDICATORS[k]["bucket"] == b]
-    wrows.append([b, f"{_totals[b]*100:.0f}%",
-                  " · ".join(f"{data.PRETTY[k]} ({data.INDICATORS[k]['weight']*100:.0f}%)"
-                             for k in ks)])
-wt = Table(wrows, colWidths=[1.1 * inch, 0.7 * inch, 5.2 * inch])
-wt.setStyle(TableStyle([
-    ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-    ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
-    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
-    ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.4),
-    ("FONTNAME", (0, 1), (0, -1), "Inter-Md"),
-    ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
-    ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.6, C_LINE),
-    ("LINEBELOW", (0, 1), (-1, -2), 0.4, C_LINE),
-    ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5),
-    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-]))
-story += [wt,
-          Paragraph("The weights are fixed, published in full, set by judgment rather "
-                    "than fitted, and stress-tested: reasonable alternative weightings "
-                    "score about the same, so the testing, not the weights, is the "
-                    "point.", S["cap"]),
-          Paragraph("Where the data comes from", S["h2"])]
 _cell_md = ParagraphStyle("cellmd", fontName="Inter-Md", fontSize=8, leading=10.5,
                           textColor=C_INK)
 _cell = ParagraphStyle("cell", fontName="Inter", fontSize=8, leading=10.5,
                        textColor=C_INK)
-vrows = [["Measure", "Source", "Through"]]
-for k in data.INDICATORS:
-    src_txt, through = data.VINTAGE_SOURCES[k]
-    url = data.SOURCE_LINKS.get(k)
-    if url:
-        src_txt = (f"{src_txt} · <a href='{url}' color='{ACCENT}'>"
-                   f"source page</a>")
-    vrows.append([Paragraph(data.PRETTY[k], _cell_md),
-                  Paragraph(src_txt, _cell), through])
-vt = Table(vrows, colWidths=[1.9 * inch, 4.4 * inch, 0.7 * inch])
-vt.setStyle(TableStyle([
-    ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-    ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
-    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
-    ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8),
-    ("FONTNAME", (0, 1), (0, -1), "Inter-Md"),
-    ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
-    ("ALIGN", (2, 0), (2, -1), "RIGHT"),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.6, C_LINE),
-    ("LINEBELOW", (0, 1), (-1, -2), 0.4, C_LINE),
-    ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-]))
-story += [vt,
-          Paragraph("* The three Connecticut metros' job and income growth are chained "
-                    "across a 2023-24 state geography change using validated substitutes, "
-                    "a disclosed fix for those three markets only. The current screen's "
-                    "slowest inputs use validated substitutes (Census migration, monthly "
-                    "employment, state-chained income); the configuration passed its "
-                    "pre-registered gate at 96.6% signal retention.", S["cap"]),
+
+THEMES = [
+    ("Demand", "40%", "Net migration, job growth, and income growth. Markets that "
+     "people and paychecks are moving into fill apartments first; migration is "
+     "the screen's biggest bet."),
+    ("Supply", "25%", "Building permits relative to existing housing, counted the "
+     "opposite way: today's construction is tomorrow's competition."),
+    ("Affordability", "20%", "Rent as a share of local income, and the cost of "
+     "owning versus renting; when buying is far pricier, households stay renters "
+     "longer."),
+    ("Momentum", "10%", "Recent rent growth, deliberately held to a small weight: "
+     "it decays and inverted badly in the 2020–22 shock."),
+    ("Resilience", "5%", "Employment spread across industries; a one-sector "
+     "economy carries more downside risk to rents."),
+]
+trows = [["Theme", "Weight", "The idea"]]
+for _b, _share, _body in THEMES:
+    trows.append([Paragraph(_b, _cell_md), _share, Paragraph(_body, _cell)])
+story += [Paragraph("The five themes", S["h2"]),
+          Image(str(P_WBAR), width=CW, height=CW * (0.72 / 7.0)),
+          Spacer(1, 6),
+          ruled_table(trows, [1.1 * inch, 0.7 * inch, 5.2 * inch],
+                      body_size=8, align_right=(1,)),
           PageBreak()]
 
-# ---- Speculative outlook (v0.6; decision-log 2026-07-21) ----------------------------
-_nc = config.PROCESSED_DIR / "nowcast"
-_spec_rank_p = _nc / "midyear_2026_ranking.csv"
-_spec_acc_p = _nc / "midyear_v06_accuracy.csv"
-if _spec_rank_p.exists() and _spec_acc_p.exists():
-    spec_rank = pd.read_csv(_spec_rank_p, dtype={"cbsa_code": str}).sort_values("rank")
-    spec_rank[["s_strength", "s_drag"]] = spec_rank.apply(
-        lambda r: pd.Series(data.strength_drag(r)), axis=1)
-    acc = pd.read_csv(_spec_acc_p).iloc[0]
-    C_PROV = colors.HexColor(FLAG)
-    warn = Table([[Paragraph(
-        f"<font name='Inter-SB' color='{FLAG}'>This screen has not passed validation. "
-        f"Read every rank loosely.</font><br/>"
-        f"Tested on history the same way as every published screen, this recipe keeps "
-        f"<b>{acc['retention']:.1%}</b> of the finalized model's signal but matches the "
-        f"finalized top-10 on only <b>{acc['mean_top10_overlap']:.1f} of 10</b> names "
-        f"(a validated screen needs 7), falling to 3-4 of 10 in fast-moving years. An "
-        f"earlier mid-year recipe failed its one-shot gate outright (82.7% and 4.8 of "
-        f"10). For decisions, use the validated {HORIZON} screen in the body of this "
-        f"report.", S["body"])]], colWidths=[CW])
-    warn.setStyle(TableStyle([
-        ("BOX", (0, 0), (-1, -1), 1.2, C_PROV),
-        ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-    ]))
-    story += [*divider("Speculative outlook", "The speculative 2026-2029 outlook",
-                       P_DIV_SPEC,
-                       subtitle="The freeze-grade rail breaks here: this "
-                                "configuration failed its validation gate and "
-                                "makes no graded claim."),
-              warn, Spacer(1, 8),
-              Paragraph("This is the same frozen model run on data through May 2026: "
-                        "five months of rents, jobs, home values, and permits; migration "
-                        "one year stale; and income growth estimated from each metro's "
-                        "state, so metros in the same state share one income figure.",
-                        S["body"]),
-              Paragraph("The speculative top 10", S["h2"])]
-    srows = [["Rank", "Metro", "Score", "What lifts it most"]]
-    for _, r in spec_rank.head(10).iterrows():
-        srows.append([f"{int(r['rank'])}", r["cbsa_title"], f"{r['score']:+.2f}",
-                      r["s_strength"]])
-    st_t = Table(srows, colWidths=[0.6 * inch, 2.9 * inch, 0.7 * inch, 2.8 * inch])
-    st_t.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7.5),
-        ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
-    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
-        ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 8.6),
-        ("FONTNAME", (1, 1), (1, -1), "Inter-Md"),
-        ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
-        ("TEXTCOLOR", (2, 1), (2, -1), C_POS),
-        ("ALIGN", (2, 0), (2, -1), "RIGHT"),
-        ("LINEBELOW", (0, 0), (-1, 0), 0.6, C_LINE),
-        ("LINEBELOW", (0, 1), (-1, -2), 0.4, C_LINE),
-        ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5),
-    ]))
-    story += [st_t,
-              Paragraph("No rank ranges are shown: this configuration failed validation, "
-                        "so the ordering is indicative at best. A working view, rebuilt as "
-                        "data lands; unlike the validated screens it is not frozen to the "
-                        "registry and makes no graded claim. The full speculative ranking "
-                        "and per-market detail are on the companion site.", S["cap"]),
-              PageBreak()]
+# ============================ 2. Key findings =================================
+s1, s2 = data.top_strengths(top)
+lift = " and ".join(s.lower() for s in (s1, s2) if s) or "balanced fundamentals"
+lead_range = (f"; its 90% rank range is {int(top['rank_lo'])}–{int(top['rank_hi'])}"
+              if pd.notna(top.get("rank_lo")) else "")
+story += [*section_header(
+              "home", "Multifamily research · the report", "Key findings",
+              f"What the screen says right now: the {N} largest US rental markets, "
+              "ranked by fundamentals that have historically come before strong rent "
+              "growth.")]
 
-# ---- Appendix: full table -----------------------------------------------------------
-story += [*divider("Appendix", f"All {N} markets", P_DIV_APPX,
-                   subtitle="All 110 markets as one strip, colored by tier, "
-                            "leading cluster to lagging: the legend for the "
-                            "table that follows."),
-          Paragraph("Treat this as a screen, not a precise ordering: the range beside "
-                    "each rank shows where that rank lands 90% of the time once "
-                    "measurement noise is accounted for, and markets with overlapping "
-                    "ranges are roughly tied.", S["cap"])]
-
-# Change vs prior edition (C-1): frozen prior ranks from the registry; slate
-# unless the new rank falls outside the market's PRIOR edition's 90% range.
-if show_change:
-    rank_appx = rank.merge(prior_df, on="cbsa_code", how="left")
+story += [Paragraph(f"<b>{top_city} leads the current screen</b>, lifted most by "
+                    f"{lift}{lead_range}.", S["bullet"], bulletText="•"),
+          Paragraph(f"<b>The screen's top-10 markets out-grew the median market by "
+                    f"{pp_pooled:+.1f} points of rent growth</b> across six completed "
+                    f"windows; picking on recent rent growth alone earned "
+                    f"{pp_mom:+.1f}.", S["bullet"], bulletText="•")]
+if flag_on:
     story.append(Paragraph(
-        "Rank moves mix one real year of market change with measurement noise; "
-        "a move inside a market's own 90% range is expected, not a signal. "
-        "Historically even two fully finalized years share only 1 to 6 of the "
-        "same top-10 names. Gray moves are expected churn; colored moves fall "
-        "outside the market's prior 90% range.", S["cap"]))
-else:
-    rank_appx = rank
+        f"Elevated-uncertainty flag: national rent growth in {YEAR} is {nat:+.1%}, "
+        f"above the published rule; in the two years this flag fired historically "
+        f"(2021 and 2022), the screen's accuracy broke down.", S["cap"]))
 
-C_SLATE = C_MUTED
+top3 = [t.split(",")[0].split("-")[0] for t in rank.head(3)["cbsa_title"]]
+story += [Spacer(1, 6),
+          Image(str(P_MAP), width=CW, height=CW * (560 / 980)),
+          Paragraph(f"Green = above the average market (score 0), clay = below; the "
+                    f"tiers group markets the data cannot separate. {top3[0]} leads; "
+                    f"{top3[1]} and {top3[2]} round out the top three. The "
+                    f"{YEAR}→{YEAR + 3} outlook.", S["cap"]),
+          PageBreak()]
 
-
-def _chg_cell(r):
-    """(text, color) for the change column."""
-    if not show_change or pd.isna(r.get("prior_rank")):
-        return ("new" if show_change else "", C_SLATE)
-    delta = int(r["prior_rank"]) - int(r["rank"])
-    txt = f"{delta:+d}" if delta else "0"
-    if pd.notna(r.get("prior_lo")):
-        if int(r["rank"]) < int(r["prior_lo"]):
-            return (txt, C_POS)
-        if int(r["rank"]) > int(r["prior_hi"]):
-            return (txt, C_NEG)
-    return (txt, C_SLATE)
-
-
-head = ["Rank", "Metro", "Score"] + \
-    ([f"Vs {prior_label}"] if show_change else []) + ["Top strength", "Top drag"]
-arows = [head]
-chg_styles = []
-for i, (_, r) in enumerate(rank_appx.iterrows()):
-    rng = (f"{int(r['rank'])}  ({int(r['rank_lo'])}-{int(r['rank_hi'])})"
+# ============================ 3. The top 10 ===================================
+story += [Paragraph("The top 10", S["h2"])]
+rows = [["Rank", "Metro", "What lifts it most"]]
+for _, r in rank.head(10).iterrows():
+    strengths = " · ".join(s for s in (r["strength_1"], r["strength_2"]) if s) \
+        or "Broadly average"
+    if int(r["n_indicators"]) < data.N_IND:
+        strengths += f" · scored on {int(r['n_indicators'])} of {data.N_IND} measures"
+    rng = (f"{int(r['rank'])}  ({int(r['rank_lo'])}–{int(r['rank_hi'])})"
            if pd.notna(r.get("rank_lo")) else f"{int(r['rank'])}")
-    row = [rng, r["cbsa_title"][:42], f"{r['score']:+.2f}"]
-    if show_change:
-        txt, col = _chg_cell(r)
-        row.append(txt)
-        chg_styles.append(("TEXTCOLOR", (3, i + 1), (3, i + 1), col))
-    row += [r["strength"], r["drag"]]
-    arows.append(row)
-_appx_widths = ([0.85 * inch, 2.45 * inch, 0.6 * inch, 0.55 * inch,
-                 1.35 * inch, 1.2 * inch] if show_change else
-                [0.85 * inch, 2.75 * inch, 0.6 * inch, 1.45 * inch, 1.35 * inch])
-at = Table(arows, colWidths=_appx_widths, repeatRows=1)
-score_colors = [("TEXTCOLOR", (2, i + 1), (2, i + 1), C_POS if r["score"] >= 0 else C_NEG)
-                for i, (_, r) in enumerate(rank_appx.iterrows())]
-# Ranges read as context, not noise: the range half of the Rank column and the
-# whole row sit on the tier-band component (B-4.4).
-_appx_base = [
-    ("FONTNAME", (0, 0), (-1, 0), "Inter-SB"), ("FONTSIZE", (0, 0), (-1, 0), 7),
-    ("TEXTCOLOR", (0, 0), (-1, 0), C_INK),
-    ("LINEABOVE", (0, 0), (-1, 0), 1.0, C_INK),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.7, C_INK),
-    ("FONTNAME", (0, 1), (-1, -1), "Inter"), ("FONTSIZE", (0, 1), (-1, -1), 7),
-    ("TEXTCOLOR", (0, 1), (-1, -1), C_INK),
-    ("ALIGN", (2, 0), (3 if show_change else 2, -1), "RIGHT"),
-    ("LINEBELOW", (0, 0), (-1, 0), 0.6, C_LINE),
-    ("LINEBELOW", (0, 1), (-1, -2), 0.3, C_LINE),
-    ("TOPPADDING", (0, 0), (-1, -1), 2.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
-    *score_colors,
-    *chg_styles,
-]
-if has_tiers:
-    at.setStyle(TableStyle(rl_comp.tier_band_style(_appx_base,
-                                                   rank_appx["tier"].tolist())))
-else:
-    at.setStyle(TableStyle(_appx_base))
-story += [at, PageBreak()]
+    rows.append([rng, r["cbsa_title"], strengths])
+story += [ruled_table(rows, [0.95 * inch, 2.75 * inch, 3.3 * inch], md_col=1),
+          Paragraph("Rank (90% range: where the rank lands 90% of the time once "
+                    "measurement noise is accounted for) and the themes lifting "
+                    "each score most.", S["cap"])]
 
-# ---- About + disclaimer ------------------------------------------------------------
-story += [eyebrow("About"),
-          Paragraph("About this research", S["h1"]), *hr(),
-          Paragraph("My name is <b>Ben Larson</b>, and I am a junior at Indiana "
-                    "University studying economics and applied math. My research "
-                    "interests center on quantitative market selection: applying data "
-                    "to identify optimal real estate markets across the U.S. and to "
-                    "help inform investment decisions across commercial real estate "
-                    "asset classes, including multifamily, industrial, retail, office, "
-                    "and data centers.", S["body"]),
-          Paragraph("Everything here is held to a standard worth defending: every "
-                    "method documented, every claim validated before it is published, "
-                    "failed experiments published alongside the successes, and a frozen "
-                    "track record anyone can check against what actually happens.",
+# ---- Why the leader leads (the site's surface card) -------------------------
+case_bits = []
+contribs = {b: top.get(f"bucket_{b}", 0.0) for b in data.BUCKETS}
+for b in sorted(contribs, key=contribs.get, reverse=True)[:2]:
+    if contribs[b] > 0.02:
+        case_bits.append(f"{data.BUCKET_LABEL[b]} ({contribs[b]:+.2f})")
+streak_txt = ""
+_tr = d["rent_trend"]
+_code = top["cbsa_code"]
+if len(_tr) and (_tr.cbsa_code == _code).any():
+    _mt = _tr[_tr.cbsa_code == _code].set_index("month")["yoy"]
+    _us = _tr[_tr.cbsa_code == "US"].set_index("month")["yoy"]
+    _j = pd.concat([_mt.rename("m"), _us.rename("u")], axis=1).dropna()
+    _above = (_j["m"] > _j["u"]).tolist()
+    _streak = 0
+    for _v in reversed(_above):
+        if not _v:
+            break
+        _streak += 1
+    if _streak >= 3:
+        streak_txt = (f" Its rents have out-grown the national median for "
+                      f"{_streak} consecutive months.")
+_case_head = ParagraphStyle("case_h", fontName="Serif-SB", fontSize=12.5,
+                            leading=15.5, textColor=C_INK)
+_case_tab = Table([[[
+    Paragraph(f"Why {top_city} leads", _case_head),
+    Spacer(1, 3),
+    Paragraph(f"Strongest on "
+              f"{' and '.join(case_bits) if case_bits else 'balanced fundamentals'} "
+              f"(contribution to its score).{streak_txt} A #1 rank is a screening "
+              f"result, not a verdict.", S["body"]),
+    Paragraph(f"The full measure-by-measure case for {top_city}, and for every "
+              f"other market, is on the companion site.", S["cap"])]]],
+    colWidths=[CW])
+_case_tab.setStyle(TableStyle([
+    ("BACKGROUND", (0, 0), (-1, -1), C_SURFACE),
+    ("BOX", (0, 0), (-1, -1), 0.8, C_LINE),
+    ("TOPPADDING", (0, 0), (-1, -1), 9), ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ("LEFTPADDING", (0, 0), (-1, -1), 11), ("RIGHTPADDING", (0, 0), (-1, -1), 11),
+]))
+story += [Spacer(1, 6), _case_tab, PageBreak()]
+
+# ============================ 4. Track record =================================
+story += [*section_header(
+              "track_record", "Multifamily research · the fine print",
+              "Track record",
+              "Every published run is frozen with its scores, rankings, inputs, and "
+              "settings, and never edited; the complete record, including the "
+              "failures, is published. <b>The "
+              "frozen 2025→2028 screen will be scored against realized rent growth "
+              "when 2028 rent data closes (early 2029), whatever it shows.</b>")]
+
+story += [Paragraph("The edge, in points of rent growth", S["h2"])]
+piv = ew.pivot_table(index="pred_year", columns="strategy",
+                     values="top10_pp_vs_median")
+edge = piv[["Composite (model)", "Momentum (trailing rent)", "Equal weight",
+            "Random (50-seed mean)"]].round(1)
+erows = [["Window start", "This screen", "Rent momentum", "Equal weight", "Random"]]
+edge_colors = []
+for ri, (yr, r) in enumerate(edge.iterrows()):
+    erows.append([f"{int(yr)}"] + [f"{v:+.1f}" for v in r.tolist()])
+    for ci, v in enumerate(r.tolist()):
+        edge_colors.append(("TEXTCOLOR", (ci + 1, ri + 1), (ci + 1, ri + 1),
+                            C_POS if v > 0 else (C_NEG if v < 0 else C_INK)))
+cm, mm = piv["Composite (model)"], piv["Momentum (trailing rent)"]
+story += [ruled_table(erows, [1.3 * inch, 1.45 * inch, 1.45 * inch, 1.45 * inch,
+                              1.35 * inch],
+                      align_right=(0, 1, 2, 3, 4), extra=edge_colors),
+          Paragraph(f"Percentage points of 3-year rent growth above the median "
+                    f"market for each strategy's top-10; each call is frozen at "
+                    f"publication and graded three years later. Pooled, this screen "
+                    f"earned {cm.mean():+.1f} points (momentum {mm.mean():+.1f}); in "
+                    f"the 2020–22 shock rows momentum flipped firmly negative while "
+                    f"the screen held near flat. Rent data through July 2026.",
+                    S["cap"])]
+
+# ---- Honest limits ----------------------------------------------------------
+story += [Paragraph("Honest limits",
+                    ParagraphStyle("h2_tight", parent=S["h2"], spaceBefore=10)),
+          Paragraph("The rent data measures asking rents, not signed leases; where "
+                    "free-month move-in deals are common, asking rents understate the "
+                    "true decline (one oversupplied market in mid-2026: asking rents "
+                    "down about 2.6%, net of those deals about 7.2%).",
+                    S["bullet"], bulletText="•"),
+          Paragraph("No capital-markets or operating-cost data (sale prices, cap "
+                    "rates, insurance, taxes); rent growth stands in for "
+                    "profitability, and Florida's 2023–26 insurance-cost shock shows "
+                    "what that misses.", S["bullet"], bulletText="•"),
+          Paragraph("Measure weights are set by judgment and tested, not statistically "
+                    "fitted.", S["bullet"], bulletText="•"),
+          Paragraph("The supply measure reads permit levels in the scoring year, so "
+                    "sharp turns in construction can show up with a lag.",
+                    S["bullet"], bulletText="•"),
+          Paragraph("In shock periods like 2020–22 the screen loses most of its edge; "
+                    "treat it as a screen, not a forecast.", S["bullet"],
+                    bulletText="•"),
+          PageBreak()]
+
+# ============================ 5. The companion site ===========================
+story += [eyebrow("The companion site"),
+          Paragraph("This report is the snapshot", S["h1"]), *hr(),
+          Paragraph("The interactive site is the working product. On it:",
                     S["body"]),
-          Paragraph(f'Contact: <link href="mailto:blarson5187@gmail.com">'
-                    f'<font color="{ACCENT}">blarson5187@gmail.com</font></link> · '
-                    f'<link href="https://www.linkedin.com/in/blarson1105">'
-                    f'<font color="{ACCENT}">linkedin.com/in/blarson1105</font></link>',
-                    S["body"]),
-          Paragraph("The interactive version of this report, with every market's detail "
-                    "page, side-by-side comparisons, and the full validation record, is "
-                    "on the companion site.", S["body"]),
-          Spacer(1, 14),
-          Paragraph("Disclaimer", S["h3"]),
-          Paragraph("This report is a research screen built on free public data (Census, "
-                    "IRS, BLS, BEA, Zillow, FRED). It is intended for general information "
-                    "purposes only, is not investment advice, and is not an offer or "
-                    "solicitation of any kind. Rankings reflect a validated statistical "
-                    "screen of historical fundamentals; they are not forecasts of any "
-                    "individual market's performance, and in shock periods the framework "
-                    "loses most of its edge. Verify all figures against the primary "
-                    "sources before relying on them.", S["cap"])]
+          Paragraph(f"All {N} markets, ranked, tiered, and mapped, with each "
+                    f"market's 90% rank range and its move versus the prior frozen "
+                    f"edition.", S["bullet"], bulletText="•"),
+          Paragraph("A detail page for every market: its score, the themes driving "
+                    "it, and each measure in plain terms, with side-by-side "
+                    "comparison.", S["bullet"], bulletText="•")]
+if have_spec26:
+    story.append(Paragraph(
+        "A 2026→2029 outlook built on data through May 2026, labeled speculative "
+        "throughout: that configuration failed validation.",
+        S["bullet"], bulletText="•"))
+story += [Paragraph("The full track record: every graded window, the interim reads "
+                    "on the newer calls, and the frozen registry of every published "
+                    "run.", S["bullet"], bulletText="•"),
+          Paragraph("The data behind each measure, its source and vintage, and the "
+                    "boundary corrections that rebuilt it.", S["bullet"],
+                    bulletText="•")]
+if config.SITE_URL:
+    story += [Spacer(1, 4),
+              Paragraph(f'Read it live: <link href="{config.SITE_URL}">'
+                        f'<font color="{ACCENT}">{config.SITE_URL}</font></link>',
+                        S["body"])]
+
+# ---- About the author -------------------------------------------------------
+# The site's author photo (app/assets/author.jpg), print edition: photo left,
+# bio right, mirroring the How-it-works author block.
+_author_photo = APP / "assets" / "author.jpg"
+_author_text = [
+    Paragraph("My name is <b>Ben Larson</b>, and I am a junior at <b>Indiana "
+              "University</b> studying economics and applied math. My research "
+              "interests center on quantitative market selection: applying data "
+              "to identify optimal real estate markets across the U.S. and to "
+              "help inform investment decisions across commercial real estate "
+              "asset classes, including multifamily, industrial, retail, office, "
+              "and data centers.", S["body"]),
+    Paragraph(f'Contact: <link href="mailto:blarson5187@gmail.com">'
+              f'<font color="{ACCENT}">blarson5187@gmail.com</font></link> · '
+              f'<link href="https://www.linkedin.com/in/blarson1105">'
+              f'<font color="{ACCENT}">linkedin.com/in/blarson1105</font></link>',
+              S["body"]),
+]
+story += [Paragraph("About the author", S["h2"])]
+if _author_photo.exists():
+    _author_tab = Table(
+        [[Image(str(_author_photo), width=1.25 * inch, height=1.5625 * inch),
+          _author_text]],
+        colWidths=[1.45 * inch, CW - 1.45 * inch])
+    _author_tab.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (0, 0), 12),
+    ]))
+    story += [_author_tab]
+else:
+    story += _author_text
+
+# ---- The fine print ---------------------------------------------------------
+story += [Spacer(1, 24), *hr(),
+          Paragraph("This report is a research screen built on free public data "
+                    "(Census, IRS, BLS, BEA, Zillow, FRED). It is intended for "
+                    "general information purposes only, is not investment advice, and "
+                    "is not an offer or solicitation of any kind. Rankings reflect a "
+                    "validated statistical screen of historical fundamentals; they "
+                    "are not predictions of any individual market's performance, and "
+                    "in shock periods the framework loses most of its edge. Verify "
+                    "all figures against the primary sources before relying on them.",
+                    S["cap"])]
 
 print("building pdf...")
 doc.build(story)
